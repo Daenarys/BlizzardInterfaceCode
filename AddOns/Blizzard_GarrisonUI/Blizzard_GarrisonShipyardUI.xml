@@ -5,8 +5,8 @@
 	<!-- This represents one of the naval mission icons on the naval map -->
 	<Button name="GarrisonShipyardMapMissionTemplate" virtual="true">
 		<Size x="64" y="64"/>
-		<NormalTexture parentKey="Icon" atlas="ShipMissionIcon-Combat-Map" useAtlasSize="true"/>
-		<HighlightTexture parentKey="HighlightIcon" atlas="ShipMissionIcon-Combat-Map" useAtlasSize="true" alpha="0.3" alphaMode="ADD"/>
+		<NormalTexture parentKey="Icon" atlas="BoatMissionIcon-Combat-Map" useAtlasSize="true"/>
+		<HighlightTexture parentKey="HighlightIcon" atlas="BoatMissionIcon-Combat-Map" useAtlasSize="true" alpha="0.3" alphaMode="ADD"/>
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="2">
 				<Texture parentKey="InProgressIcon" atlas="ShipMissionIcon-Combat-MapBadge" useAtlasSize="true" hidden="true">
@@ -14,7 +14,7 @@
 						<Anchor point="TOPLEFT" x="2" y="-45"/>
 					</Anchors>
 				</Texture>
-				<Texture parentKey="FogHighlight" atlas="ShipMissionIcon-Combat-Map" useAtlasSize="true" alpha="0.3" alphaMode="ADD" hidden="true">
+				<Texture parentKey="FogHighlight" atlas="BoatMissionIcon-Combat-Map" useAtlasSize="true" alpha="0.3" alphaMode="ADD" hidden="true">
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>
@@ -191,8 +191,8 @@
 
 	<Frame name="GarrisonShipyardBonusAreaFrameTemplate" virtual="true" hidden="true">
 		<Size x="132" y="132"/>
-		<NormalTexture parentKey="Icon" atlas="ShipMissionIcon-Combat-Map" useAtlasSize="true"/>
-		<HighlightTexture parentKey="HighlightIcon" atlas="ShipMissionIcon-Combat-Map" useAtlasSize="true" alpha="0.3" alphaMode="ADD"/>
+		<NormalTexture parentKey="Icon" atlas="BoatMissionIcon-Combat-Map" useAtlasSize="true"/>
+		<HighlightTexture parentKey="HighlightIcon" atlas="BoatMissionIcon-Combat-Map" useAtlasSize="true" alpha="0.3" alphaMode="ADD"/>
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="0">
 				<Texture parentKey="CircleTexture" alpha="1" alphaMode="BLEND" atlas="NavalMap-SmallBonusCircle" useAtlasSize="true">
@@ -287,8 +287,13 @@
 		</KeyValues>
 	</Frame>
 
-	<Frame name="GarrisonBonusAreaTooltip" parent="UIParent" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true" inherits="TooltipBackdropTemplate">
+	<Frame name="GarrisonBonusAreaTooltip" parent="UIParent" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true">
 		<Size x="250" y="1"/>
+		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<EdgeSize val="16"/>
+			<TileSize val="16"/>
+			<BackgroundInsets left="4" right="4" top="4" bottom="4"/>
+		</Backdrop>
 		<Frames>
 			<Frame parentKey="BonusArea" parentArray="BonusAreas" inherits="GarrisonBonusAreaTooltipFrameTemplate">
 				<Anchors>
@@ -296,10 +301,21 @@
 				</Anchors>
 			</Frame>
 		</Frames>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+				self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+			</OnLoad>
+		</Scripts>
 	</Frame>
 
-	<Frame name="GarrisonShipyardMapMissionTooltip" parent="UIParent" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true" inherits="TooltipBackdropTemplate">
+	<Frame name="GarrisonShipyardMapMissionTooltip" parent="UIParent" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true">
 		<Size x="250" y="256"/>
+		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<EdgeSize val="16"/>
+			<TileSize val="16"/>
+			<BackgroundInsets left="4" right="4" top="4" bottom="4"/>
+		</Backdrop>
 		<Anchors>
 			<Anchor point="CENTER"/>
 		</Anchors>
@@ -455,8 +471,11 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="ItemTooltip" inherits="InternalEmbeddedItemTooltipTemplate">
+			<Frame parentKey="ItemTooltip" inherits="EmbeddedItemTooltip">
 				<Size x="100" y="100"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.RewardString" relativePoint="BOTTOMLEFT" x="6" y="-8"/>
+				</Anchors>
 				<KeyValues>
 					<KeyValue key="yspacing" value="8" type="number"/>
 				</KeyValues>
@@ -483,6 +502,12 @@
 				</KeyValues>
 			</Frame>
 		</Frames>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+				self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+			</OnLoad>
+		</Scripts>
 	</Frame>
 
 	<Frame name="GarrisonShipyardMissionPageBaseTemplate" virtual="true">
@@ -1298,7 +1323,7 @@
 						</Texture>
 					</Layer>
 					<Layer level="OVERLAY" textureSubLevel="5">
-						<Texture parentKey="MissionType" atlas="ShipMissionIcon-Combat-Mission" useAtlasSize="true">
+						<Texture parentKey="MissionType" atlas="ShipMission_MissionIcon-Combat" useAtlasSize="true">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="12" y="-2"/>
 							</Anchors>
@@ -1352,7 +1377,7 @@
 			</Layer>
 
 			<Layer level="ARTWORK">
-				<Texture parentKey="HighlightAnimTexture" hidden="false" alpha="0.01" alphaMode="BLEND" atlas="NavalMap-OpenWaters-Highlight" useAtlasSize="true">
+				<Texture parentKey="HighlightAnimTexture" hidden="false" alpha="0.01" alphaMode="BLEND" atlas="NavalMap-OpenWatersHighlight" useAtlasSize="true">
 					<Anchors>
 						<Anchor point="CENTER" relativeKey="$parent.None"/>
 					</Anchors>
@@ -1579,6 +1604,8 @@
 						self:SetAlpha(1);
 						GarrisonMission_SetFollowerModelItems(self);
 					</OnModelLoaded>
+					<OnMouseDown function="GarrisonFollowerPageModel_OnMouseDown"/>
+					<OnMouseUp function="GarrisonFollowerPageModel_OnMouseUp"/>
 				</Scripts>
 			</CinematicModel>
 			<Button parentKey="Trait1" parentArray="Traits" inherits="GarrisonShipTraitTemplate">
@@ -1665,7 +1692,7 @@
 					<Anchor point="TOPRIGHT" x="-12" y="30"/>
 				</Anchors>
 				<Scripts>
-					<OnLoad>GarrisonThreatCountersFrame_OnLoad(self, Enum.GarrisonFollowerType.FollowerType_6_2, GARRISON_SHIPYARD_THREAT_COUNTER_TOOLTIP);</OnLoad>
+					<OnLoad>GarrisonThreatCountersFrame_OnLoad(self, LE_FOLLOWER_TYPE_SHIPYARD_6_2, GARRISON_SHIPYARD_THREAT_COUNTER_TOOLTIP);</OnLoad>
 				</Scripts>
 			</Frame>
 		</Frames>
@@ -1677,7 +1704,7 @@
 			<Anchor point="CENTER"/>
 		</Anchors>
 		<KeyValues>
-			<KeyValue key="followerTypeID" value="Enum.GarrisonFollowerType.FollowerType_6_2" type="global"/>
+			<KeyValue key="followerTypeID" value="LE_FOLLOWER_TYPE_SHIPYARD_6_2" type="global"/>
 		</KeyValues>
 		<Layers>
 			<Layer level="BACKGROUND" textureSubLevel="-1">

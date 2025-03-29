@@ -29,6 +29,7 @@
 		</Layers>
 		<Scripts>
 			<OnShow function="SpellActivationOverlayTexture_OnShow"/>
+			<OnHide function="SpellActivationOverlayTexture_OnHide"/>
 		</Scripts>
 	</Frame>
 	<Frame name="SpellActivationOverlayFrame" parent="UIParent">

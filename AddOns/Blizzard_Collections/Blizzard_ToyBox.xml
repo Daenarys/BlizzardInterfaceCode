@@ -1,28 +1,32 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
 	<Script file="Blizzard_ToyBox.lua"/>
+	
+	<CheckButton name="ToySpellButtonTemplate" inherits="CollectionsSpellButtonTemplate" virtual="true">
+		<Scripts>
+			<OnLoad>
+				CollectionsSpellButton_OnLoad(self, ToySpellButton_UpdateButton)
+			</OnLoad>
+			
+			<OnClick>
+				if ( IsModifiedClick() ) then
+					ToySpellButton_OnModifiedClick(self, button);
+				elseif (not self.isPassive) then
+					ToySpellButton_OnClick(self, button);
+				end
+			</OnClick>
+			
+			<OnShow function="ToySpellButton_OnShow"/>
+			<OnHide function="ToySpellButton_OnHide"/>
+			
+			<OnDragStart function="ToySpellButton_OnDrag"/>
+			<OnReceiveDrag function="ToySpellButton_OnDrag"/>
+			
+			<OnEnter function="ToySpellButton_OnEnter"/>
+		</Scripts>
+	</CheckButton>
 
-  <CheckButton name="ToySpellButtonTemplate" inherits="CollectionsSpellButtonTemplate" virtual="true">
-    <Scripts>
-      <OnLoad>
-        CollectionsSpellButton_OnLoad(self, ToySpellButton_UpdateButton)
-      </OnLoad>
-      <OnClick>
-        if ( IsModifiedClick() ) then
-        ToySpellButton_OnModifiedClick(self, button);
-        elseif (not self.isPassive) then
-        ToySpellButton_OnClick(self, button);
-        end
-      </OnClick>
-      <OnShow function="ToySpellButton_OnShow"/>
-      <OnHide function="ToySpellButton_OnHide"/>
-      <OnDragStart function="ToySpellButton_OnDrag"/>
-      <OnReceiveDrag function="ToySpellButton_OnDrag"/>
-      <OnEnter function="ToySpellButton_OnEnter"/>
-    </Scripts>
-  </CheckButton>
-
-  <Frame name="ToyBox" parent="CollectionsJournal" setAllPoints="true" hidden="true">
+	<Frame name="ToyBox" parent="CollectionsJournal" setAllPoints="true" hidden="true">
 		<Frames>
 			<StatusBar parentKey="progressBar" inherits="CollectionsProgressBarTemplate" />
 			
@@ -36,23 +40,111 @@
 					<OnTextChanged function="ToyBox_OnSearchTextChanged"/>
 				</Scripts>
 			</EditBox>
-			<DropDownToggleButton name="$parentFilterButton" inherits="UIResettableDropdownButtonTemplate" text="FILTER">
-				<KeyValues>
-					<KeyValue key="resetFunction" value="ToyBoxFilterDropDown_ResetFilters" type="global"/>
-				</KeyValues>
+			<Button name="$parentFilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
+				<Size x="93" y="22"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="-12" y="-34"/>
 				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="Icon" file="Interface\ChatFrame\ChatFrameExpandArrow">
+							<Size x="10" y="12"/>
+							<Anchors>
+								<Anchor point="RIGHT" relativeKey="$parent.Right" relativePoint="RIGHT" x="-5"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
 				<Scripts>
-					<OnMouseDown inherit="prepend">
+					<OnClick>
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 						ToggleDropDownMenu(1, nil, ToyBoxFilterDropDown, "ToyBoxFilterButton", 74, 15);
-					</OnMouseDown>
+					</OnClick>
 				</Scripts>
-			</DropDownToggleButton>
+			</Button>
 			<Frame name="$parentFilterDropDown" inherits="UIDropDownMenuTemplate">
 				<Scripts>
 					<OnLoad function="ToyBoxFilterDropDown_OnLoad"/>
 				</Scripts>
+			</Frame>
+
+			<Frame parentKey="favoriteHelpBox" inherits="GlowBoxTemplate" hidden="false" frameStrata="DIALOG" >
+				<Size x="220" y="65"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="BOTTOMRIGHT" x="0" y="0"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="BigText" inherits="GameFontHighlight" text="TOYBOX_FAVORITE_HELP" justifyH="LEFT">
+							<Size x="176" y="0"/>
+							<Anchors>
+								<Anchor point="TOP" x="-10" y="-12"/>
+							</Anchors>
+						</FontString>
+						<Texture parentKey="ArrowUp" inherits="HelpPlateArrowUP">
+							<Size x="53" y="21"/>
+							<Anchors>
+								<Anchor point="BOTTOM" relativePoint="TOPLEFT" x="37" y="-3"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+					<Layer level="BORDER">
+						<Texture parentKey="ArrowGlowUp" inherits="HelpPlateArrow-GlowUP" alphaMode="ADD" alpha="0.5">
+							<Size x="53" y="21"/>
+							<Anchors>
+								<Anchor point="BOTTOM" relativePoint="TOPLEFT" x="37" y="-3"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Button parentKey="CloseButton" inherits="UIPanelCloseButton">
+						<Anchors>
+							<Anchor point="TOPRIGHT" x="6" y="6"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								self:GetParent():Hide();
+								SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_TOYBOX_FAVORITE, true);
+							</OnClick>
+						</Scripts>
+					</Button>
+				</Frames>
+				<Scripts>
+					<OnLoad>
+						self:SetHeight(self.BigText:GetHeight() + HELPTIP_HEIGHT_PADDING);
+					</OnLoad>
+				</Scripts>
+			</Frame>
+
+			<Frame parentKey="mousewheelPagingHelpBox" inherits="GlowBoxTemplate" hidden="true" frameStrata="DIALOG" >
+				<Size x="220" y="65"/>
+				<Anchors>
+					<Anchor point="BOTTOMRIGHT" relativeTo="ToyBox" relativePoint="BOTTOMRIGHT" x="-30" y="30"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="BigText" inherits="GameFontHighlight" text="TOYBOX_MOUSEWHEEL_PAGING_HELP" justifyH="LEFT">
+							<Size x="176" y="0"/>
+							<Anchors>
+								<Anchor point="TOP" x="-10" y="-12"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Button parentKey="CloseButton" inherits="UIPanelCloseButton">
+						<Anchors>
+							<Anchor point="TOPRIGHT" x="6" y="6"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								self:GetParent():Hide();
+								SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_TOYBOX_MOUSEWHEEL_PAGING, true);
+							</OnClick>
+						</Scripts>
+					</Button>
+				</Frames>
 			</Frame>
 
 			<Frame parentKey="iconsFrame" inherits="CollectionsBackgroundTemplate">

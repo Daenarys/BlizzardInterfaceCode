@@ -35,12 +35,12 @@
 		<Scripts>
 			<OnEnter>
 				if ( self.abilityID ) then
-					ShowGarrisonFollowerAbilityTooltip(self.Icon, self.abilityID, Enum.GarrisonFollowerType.FollowerType_6_0);
+					ShowGarrisonFollowerAbilityTooltip(self.Icon, self.abilityID, LE_FOLLOWER_TYPE_GARRISON_6_0);
 					return;
 				end
 			</OnEnter>
 			<OnLeave>
-				HideGarrisonFollowerAbilityTooltip(Enum.GarrisonFollowerType.FollowerType_6_0);
+				HideGarrisonFollowerAbilityTooltip(LE_FOLLOWER_TYPE_GARRISON_6_0);
 			</OnLeave>
 		</Scripts>
 	</Frame>
@@ -177,6 +177,24 @@
 				<Texture atlas="Headhunter_BG" parentKey="BG" useAtlasSize="true">
 					<Anchors>
 						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BORDER" textureSubLevel="1">
+				<Texture name="$parentBtnCornerLeft" inherits="UI-Frame-BtnCornerLeft">
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" x="-2" y="-1"/>
+					</Anchors>
+				</Texture>
+				<Texture name="$parentBtnCornerRight" inherits="UI-Frame-BtnCornerRight">
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="0" y="-1"/>
+					</Anchors>
+				</Texture>
+				<Texture name="$parentButtonBottomBorder" inherits="_UI-Frame-BtnBotTile">
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeTo="$parentBtnCornerLeft" relativePoint="BOTTOMRIGHT" y="3"/>
+						<Anchor point="BOTTOMRIGHT" relativeTo="$parentBtnCornerRight" relativePoint="BOTTOMLEFT"/>
 					</Anchors>
 				</Texture>
 			</Layer>

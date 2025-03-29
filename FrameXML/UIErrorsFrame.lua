@@ -11,7 +11,7 @@ end
 function UIErrorsMixin:OnEvent(event, ...)
 	if event == "SYSMSG" then
 		local message, r, g, b = ...;
-		self:CheckAddMessage(message, r, g, b, 1.0);
+		self:AddMessage(message, r, g, b, 1.0);
 	elseif event == "UI_INFO_MESSAGE" then
 		local messageType, message = ...;
 		self:TryDisplayMessage(messageType, message, YELLOW_FONT_COLOR:GetRGB());
@@ -109,23 +109,16 @@ function UIErrorsMixin:FlashFontString(fontString)
 	end
 end
 
-function UIErrorsMixin:TryFlashingExistingMessage(messageType, message)
-	local existingFontString = self:GetFontStringByID(messageType);
-	if existingFontString and existingFontString:GetText() == message then
-		self:FlashFontString(existingFontString);
-
-		self:ResetMessageFadeByID(messageType);
-		return true;
-	end
-	return false;
-end
-
 function UIErrorsMixin:ShouldDisplayMessageType(messageType, message)
 	if BLACK_LISTED_MESSAGE_TYPES[messageType] then
 		return false;
 	end
 	if THROTTLED_MESSAGE_TYPES[messageType] then
-		if self:TryFlashingExistingMessage(messageType, message) then
+		local existingFontString = self:GetFontStringByID(messageType);
+		if existingFontString and existingFontString:GetText() == message then
+			self:FlashFontString(existingFontString);
+
+			self:ResetMessageFadeByID(messageType);
 			return false;
 		end
 	end
@@ -134,52 +127,14 @@ function UIErrorsMixin:ShouldDisplayMessageType(messageType, message)
 end
 
 function UIErrorsMixin:TryDisplayMessage(messageType, message, r, g, b)
-	if not self:GetMessagesSuppressed() and self:ShouldDisplayMessageType(messageType, message) then
+	if self:ShouldDisplayMessageType(messageType, message) then
 		self:AddMessage(message, r, g, b, 1.0, messageType);
 
-		local errorStringId, soundKitID, voiceID = GetGameMessageInfo(messageType);
+		local errorName, soundKitID, voiceID = GetGameMessageInfo(messageType);
 		if voiceID then
 			PlayVocalErrorSoundID(voiceID);
 		elseif soundKitID then
 			PlaySound(soundKitID);
 		end
-	end
-end
-
-local function AddExternalMessage(self, message, color)
-	if not self:TryFlashingExistingMessage(LE_GAME_ERR_SYSTEM, message) then
-		local r, g, b = color:GetRGB();
-		self:CheckAddMessage(message, r, g, b, 1.0, LE_GAME_ERR_SYSTEM);
-	end
-end
-
-function UIErrorsMixin:AddExternalErrorMessage(message)
-	AddExternalMessage(self, message, RED_FONT_COLOR);
-end
-
-function UIErrorsMixin:AddExternalWarningMessage(message)
-	AddExternalMessage(self, message, YELLOW_FONT_COLOR);
-end
-
-function UIErrorsMixin:SetMessagesSuppressed(messagesSuppressed)
-	self.messagesSuppressed = messagesSuppressed;
-end
-
-function UIErrorsMixin:GetMessagesSuppressed()
-	return self.messagesSuppressed;
-end
-
-function UIErrorsMixin:SuppressMessagesThisFrame()
-	if self:GetMessagesSuppressed() then
-		return;
-	end
-	
-	self:SetMessagesSuppressed(true);
-	C_Timer.After(0, GenerateClosure(self.SetMessagesSuppressed, self, false));
-end
-
-function UIErrorsMixin:CheckAddMessage(...)
-	if not self:GetMessagesSuppressed() then
-		self:AddMessage(...);
 	end
 end

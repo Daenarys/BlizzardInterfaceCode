@@ -92,7 +92,7 @@
 			<AbsDimension x="30" y="30"/>
 		</Size>
 	</Frame>
-	<CheckButton name="SpellBookSkillLineTabTemplate" frameLevel="510" virtual="true" hidden="true">
+	<CheckButton name="SpellBookSkillLineTabTemplate" virtual="true" hidden="true">
 		<Size>
 			<AbsDimension x="32" y="32"/>
 		</Size>
@@ -113,9 +113,9 @@
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="1">
 				<Texture name="$parentTabardEmblem" parentKey="TabardEmblem" hidden="true" file="Interface\GuildFrame\GuildEmblemsLG_01">
-					<Size x="33" y="38"/>
+					<Size x="38" y="38"/>
 					<Anchors>
-						<Anchor point="CENTER" relativeKey="$parent" relativePoint="TOPLEFT" x="16" y="-15"/>
+						<Anchor point="TOPLEFT" x="-3" y="3"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -243,14 +243,6 @@
 					</Anchors>
 				</FontString>
 			</Layer>
-			<Layer level="OVERLAY" textureSubLevel ="-2">
-				<Texture parentKey="ClickBindingIconCover" setAllPoints="true" hidden="true">
-					<Color r="0" g="0" b="0" a="0.3"/>
-				</Texture>
-				<Texture name="$parentLevelLinkLockBg" hidden="true" setAllPoints="true">
-					<Color color="BLACK_FONT_COLOR" a=".3"/>
-				</Texture>
-			</Layer>
 			<Layer level="OVERLAY" textureSubLevel="-1">
 				<Texture name="$parentSlotFrame" inherits="Spellbook-SlotFrame">
 					<Anchors>
@@ -265,11 +257,6 @@
 				<Texture name="$parentTrainSlotFrame" inherits="Spellbook-TrainSlot" hidden="true" parentKey="TrainFrame">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="-35" y="35"/>
-					</Anchors>
-				</Texture>
-				<Texture name="$parentLevelLinkLockTexture" atlas="QuestSharing-Padlock" useAtlasSize="true" hidden="true">
-					<Anchors>
-						<Anchor point="CENTER"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -317,11 +304,6 @@
 				</Texture>
 				<Texture parentKey="SpellHighlightTexture" atlas="bags-newitem" useAtlasSize="false" alphaMode="ADD" hidden="true">
 					<Size x="48" y="48"/>
-					<Anchors>
-						<Anchor point="CENTER"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="ClickBindingHighlight" atlas="ClickCast-Highlight-Spellbook" useAtlasSize="true" alphaMode="ADD" hidden="true">
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>
@@ -492,7 +474,7 @@
 					<OnClick>
 						local parent = self:GetParent():GetParent();
 						if ( parent.specializationIndex >= 0 ) then
-							local spellName = GetSpellBookItemName( (parent.spellOffset + parent.specializationOffset), SpellBookFrame.bookType);
+							local spellName, subSpellName = GetSpellBookItemName( (parent.spellOffset + parent.specializationOffset), SpellBookFrame.bookType);
 							StaticPopup_Show("UNLEARN_SPECIALIZATION", spellName, nil, parent.specializationIndex);
 						end
 					</OnClick>
@@ -712,7 +694,11 @@
 		<Frames>
 			<CheckButton name="$parentSpellButtonTop" inherits="ProfessionButtonTemplate" parentKey="button2" id="2">
 				<Anchors>
-					<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" x="-109" y="-3" />
+					<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT">
+						<Offset>
+							<AbsDimension x="-109" y="-3"/>
+						</Offset>
+					</Anchor>
 				</Anchors>
 			</CheckButton>
 			<CheckButton name="$parentSpellButtonBottom" inherits="ProfessionButtonTemplate" parentKey="button1" id="1">
@@ -726,7 +712,9 @@
 				</Anchors>
 			</StatusBar>
 			<Button name="$parentUnlearnButton" parentKey="unlearn">
-				<Size x="16" y="16" />
+				<Size>
+					<AbsDimension x="16" y="16"/>
+				</Size>
 				<Anchors>
 					<Anchor point="RIGHT"  relativeTo="$parentStatusBar" relativePoint="LEFT" x="-21" y="1"/>
 				</Anchors>
@@ -766,38 +754,17 @@
 		</Scripts>
 	</Frame>
 	<Frame name="SecondaryProfessionTemplate" virtual="true">
-		<Size x="437" y="46"/>
-		<Frames>
-			<CheckButton name="$parentSpellButtonRight" inherits="ProfessionButtonTemplate" parentKey="button1" id="1">
-				<Anchors>
-					<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" x="-109" y="-3"/>
-				</Anchors>
-			</CheckButton>
-			<CheckButton name="$parentSpellButtonLeft" inherits="ProfessionButtonTemplate" parentKey="button2" id="2">
-				<Anchors>
-					<Anchor point="TOPRIGHT" relativeTo="$parentSpellButtonRight" relativePoint="TOPLEFT" x="-109"/>
-				</Anchors>
-			</CheckButton>
-			<StatusBar name="$parentStatusBar" inherits="ProfessionStatusBarTemplate" parentKey="statusBar">
-				<Anchors>
-					<Anchor point="BOTTOMLEFT" x="16" y="-1"/>
-				</Anchors>
-			</StatusBar>
-		</Frames>		
+		<Size>
+			<AbsDimension x="437" y="46"/>
+		</Size>
 		<Layers>
 			<Layer level="OVERLAY">
-				<FontString name="$parentRank" inherits="GameFontHighlightSmall" justifyH="LEFT" parentKey="rank" text="TRADE_SKILLS">
-					<Size x="0" y="0" />
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.statusBar" relativePoint="TOPLEFT" x="-14" y="4"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.statusBar" relativePoint="TOPRIGHT" x="25" y="4"/>
-					</Anchors>
-				</FontString>				
 				<FontString name="$parentProfessionName" inherits="QuestFont_Shadow_Small" justifyH="LEFT" parentKey="professionName" text="TRADE_SKILLS">
-					<Size x="0" y="0" />
+					<Size>
+						<AbsDimension x="0" y="0"/>
+					</Size>
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.rank" relativePoint="TOPLEFT" x="0" y="2"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.rank" relativePoint="TOPRIGHT" x="0" y="2"/>
+						<Anchor point="TOPLEFT"  x="2" y="-1"/>
 					</Anchors>
 					<Shadow>
 						<Offset>
@@ -807,15 +774,27 @@
 					</Shadow>
 					<Color r="1" g=".82" b="0"/>
 				</FontString>
+				<FontString name="$parentRank" inherits="GameFontHighlightSmall" justifyH="LEFT" parentKey="rank" text="TRADE_SKILLS">
+					<Size>
+						<AbsDimension x="0" y="0"/>
+					</Size>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="$parentProfessionName" relativePoint="BOTTOMLEFT" x="0" y="-2"/>
+					</Anchors>
+				</FontString>
 				<FontString name="$parentMissing" inherits="QuestFont_Large" justifyH="LEFT" parentKey="missingHeader" text="">
-					<Size x="0" y="0"/>
+					<Size>
+						<AbsDimension x="0" y="0"/>
+					</Size>
 					<Anchors>
 						<Anchor point="TOPLEFT"  x="4" y="-15"/>
 					</Anchors>
 					<Color r="0.15" g="0.1" b="0.1"/>
 				</FontString>
 				<FontString inherits="SubSpellFont" justifyH="LEFT" parentKey="missingText" text="">
-					<Size x="250" y="0" />
+					<Size>
+						<AbsDimension x="250" y="0"/>
+					</Size>
 					<Anchors>
 						<Anchor point="RIGHT" relativeTo="$parent" relativePoint="RIGHT" x="-5" y="0"/>
 					</Anchors>
@@ -823,6 +802,27 @@
 				</FontString>
 			</Layer>
 		</Layers>
+		<Frames>
+			<CheckButton name="$parentSpellButtonRight" inherits="ProfessionButtonTemplate" parentKey="button1" id="1">
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT">
+						<Offset>
+							<AbsDimension x="-109" y="-3"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+			</CheckButton>
+			<CheckButton name="$parentSpellButtonLeft" inherits="ProfessionButtonTemplate" parentKey="button2" id="2">
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="$parentSpellButtonRight" relativePoint="TOPLEFT" x="-109"/>
+				</Anchors>
+			</CheckButton>
+			<StatusBar name="$parentStatusBar" inherits="ProfessionStatusBarTemplate" parentKey="statusBar">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentRank" relativePoint="BOTTOMLEFT" x="14" y="-5"/>
+				</Anchors>
+			</StatusBar>
+		</Frames>
 	</Frame>
 
 	<Frame name="SpellBookFrame" toplevel="true" movable="true" enableMouse="true" hidden="true" parent="UIParent" inherits="ButtonFrameTemplate" frameStrata="MEDIUM">
@@ -1262,18 +1262,18 @@
 					</Frame>
 					<Frame name="SecondaryProfession1" inherits="SecondaryProfessionTemplate">
 						<Anchors>
-							<Anchor point="TOPLEFT" relativeTo="PrimaryProfession2" relativePoint="BOTTOMLEFT" x="0" y="-40"/>
+							<Anchor point="TOPLEFT" relativeTo="PrimaryProfession2" relativePoint="BOTTOMLEFT" x="0" y="-22"/>
 						</Anchors>
 						<Scripts>
 							<OnLoad>
-								self.missingHeader:SetText(PROFESSIONS_COOKING);
-								self.missingText:SetText(PROFESSIONS_COOKING_MISSING);
+								self.missingHeader:SetText(PROFESSIONS_ARCHAEOLOGY);
+								self.missingText:SetText(PROFESSIONS_ARCHAEOLOGY_MISSING);
 							</OnLoad>
 						</Scripts>
 					</Frame>
 					<Frame name="SecondaryProfession2" inherits="SecondaryProfessionTemplate">
 						<Anchors>
-							<Anchor point="TOPLEFT" relativeTo="SecondaryProfession1" relativePoint="BOTTOMLEFT" x="0" y="-30"/>
+							<Anchor point="TOPLEFT" relativeTo="SecondaryProfession1" relativePoint="BOTTOMLEFT" x="0" y="-11"/>
 						</Anchors>
 						<Scripts>
 							<OnLoad>
@@ -1284,12 +1284,23 @@
 					</Frame>
 					<Frame name="SecondaryProfession3" inherits="SecondaryProfessionTemplate">
 						<Anchors>
-							<Anchor point="TOPLEFT" relativeTo="SecondaryProfession2" relativePoint="BOTTOMLEFT" x="0" y="-30"/>
+							<Anchor point="TOPLEFT" relativeTo="SecondaryProfession2" relativePoint="BOTTOMLEFT" x="0" y="-11"/>
 						</Anchors>
 						<Scripts>
 							<OnLoad>
-								self.missingHeader:SetText(PROFESSIONS_ARCHAEOLOGY);
-								self.missingText:SetText(PROFESSIONS_ARCHAEOLOGY_MISSING);
+								self.missingHeader:SetText(PROFESSIONS_COOKING);
+								self.missingText:SetText(PROFESSIONS_COOKING_MISSING);
+							</OnLoad>
+						</Scripts>
+					</Frame>
+					<Frame name="SecondaryProfession4" inherits="SecondaryProfessionTemplate">
+						<Anchors>
+							<Anchor point="TOPLEFT" relativeTo="SecondaryProfession3" relativePoint="BOTTOMLEFT" x="0" y="-11"/>
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								self.missingHeader:SetText(PROFESSIONS_FIRST_AID);
+								self.missingText:SetText(PROFESSIONS_FIRST_AID_MISSING);
 							</OnLoad>
 						</Scripts>
 					</Frame>
@@ -1302,6 +1313,60 @@
 			<OnShow function="SpellBookFrame_OnShow"/>
 			<OnHide function="SpellBookFrame_OnHide"/>
 			<OnMouseWheel function="SpellBookFrame_OnMouseWheel"/>
+		</Scripts>
+	</Frame>
+
+	<Frame name="SpellLockedTooltip" inherits="GlowBoxTemplate" parent="UIParent" hidden="true" frameStrata="FULLSCREEN_DIALOG" frameLevel="2">
+		<Size x="220" y="100"/>
+		<Layers>
+			<Layer level="OVERLAY">
+				<FontString parentKey="Text" inherits="GameFontHighlightLeft">
+					<Size x="188" y="0"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" x="15" y="-15"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="ArrowGlowRIGHT" inherits="HelpPlateArrow-GlowDOWN" alphaMode="ADD" alpha="0.5">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="RIGHT" relativePoint="LEFT" x="3" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BORDER">
+				<Texture parentKey="ArrowRIGHT" inherits="HelpPlateArrowDOWN">
+					<Size x="53" y="21"/>
+					<Anchors>
+						<Anchor point="RIGHT" relativePoint="LEFT" x="3" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Button parentKey="CloseButton" inherits="UIPanelCloseButton">
+				<Anchors>
+					<Anchor point="TOPRIGHT" x="6" y="6"/>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						self:GetParent():Hide();
+						SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_BOOSTED_SPELL_BOOK, true);
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				self.Text:SetSpacing(4);
+				self.Text:SetText(BOOSTED_CHAR_LOCKED_SPELL_TIP);
+				SetClampedTextureRotation(self.ArrowRIGHT, 90);
+				SetClampedTextureRotation(self.ArrowGlowRIGHT, 90);
+			</OnLoad>
+			<OnShow>
+				self:SetHeight(self.Text:GetHeight()+30);
+			</OnShow>
 		</Scripts>
 	</Frame>
 </Ui>

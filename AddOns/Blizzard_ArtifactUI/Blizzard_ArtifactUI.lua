@@ -38,7 +38,7 @@ StaticPopupDialogs["NOT_ENOUGH_POWER_ARTIFACT_RESPEC"] = {
 }
 
 function ArtifactUI_CanViewArtifact()
-	return C_ArtifactUI.IsAtForge() or ArtifactUI_HasPurchasedAnything() or C_ArtifactUI.IsArtifactDisabled() or C_ArtifactUI.GetNumObtainedArtifacts() > 1;
+	return C_ArtifactUI.IsAtForge() or ArtifactUI_HasPurchasedAnything() or C_ArtifactUI.GetNumObtainedArtifacts() > 1;
 end
 
 function ArtifactUI_HasPurchasedAnything()
@@ -64,6 +64,7 @@ function ArtifactUIMixin:OnLoad()
 
 	self:RegisterEvent("ARTIFACT_UPDATE");
 	self:RegisterEvent("ARTIFACT_CLOSE");
+	self:RegisterEvent("ARTIFACT_MAX_RANKS_UPDATE");
 end
 
 function ArtifactUIMixin:OnShow()
@@ -78,7 +79,7 @@ function ArtifactUIMixin:OnShow()
 	self:SetupPerArtifactData();
 	self:RefreshKnowledgeRanks();
 	self.PerksTab:OnUIOpened();
-
+	
 	self:RegisterEvent("ARTIFACT_XP_UPDATE");
 	self:RegisterEvent("ARTIFACT_RELIC_INFO_RECEIVED");
 	self:RegisterEvent("UI_SCALE_CHANGED");
@@ -166,18 +167,10 @@ function ArtifactUIMixin:EvaulateForgeState()
 
 	if isAtForge and not self.AppearancesTab:IsShown() and not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_ARTIFACT_APPEARANCE_TAB) and C_ArtifactUI.GetTotalPurchasedRanks() > 0 then
 		if GetNumUnlockedAppearances() > 1 then
-			local helpTipInfo = {
-				text = ARTIFACT_TUTORIAL_CUSTOMIZE_APPEARANCE,
-				buttonStyle = HelpTip.ButtonStyle.Close,
-				cvarBitfield = "closedInfoFrames",
-				bitfieldFlag = LE_FRAME_TUTORIAL_ARTIFACT_APPEARANCE_TAB,
-				targetPoint = HelpTip.Point.TopEdgeCenter,
-				offsetY = -7,
-			};
-			HelpTip:Show(self, helpTipInfo, self.AppearancesTabButton);
+			self.AppearanceTabHelpBox:Show();
 		end
 	else
-		HelpTip:Hide(self, ARTIFACT_TUTORIAL_CUSTOMIZE_APPEARANCE);
+		self.AppearanceTabHelpBox:Hide();
 	end
 
 	ArtifactFrameUnderlay:SetShown(isAtForge);
@@ -196,7 +189,7 @@ function ArtifactUIMixin:SetTab(id)
 	UpdateUIPanelPositions(self);
 
 	if id == TAB_APPEARANCE then
-		HelpTip:Hide(self, ARTIFACT_TUTORIAL_CUSTOMIZE_APPEARANCE);
+		self.AppearanceTabHelpBox:Hide();
 		SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_ARTIFACT_APPEARANCE_TAB, true)
 	end
 
@@ -230,37 +223,51 @@ end
 
 function ArtifactUIMixin:RefreshKnowledgeRanks()
 	local totalRanks = C_ArtifactUI.GetTotalPurchasedRanks();
-	if totalRanks > 0 and not C_ArtifactUI.IsArtifactDisabled() then
+	if totalRanks > 0 then
 		self.ForgeBadgeFrame.ForgeLevelLabel:SetText(totalRanks);
 		self.ForgeBadgeFrame.ForgeLevelLabel:Show();
 		self.ForgeBadgeFrame.ForgeLevelBackground:Show();
 		self.ForgeBadgeFrame.ForgeLevelBackgroundBlack:Show();
 		self.ForgeLevelFrame:Show();
+
+		local knowledgeLevel = C_ArtifactUI.GetArtifactKnowledgeLevel();
+		if knowledgeLevel and knowledgeLevel > 0 and not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_ARTIFACT_KNOWLEDGE) then
+			self.KnowledgeLevelHelpBox:Show();
+		end
 	else
 		self.ForgeBadgeFrame.ForgeLevelLabel:Hide();
 		self.ForgeBadgeFrame.ForgeLevelBackground:Hide();
 		self.ForgeBadgeFrame.ForgeLevelBackgroundBlack:Hide();
 		self.ForgeLevelFrame:Hide();
+		self.KnowledgeLevelHelpBox:Hide();
 	end
 end
 
 function ArtifactUIMixin:OnKnowledgeEnter(knowledgeFrame)
 	GameTooltip:SetOwner(knowledgeFrame, "ANCHOR_BOTTOMRIGHT", -25, 27);
 	local artifactArtInfo = C_ArtifactUI.GetArtifactArtInfo();
-	local color = ITEM_QUALITY_COLORS[Enum.ItemQuality.Artifact];
+	local color = ITEM_QUALITY_COLORS[LE_ITEM_QUALITY_ARTIFACT];
 	GameTooltip:SetText(artifactArtInfo.titleName, color.r, color.g, color.b);
 
 	GameTooltip:AddLine(ARTIFACTS_NUM_PURCHASED_RANKS:format(C_ArtifactUI.GetTotalPurchasedRanks()), HIGHLIGHT_FONT_COLOR:GetRGB());
 
 	local addedAnyMetaPowers = MetaPowerTooltipHelper(C_ArtifactUI.GetMetaPowerInfo());
-	
-	knowledgeFrame.UpdateTooltip = function() self:OnKnowledgeEnter(knowledgeFrame); end;
-	GameTooltip:Show();
-end
 
-function ArtifactUIMixin:OnKnowledgeLeave(knowledgeFrame)
-	knowledgeFrame.UpdateTooltip = nil;
-	GameTooltip:Hide();
+	local knowledgeLevel = C_ArtifactUI.GetArtifactKnowledgeLevel();
+	if knowledgeLevel and knowledgeLevel > 0 then
+		local knowledgeMultiplier = C_ArtifactUI.GetArtifactKnowledgeMultiplier();
+		local percentIncrease = math.floor(((knowledgeMultiplier - 1.0) * 100) + .5);
+		if percentIncrease > 0.0 then
+			if addedAnyMetaPowers then
+				GameTooltip:AddLine(" ");
+			end
+
+			GameTooltip:AddLine(ARTIFACTS_KNOWLEDGE_TOOLTIP_LEVEL:format(knowledgeLevel), HIGHLIGHT_FONT_COLOR:GetRGB());
+			GameTooltip:AddLine(ARTIFACTS_KNOWLEDGE_TOOLTIP_DESC:format(BreakUpLargeNumbers(percentIncrease)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
+		end
+	end
+	
+	GameTooltip:Show();
 end
 
 function ArtifactUIMixin:OnInventoryItemMouseEnter(bag, slot)

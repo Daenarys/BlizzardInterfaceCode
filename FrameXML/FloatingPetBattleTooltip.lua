@@ -95,9 +95,8 @@ function FloatingBattlePet_Show(speciesID, level, breedQuality, maxHealth, power
 end
 
 function BattlePetTooltip_OnLoad(self)
-	local subLayer = 0;
-	self.linePool = CreateFontStringPool(self, "ARTWORK", subLayer, "GameTooltipText");
-	self.AddLine = BattlePetTooltipTemplate_AddTextLine;
+	self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+	self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
 end
 
 function BattlePetTooltipTemplate_SetBattlePet(tooltipFrame, data)
@@ -115,43 +114,6 @@ function BattlePetTooltipTemplate_SetBattlePet(tooltipFrame, data)
 	tooltipFrame.Power:SetText(data.power);
 	tooltipFrame.Speed:SetText(data.speed);
 	tooltipFrame.PetTypeTexture:SetTexture("Interface\\PetBattles\\PetIcon-"..PET_TYPE_SUFFIX[data.petType]);
-
-	tooltipFrame.linePool:ReleaseAll();
-	tooltipFrame.textLineAnchor = nil;
-end
-
-local LinePadding = 2;
-function BattlePetTooltipTemplate_AddTextLine(self, text, r, g, b, wrap)
-	if not r then
-		r, g, b = NORMAL_FONT_COLOR:GetRGB();
-	end
-	
-	local anchor = self.textLineAnchor;
-	if not anchor then
-		if self.JournalClick and self.JournalClick:IsShown() then
-			anchor = self.JournalClick;
-		elseif self.Owned:IsShown() and self.Owned:GetText() ~= nil then
-			anchor = self.Owned;
-		else
-			anchor = self.SpeedTexture;
-		end
-	end
-
-	local line = self.linePool:Acquire();
-	line:SetText(text);
-	line:SetTextColor(r, g, b);
-	line:SetPoint("TOP", anchor, "BOTTOM", 0, -LinePadding);
-	line:SetPoint("LEFT", self.Name, "LEFT");
-
-	if wrap then
-		line:SetPoint("RIGHT", self, "RIGHT");
-	end
-
-	line:Show();
-
-	self.textLineAnchor = line;
-
-	self:SetHeight(self:GetHeight() + line:GetHeight() + LinePadding);
 end
 
 function BattlePetTooltipJournalClick_OnClick(self)

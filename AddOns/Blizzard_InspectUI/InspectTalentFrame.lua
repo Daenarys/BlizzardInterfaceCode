@@ -86,6 +86,9 @@ end
 function InspectTalentFrameTalent_OnClick(self)
 	if ( IsModifiedClick("CHATLINK") ) then
 		local _, _, classID = UnitClass(INSPECTED_UNIT);
-		ChatEdit_InsertLink(GetTalentLink(self:GetID()));
+		local link = GetTalentLink(self:GetID());
+		if ( link ) then
+			ChatEdit_InsertLink(link);
+		end
 	end
 end

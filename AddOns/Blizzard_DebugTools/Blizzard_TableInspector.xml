@@ -207,7 +207,7 @@
 				<CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
 				<DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>		
 			</CheckButton>
-			<EditBox parentKey="FilterBox" inherits="SearchBoxTemplate" autoFocus="false" bytes="64">
+			<EditBox parentKey="FilterBox" inherits="SearchBoxTemplate" autoFocus="false">
 				<Size x="130" y="16"/>
 				<Anchors>
 					<Anchor point="LEFT" relativeKey="$parent.DynamicUpdateButton.Label" relativePoint="RIGHT" x="12" y="0"/>
@@ -216,7 +216,7 @@
 					<OnEnterPressed function="TableInspectorFilterBox_OnEnterPressed"/>
 					<OnTextChanged inherit="prepend" function="TableInspectorFilterBox_OnTextChanged"/>
 				</Scripts>
-				<FontString inherits="ChatFontNormal"/>
+				<FontString inherits="ChatFontNormal" bytes="64"/>
 			</EditBox>
 			<Button parentKey="CloseButton" inherits="UIPanelCloseButton">
 				<Size x="32" y="32"/>
@@ -274,6 +274,8 @@
 				</Anchors>
 				<Scripts>
 					<OnLoad>
+						self:SetBackdropBorderColor(.6, .6, .6, 1);
+						
 						self.scrollBarHideable = 1;
 						self.ScrollBar.scrollStep = 24;
 						ScrollFrame_OnLoad(self);
@@ -289,11 +291,23 @@
 					</Frame>
 				</ScrollChild>
 			</ScrollFrame>
-			<Frame parentKey="ScrollFrameArt" inherits="TooltipBorderBackdropTemplate">
+			<Frame parentKey="ScrollFrameArt">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.LinesScrollFrame" x="0" y="6"/>
 					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.LinesScrollFrame.ScrollBar" x="6" y="-22"/>
 				</Anchors>
+
+				<Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+					<EdgeSize>
+						<AbsValue val="16"/>
+					</EdgeSize>
+					<TileSize>
+						<AbsValue val="16"/>
+					</TileSize>
+					<BackgroundInsets>
+						<AbsInset left="0" right="0" top="0" bottom="0"/>
+					</BackgroundInsets>
+				</Backdrop>
 			</Frame>
 			<Frame parentKey="FrameHighlight" inherits="FrameHighlightTemplate"/>
 		</Frames>

@@ -57,17 +57,17 @@ function ArenaEnemyFrames_ResetCrowdControlCooldownData()
 end
 
 function ArenaEnemyFrames_OnShow(self)
-	DurabilityFrame:SetAlerts();
+	DurabilityFrame_SetAlerts();
 	UIParent_ManageFramePositions();
 end
 
 function ArenaEnemyFrames_OnHide(self)	
-	DurabilityFrame:SetAlerts();
+	DurabilityFrame_SetAlerts();
 	UIParent_ManageFramePositions();
 end
 
 function ArenaEnemyFrames_CheckEffectiveEnableState(self, cvarUpdate)
-	if (C_PvP.IsInBrawl() and not C_PvP.IsSoloShuffle()) then
+	if (C_PvP.IsInBrawl()) then
 		ArenaEnemyFrames_Disable(self);
 	else
 		if ( GetCVarBool("showArenaEnemyFrames") or cvarUpdate ) then
@@ -430,12 +430,12 @@ function ArenaPrepFrames_OnEvent(self, event, ...) --also called in OnLoad
 end
 
 function ArenaPrepFrames_OnShow(self)
-	DurabilityFrame:SetAlerts();
+	DurabilityFrame_SetAlerts();
 	UIParent_ManageFramePositions()
 end
 
 function ArenaPrepFrames_OnHide(self)
-	DurabilityFrame:SetAlerts();
+	DurabilityFrame_SetAlerts();
 	UIParent_ManageFramePositions();
 end
 

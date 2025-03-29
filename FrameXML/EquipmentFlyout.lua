@@ -59,7 +59,7 @@ function EquipmentFlyout_CreateButton()
 	local buttonAnchor = EquipmentFlyoutFrame.buttonFrame;
 	local numButtons = #buttons;
 	
-	local button = CreateFrame("ItemButton", "EquipmentFlyoutFrameButton" .. numButtons + 1, buttonAnchor, "EquipmentFlyoutButtonTemplate");
+	local button = CreateFrame("BUTTON", "EquipmentFlyoutFrameButton" .. numButtons + 1, buttonAnchor, "EquipmentFlyoutButtonTemplate");
 
 	local pos = numButtons/EQUIPMENTFLYOUT_ITEMS_PER_ROW;
 	if ( math.floor(pos) == pos ) then
@@ -126,35 +126,15 @@ local function _createFlyoutBG(buttonAnchor)
 	local numBGs = buttonAnchor["numBGs"];
 	numBGs = numBGs + 1;
 	local texture = buttonAnchor:CreateTexture(nil, nil, "EquipmentFlyoutTexture");
-
-	local itemButton = buttonAnchor:GetParent().button;
-	local flyoutSettings = itemButton:GetParent().flyoutSettings;
-	local customBackground = flyoutSettings.customBackground;
-	if customBackground then
-		texture:SetTexture(customBackground);
-	end
-
 	buttonAnchor["bg" .. numBGs] = texture;
 	buttonAnchor["numBGs"] = numBGs;
 	return texture;
-end
-
-function EquipmentFlyout_GetFrame()
-	return EquipmentFlyoutFrame;
-end
-
-function EquipmentFlyout_Hide()
-	EquipmentFlyoutFrame:Hide();
 end
 
 function EquipmentFlyout_Show(itemButton)
 	local id = itemButton.id or itemButton:GetID();
 
 	local flyout = EquipmentFlyoutFrame;
-	if flyout:IsShown() and (flyout.button ~= itemButton) then
-		flyout:Hide();
-	end
-
 	local buttons = flyout.buttons;
 	
 	if ( flyout.button ~= itemButton ) then
@@ -174,38 +154,17 @@ function EquipmentFlyout_Show(itemButton)
 	wipe(itemTable);
 
 	local flyoutSettings = itemButton:GetParent().flyoutSettings;
-	local useItemLocation = flyoutSettings.useItemLocation;
-
-	flyout:SetScript("OnUpdate", flyoutSettings.customFlyoutOnUpdate or EquipmentFlyout_OnUpdate);
-
-	flyout.Highlight:SetShown(not flyoutSettings.hideFlyoutHighlight);
-
-	EquipmentFlyout_SetBackgroundTexture(flyoutSettings.customBackground or [[Interface\PaperDollInfoFrame\UI-GearManager-Flyout]]);
 
 	flyoutSettings.getItemsFunc(id, itemTable);
 	for location, itemID in next, itemTable do
-		if ( not useItemLocation and ((location - id) == ITEM_INVENTORY_LOCATION_PLAYER) ) then -- Remove the currently equipped item from the list
+		if ( location - id == ITEM_INVENTORY_LOCATION_PLAYER ) then -- Remove the currently equipped item from the list
 			itemTable[location] = nil;
 		else
 			tinsert(itemDisplayTable, location);
 		end
 	end
 
-	if useItemLocation then
-		local locationToItemID = {};
-		local function ItemLocationSort(lhsLocation, rhsLocation)
-			locationToItemID[lhsLocation] = locationToItemID[lhsLocation] or C_Item.GetItemID(lhsLocation);
-			locationToItemID[rhsLocation] = locationToItemID[rhsLocation] or C_Item.GetItemID(rhsLocation);
-			
-			local lhsItemID = locationToItemID[lhsLocation];
-			local rhsItemID = locationToItemID[rhsLocation];
-			return lhsItemID < rhsItemID;
-		end
-
-		table.sort(itemDisplayTable, ItemLocationSort);
-	else
-		table.sort(itemDisplayTable); -- Sort by location. This ends up as: inventory, backpack, bags, bank, and bank bags.
-	end
+	table.sort(itemDisplayTable); -- Sort by location. This ends up as: inventory, backpack, bags, bank, and bank bags.
 	
 	local numTotalItems = #itemDisplayTable;
 
@@ -280,36 +239,10 @@ function EquipmentFlyout_UpdateItems()
 	for i, button in ipairs(buttons) do
 		if ( i <= numPageItems ) then
 			button.id = id;
+			button.location = itemDisplayTable[itemOffset + i];
 			button:Show();
 			
-			local location = itemDisplayTable[itemOffset + i];
-			button.location = location;
-
-			if flyoutSettings.useItemLocation then
-				button:SetItemLocation(location);
-
-				local function SetButtonTooltip()
-					local self = button;
-					GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-
-					local itemLocation = self:GetItemLocation();
-
-					if itemLocation:IsBagAndSlot() then
-						local bag, slot = itemLocation:GetBagAndSlot();
-						GameTooltip:SetBagItem(bag, slot);
-					elseif itemLocation:IsEquipmentSlot() then
-						local slot = itemLocation:GetEquipmentSlot();
-						GameTooltip:SetInventoryItem("player", slot);
-					end
-
-					GameTooltip:Show(bag, slot);
-				end
-
-				button.setTooltip = SetButtonTooltip;
-				button.UpdateTooltip = SetButtonTooltip;
-			else
-				EquipmentFlyout_DisplayButton(button, itemButton);
-			end
+			EquipmentFlyout_DisplayButton(button, itemButton);
 		else
 			button:Hide();
 		end
@@ -445,7 +378,7 @@ function EquipmentFlyout_DisplayButton(button, paperDollItemSlot)
 		return;
 	end
 
-	local itemID, name, textureName, count, durability, maxDurability, invType, locked, start, duration, enable, setTooltip, quality, isUpgrade, isBound = EquipmentManager_GetItemInfoByLocation(location);
+	local id, name, textureName, count, durability, maxDurability, invType, locked, start, duration, enable, setTooltip, quality, isUpgrade = EquipmentManager_GetItemInfoByLocation(location);
 	button.UpgradeIcon:SetShown(isUpgrade);
 	local broken = ( maxDurability and durability == 0 );
 	if ( textureName ) then
@@ -459,8 +392,7 @@ function EquipmentFlyout_DisplayButton(button, paperDollItemSlot)
 			SetItemButtonNormalTextureVertexColor(button, 1.0, 1.0, 1.0);
 		end
 
-		local doNotSuppressOverlays = false;
-		SetItemButtonQuality(button, quality, itemID, doNotSuppressOverlays, isBound);
+		SetItemButtonQuality(button, quality);
 
 		CooldownFrame_Set(button.cooldown, start, duration, enable);
 		
@@ -486,12 +418,6 @@ end
 function EquipmentFlyout_DisplaySpecialButton(button, paperDollItemSlot)
 	local location = button.location;
 	button.UpgradeIcon:Hide();
-	button.IconOverlay:Hide();
-	
-	local quality = nil;
-	local itemID = nil;
-	SetItemButtonQuality(button, quality, itemID);
-
 	if ( location == EQUIPMENTFLYOUT_IGNORESLOT_LOCATION ) then
 		SetItemButtonTexture(button, "Interface\\PaperDollInfoFrame\\UI-GearManager-LeaveItem-Opaque");
 		SetItemButtonCount(button, nil);
@@ -499,6 +425,9 @@ function EquipmentFlyout_DisplaySpecialButton(button, paperDollItemSlot)
 			function () 
 				GameTooltip:SetOwner(EquipmentFlyoutFrame.buttonFrame, "ANCHOR_RIGHT", 6, -EquipmentFlyoutFrame.buttonFrame:GetHeight() - 6);
 				GameTooltip:SetText(EQUIPMENT_MANAGER_IGNORE_SLOT, 1.0, 1.0, 1.0); 
+				if ( SHOW_NEWBIE_TIPS == "1" ) then
+					GameTooltip:AddLine(NEWBIE_TOOLTIP_EQUIPMENT_MANAGER_IGNORE_SLOT, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
+				end
 				GameTooltip:Show();
 			end;
 		SetItemButtonTextureVertexColor(button, 1.0, 1.0, 1.0);
@@ -510,6 +439,9 @@ function EquipmentFlyout_DisplaySpecialButton(button, paperDollItemSlot)
 			function () 
 				GameTooltip:SetOwner(EquipmentFlyoutFrame.buttonFrame, "ANCHOR_RIGHT", 6, -EquipmentFlyoutFrame.buttonFrame:GetHeight() - 6); 
 				GameTooltip:SetText(EQUIPMENT_MANAGER_UNIGNORE_SLOT, 1.0, 1.0, 1.0); 
+				if ( SHOW_NEWBIE_TIPS == "1" ) then
+					GameTooltip:AddLine(NEWBIE_TOOLTIP_EQUIPMENT_MANAGER_UNIGNORE_SLOT, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
+				end
 				GameTooltip:Show();
 			end;
 		SetItemButtonTextureVertexColor(button, 1.0, 1.0, 1.0);
@@ -521,6 +453,9 @@ function EquipmentFlyout_DisplaySpecialButton(button, paperDollItemSlot)
 			function () 
 				GameTooltip:SetOwner(EquipmentFlyoutFrame.buttonFrame, "ANCHOR_RIGHT", 6, -EquipmentFlyoutFrame.buttonFrame:GetHeight() - 6);
 				GameTooltip:SetText(EQUIPMENT_MANAGER_PLACE_IN_BAGS, 1.0, 1.0, 1.0); 
+				if ( SHOW_NEWBIE_TIPS == "1" ) then
+					GameTooltip:AddLine(NEWBIE_TOOLTIP_EQUIPMENT_MANAGER_PLACE_IN_BAGS, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
+				end
 				GameTooltip:Show();
 			end;
 		SetItemButtonTextureVertexColor(button, 1.0, 1.0, 1.0);
@@ -542,7 +477,7 @@ function EquipmentFlyoutButton_OnClick(self)
 	if ( flyoutSettings.onClickFunc ) then
 		flyoutSettings.onClickFunc(self);
 	end
-	if ( (flyoutSettings.alwaysHideOnClick) or (EquipmentFlyoutFrame.button.popoutButton and EquipmentFlyoutFrame.button.popoutButton.flyoutLocked and not flyoutSettings.keepShownOnClick) ) then
+	if ( EquipmentFlyoutFrame.button.popoutButton and EquipmentFlyoutFrame.button.popoutButton.flyoutLocked and not flyoutSettings.keepShownOnClick ) then
 		EquipmentFlyoutFrame:Hide();
 	end
 end
@@ -566,19 +501,6 @@ function EquipmentFlyout_SetTooltipAnchor(button)
 	if ( EquipmentFlyoutFrame:IsShown() ) then
 		GameTooltip:SetOwner(EquipmentFlyoutFrame.buttonFrame, "ANCHOR_RIGHT", 6, -EquipmentFlyoutFrame.buttonFrame:GetHeight() - 6);
 		return true;
-	end
-end
-
-function EquipmentFlyout_SetBackgroundTexture(texture)
-	local self = EquipmentFlyoutFrame;
-
-	self.NavigationFrame.BottomBackground:SetTexture(texture);
-	self.buttonFrame.bg1:SetTexture(texture);
-
-	local buttonAnchor = self.buttonFrame;
-	local numBGs = buttonAnchor["numBGs"];
-	for i = 1, numBGs do
-		buttonAnchor["bg" .. i]:SetTexture(texture);
 	end
 end
 

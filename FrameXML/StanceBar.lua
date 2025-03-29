@@ -16,7 +16,7 @@ function StanceBar_OnEvent(self, event)
 	end
 end
 
-function StanceBar_Update()
+function StanceBar_Update ()
 	local numForms = GetNumShapeshiftForms();
 	local needFrameMgrUpdate = false;
 	if ( numForms > 0 and not IsPossessBarVisible()) then
@@ -57,14 +57,14 @@ end
 
 function StanceBar_UpdateState ()
 	local numForms = GetNumShapeshiftForms();
-	local texture, isActive, isCastable;
+	local texture, name, isActive, isCastable;
 	local button, icon, cooldown;
 	local start, duration, enable;
 	for i=1, NUM_STANCE_SLOTS do
 		button = StanceBarFrame.StanceButtons[i];
 		icon = button.icon;
 		if ( i <= numForms ) then
-			texture, isActive, isCastable = GetShapeshiftFormInfo(i);
+			texture, name, isActive, isCastable = GetShapeshiftFormInfo(i);
 			icon:SetTexture(texture);
 			
 			--Cooldown stuffs
@@ -97,13 +97,13 @@ function StanceBar_UpdateState ()
 	end
 end
 
-function StanceBar_Select(id)
+function StanceBar_Select (id)
 	StanceBarFrame.lastSelected = id;
 	CastShapeshiftForm(id);
 end
 
 function StanceButton_OnEnter(self)
-	if ( GetCVarBool("UberTooltips") or KeybindFrames_InQuickKeybindMode() ) then
+	if ( GetCVarBool("UberTooltips") ) then
 		GameTooltip_SetDefaultAnchor(GameTooltip, self);
 	else
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");

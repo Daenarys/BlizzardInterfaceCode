@@ -1,4 +1,4 @@
-<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+ <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
 	<Frame name="QuestFramePanelTemplate" virtual="true">
 		<Size x="384" y="512"/>
@@ -7,32 +7,33 @@
 		</Anchors>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Bg" name="$parentBg" atlas="QuestBG-Parchment" useAtlasSize="true">
+				<Texture name="$parentBg" file="Interface\QuestFrame\QuestBG">
+					<Size x="510" y="620"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" x="7" y="-62"/>
 					</Anchors>
 				</Texture>
 			</Layer>
 			<Layer level="BORDER">
-				<Texture name="$parentMaterialTopLeft" parentKey="MaterialTopLeft">
+				<Texture name="$parentMaterialTopLeft">
 					<Size x="239" y="300"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" x="7" y="-62"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentMaterialTopRight" parentKey="MaterialTopRight">
+				<Texture name="$parentMaterialTopRight">
 					<Size x="64" y="300"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="$parentMaterialTopLeft" relativePoint="TOPRIGHT"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentMaterialBotLeft" parentKey="MaterialBotLeft">
+				<Texture name="$parentMaterialBotLeft">
 					<Size x="239" y="138"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="$parentMaterialTopLeft" relativePoint="BOTTOMLEFT"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentMaterialBotRight" parentKey="MaterialBotRight">
+				<Texture name="$parentMaterialBotRight">
 					<Size x="64" y="138"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="$parentMaterialTopLeft" relativePoint="BOTTOMRIGHT"/>
@@ -53,8 +54,7 @@
 				if ( self:GetAlpha() > 0 ) then
 					if (self.objectType == "item") then
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-						local showCollectionText = false;
-						GameTooltip:SetQuestItem(self.type, self:GetID(), showCollectionText);
+						GameTooltip:SetQuestItem(self.type, self:GetID());
 						GameTooltip_ShowCompareItem(GameTooltip);
 					elseif (self.objectType == "currency") then
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -121,8 +121,7 @@
 			</OnLeave>
 			<OnClick>
 				if ( IsModifiedClick("CHATLINK") and self.spellID) then
-					local spellLink = GetSpellLink(self.spellID);
-					ChatEdit_InsertLink(spellLink);
+					ChatEdit_InsertLink(GetSpellLink(self.spellID));
 				end
 			</OnClick>
 		</Scripts>
@@ -131,10 +130,10 @@
 		<Size x="300" y="16"/>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture name="$parentQuestIcon" file="Interface\GossipFrame\AvailableQuestIcon" parentKey="Icon">
+				<Texture name="$parentQuestIcon" file="Interface\GossipFrame\AvailableQuestIcon">
 					<Size x="16" y="16"/>
 					<Anchors>
-						<Anchor point="LEFT" x="4" y="0"/>
+						<Anchor point="TOPLEFT" x="4" y="2"/>
 					</Anchors>
 				</Texture>
 			</Layer>

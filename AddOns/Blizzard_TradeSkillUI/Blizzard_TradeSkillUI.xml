@@ -4,7 +4,7 @@
 
 	<Frame name="TradeSkillFrame" inherits="PortraitFrameTemplate" toplevel="true" parent="UIParent" enableMouse="true" mixin="TradeSkillUIMixin" hidden="true">
 		<Size x="670" y="496"/>
-
+		
 		<Layers>
 			<Layer level="ARTWORK">
 				<Texture parentKey="TabardBackground" file="Interface\GuildFrame\GuildFrame">
@@ -17,9 +17,9 @@
 			</Layer>
 			<Layer level="ARTWORK" textureSubLevel="1">
 				<Texture parentKey="TabardEmblem" file="Interface\GuildFrame\GuildEmblemsLG_01">
-					<Size x="56" y="64"/>
+					<Size x="64" y="64"/>
 					<Anchors>
-						<Anchor point="CENTER" relativeKey="$parent" relativePoint="TOPLEFT" x="24" y="-24"/>
+						<Anchor point="TOPLEFT" x="-8" y="9"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -47,31 +47,37 @@
 					<Anchor point="TOPRIGHT" x="-6" y="-80" />
 				</Anchors>
 			</Frame>
-
+			
 			<ScrollFrame parentKey="RecipeList" inherits="TradeSkillRecipeListTemplate" />
 			<ScrollFrame parentKey="DetailsFrame" inherits="TradeSkillDetailsFrameTemplate" />
-
+			
 			<StatusBar parentKey="RankFrame" drawLayer="BACKGROUND" minValue="0" maxValue="1" defaultValue="0">
 				<Size x="447" y="14"/>
 				<Anchors>
 					<Anchor point="TOP" y="-33"/>
 				</Anchors>
-
+				
 				<Layers>
-					<Layer level="OVERLAY">
+					<Layer level="ARTWORK">
+						<FontString parentKey="RankText" inherits="WhiteNormalNumberFont" justifyH="CENTER">
+							<Size x="0" y="9"/>
+							<Anchors>
+								<Anchor point="CENTER"/>
+							</Anchors>
+						</FontString>
 						<Texture parentKey="BorderLeft" file="Interface\PaperDollInfoFrame\UI-Character-Skills-BarBorder">
-							<Size x="9" y="20"/>
-
+							<Size x="8" y="17"/>
+							
 							<Anchors>
 								<Anchor point="LEFT" x="-3" y="0"/>
 							</Anchors>
 							<TexCoords left="0.007843" right="0.043137" top="0.193548" bottom="0.774193"/>
 						</Texture>
 						<Texture parentKey="BorderRight" file="Interface\PaperDollInfoFrame\UI-Character-Skills-BarBorder">
-							<Size x="9" y="20"/>
-
+							<Size x="8" y="17"/>
+							
 							<Anchors>
-								<Anchor point="RIGHT" x="3" y="0"/>
+								<Anchor point="RIGHT" x="4" y="0"/>
 							</Anchors>
 							<TexCoords left="0.043137" right="0.007843" top="0.193548" bottom="0.774193"/>
 						</Texture>
@@ -82,14 +88,6 @@
 							</Anchors>
 							<TexCoords left="0.113726" right="0.1490196" top="0.193548" bottom="0.774193"/>
 						</Texture>
-					</Layer>
-					<Layer level="OVERLAY" textureSubLevel="1">
-						<FontString parentKey="RankText" inherits="WhiteNormalNumberFont" justifyH="CENTER">
-							<Size x="0" y="9"/>
-							<Anchors>
-								<Anchor point="CENTER"/>
-							</Anchors>
-						</FontString>
 					</Layer>
 					<Layer level="BACKGROUND">
 						<Texture parentKey="Background">
@@ -140,6 +138,14 @@
 							<Anchor point="CENTER" />
 							<Anchor point="TOP" relativeKey="$parent.Text" relativePoint="BOTTOM" />
 						</Anchors>
+						<Scripts>
+							<OnShow>
+								self.Anim:Play();
+							</OnShow>
+							<OnHide>
+								self.Anim:Stop();
+							</OnHide>
+						</Scripts>
 					</Frame>
 				</Frames>
 				<Scripts>
@@ -152,7 +158,7 @@
 					</OnUpdate>
 				</Scripts>
 			</Frame>
-
+			
 			<Button parentKey="LinkNameButton" hidden="true">
 				<Anchors>
 					<Anchor point="TOP" relativeKey="$parent.TitleText"/>
@@ -169,7 +175,7 @@
 				</Scripts>
 			</Button>
 
-			<DropDownToggleButton parentKey="FilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
+			<Button parentKey="FilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
 				<Size x="70" y="22"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="-12" y="-55"/>
@@ -185,13 +191,12 @@
 					</Layer>
 				</Layers>
 				<Scripts>
-					<OnMouseDown>
-						UIMenuButtonStretchMixin.OnMouseDown(self, button);
+					<OnClick>
 						ToggleDropDownMenu(1, nil, self:GetParent().FilterDropDown, self, 74, 15);
 						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-					</OnMouseDown>
+					</OnClick>
 				</Scripts>
-			</DropDownToggleButton>
+			</Button>
 			<Frame name="TradeSkillFilterDropDown" parentKey="FilterDropDown" inherits="UIDropDownMenuTemplate">
 				<Scripts>
 					<OnLoad>
@@ -201,7 +206,7 @@
 				</Scripts>
 			</Frame>
 
-			<Button parentKey="LinkToButton" mixin="DropDownToggleButtonMixin">
+			<Button parentKey="LinkToButton">
 				<Size x="30" y="30"/>
 				<Anchors>
 					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.FilterButton" relativePoint="TOPRIGHT" x="3" y="1"/>
@@ -223,12 +228,6 @@
 			</Button>
 
 			<Frame parentKey="LinkToDropDown" name="TradeSkillLinkToDropDown" inherits="UIDropDownMenuTemplate" />
-
-			<Frame parentKey="OptionalReagentList" inherits="OptionalReagentListTemplate" hidden="true">
-				<Anchors>
-					<Anchor point="LEFT" relativeKey="$parent" relativePoint="RIGHT" x="0" y="0"/>
-				</Anchors>
-			</Frame>
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad" />

@@ -1,9 +1,3 @@
--- Protecting from addons since we use this in secure code.
-local cos = math.cos;
-local sin = math.sin;
-local atan2 = math.atan2;
-local sqrt = math.sqrt;
-
 function Vector2D_ScaleBy(scalar, x, y)
 	return x * scalar, y * scalar;
 end
@@ -33,7 +27,7 @@ function Vector2D_GetLengthSquared(x, y)
 end
 
 function Vector2D_GetLength(x, y)
-	return sqrt(Vector2D_GetLengthSquared(x, y));
+	return math.sqrt(Vector2D_GetLengthSquared(x, y));
 end
 
 function Vector2D_Normalize(x, y)
@@ -41,13 +35,7 @@ function Vector2D_Normalize(x, y)
 end
 
 function Vector2D_CalculateAngleBetween(leftX, leftY, rightX, rightY)
-	return atan2(Vector2D_Cross(leftX, leftY, rightX, rightY), Vector2D_Dot(leftX, leftY, rightX, rightY));
-end
-
-function Vector2D_RotateDirection(rotationRadians, x, y)
-	local cosValue = cos(rotationRadians);
-	local sinValue = sin(rotationRadians);
-	return x * cosValue - y * sinValue, x * sinValue + y * cosValue;
+	return math.atan2(Vector2D_Cross(leftX, leftY, rightX, rightY), Vector2D_Dot(leftX, leftY, rightX, rightY));
 end
 
 Vector2DMixin = {};
@@ -107,10 +95,6 @@ function Vector2DMixin:Dot(other)
 	return Vector2D_Dot(self.x, self.y, other:GetXY());
 end
 
-function Vector2DMixin:IsZero()
-	return self.x == 0 and self.y == 0;
-end
-
 function Vector2DMixin:GetLengthSquared()
 	return Vector2D_GetLengthSquared(self:GetXY());
 end
@@ -121,10 +105,6 @@ end
 
 function Vector2DMixin:Normalize()
 	self:SetXY(Vector2D_Normalize(self:GetXY()));
-end
-
-function Vector2DMixin:RotateDirection(rotationRadians)
-	self:SetXY(Vector2D_RotateDirection(rotationRadians, self:GetXY()));
 end
 
 function Vector2DMixin:Clone()

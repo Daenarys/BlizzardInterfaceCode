@@ -1,4 +1,5 @@
 LEVEL_UP_TYPE_CHARACTER = "character";	--Name used in globalstring LEVEL_UP
+LEVEL_UP_TYPE_PET = "pet" -- Name used in globalstring PET_LEVEL_UP
 LEVEL_UP_TYPE_SCENARIO = "scenario";
 LEVEL_UP_TYPE_SPELL_BUCKET = "spellbucket";
 TOAST_QUEST_BOSS_EMOTE = "questbossemote";
@@ -10,14 +11,11 @@ TOAST_CHALLENGE_MODE_RECORD = "challengemode";
 TOAST_GARRISON_ABILITY = "garrisonability";
 TOAST_WORLD_QUESTS_UNLOCKED = "worldquestsunlocked";
 
-LEVEL_UP_PLAYER_STATE_CHECKS = {
-	[C_PlayerInfo.CanPlayerUseAreaLoot] = {unlockType = "AreaLootUnlocked", allowedInNPE = true},
-	[C_LFGInfo.CanPlayerUseLFD] = {unlockType = "LFDUnlocked"},
-	[C_LFGInfo.CanPlayerUsePVP] = {unlockType = "BGsUnlocked"},
-	[C_SpecializationInfo.CanPlayerUseTalentSpecUI] = {unlockType = "SpecializationUnlocked"},
-	[C_SpecializationInfo.CanPlayerUseTalentUI] = {unlockType = "TalentsUnlocked"},
-	[C_SpecializationInfo.CanPlayerUsePVPTalentUI] = {unlockType = "PvpTalentsUnlocked"},
-	[C_PlayerInfo.CanPlayerUseMountEquipment] = {unlockType = "MountEquipmentUnlocked"},
+LEVEL_UP_EVENTS = {
+--  Level  = {unlock}
+	[10] = {"SpecializationUnlocked", "BGsUnlocked"},
+	[15] = {"TalentsUnlocked","LFDUnlocked"},
+	[110]= {"HonorTalentsUnlocked"},
 }
 
 SUBICON_TEXCOOR_BOOK 	= {0.64257813, 0.72070313, 0.03710938, 0.11132813};
@@ -29,6 +27,14 @@ local levelUpTexCoords = {
 		dot = { 0.64257813, 0.68359375, 0.18750000, 0.23046875 },
 		goldBG = { 0.56054688, 0.99609375, 0.24218750, 0.46679688 },
 		gLine = { 0.00195313, 0.81835938, 0.01953125, 0.03320313 },
+		gLineDelay = 1.5,
+	},
+	[LEVEL_UP_TYPE_PET] = {
+		dot = { 0.64257813, 0.68359375, 0.18750000, 0.23046875 },
+		goldBG = { 0.56054688, 0.99609375, 0.24218750, 0.46679688 },
+		gLine = { 0.00195313, 0.81835938, 0.01953125, 0.03320313 },
+		tint = {1, 0.5, 0.25},
+		textTint = {1, 0.7, 0.25},
 		gLineDelay = 1.5,
 	},
 	[TOAST_PET_BATTLE_WINNER] = {
@@ -98,62 +104,54 @@ LEVEL_UP_TYPES = {
 										subText=LEVEL_UP_TALENT_SUB,
 										link=LEVEL_UP_TALENTPOINT_LINK;
 									},
-
+	
+	["PetTalentPoint"] 			=	{	icon="Interface\\Icons\\Ability_Marksmanship",
+										subIcon=SUBICON_TEXCOOR_ARROW,
+										text=PET_LEVEL_UP_TALENT_MAIN,
+										subText=PET_LEVEL_UP_TALENT_SUB,
+										link=PET_LEVEL_UP_TALENTPOINT_LINK;
+									},
+									
 	["SpecializationUnlocked"] 	= 	{	icon="Interface\\Icons\\Ability_Marksmanship",
 										subIcon=SUBICON_TEXCOOR_LOCK,
 										text=SPECIALIZATION,
 										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_FEATURE2.." "..LEVEL_UP_SPECIALIZATION_LINK
+										link=LEVEL_UP_FEATURE2..LEVEL_UP_SPECIALIZATION_LINK
 									},
-
+									
 	["TalentsUnlocked"] 		= 	{	icon="Interface\\Icons\\Ability_Marksmanship",
 										subIcon=SUBICON_TEXCOOR_LOCK,
 										text=TALENT_POINTS,
 										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_FEATURE2.." "..LEVEL_UP_TALENTS_LINK
+										link=LEVEL_UP_FEATURE2..LEVEL_UP_TALENTS_LINK
 									},
-
-	["MountEquipmentUnlocked"] 	= 	{	icon="Interface\\Icons\\inv_blacksmith_leystonehoofplates_orange",
-										subIcon=SUBICON_TEXCOOR_LOCK,
-										text=MOUNT_EQUIPMENT_LEVEL_UP_FEATURE,
-										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_FEATURE2.." "..LEVEL_UP_MOUNT_EQUIPMENT_LINK
-									},
-
+									
 	["BGsUnlocked"] 			= 	{	icon="Interface\\Icons\\Ability_DualWield",
 										subIcon=SUBICON_TEXCOOR_LOCK,
 										text=BATTLEFIELDS,
 										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_FEATURE2.." "..LEVEL_UP_BG_LINK
+										link=LEVEL_UP_FEATURE2..LEVEL_UP_BG_LINK
 									},
 
 	["LFDUnlocked"] 			= 	{	icon="Interface\\Icons\\LevelUpIcon-LFD",
 										subIcon=SUBICON_TEXCOOR_LOCK,
 										text=LOOKING_FOR_DUNGEON,
 										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_FEATURE2.." "..LEVEL_UP_LFD_LINK
+										link=LEVEL_UP_FEATURE2..LEVEL_UP_LFD_LINK
 									},
-
-	["PvpTalentsUnlocked"] 		= 	{	icon="Interface\\Icons\\Ability_DualWield",
+									
+	["HonorTalentsUnlocked"] 	= 	{	icon="Interface\\Icons\\Ability_DualWield",
 										subIcon=SUBICON_TEXCOOR_LOCK,
 										text=PVP_TALENTS,
 										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_FEATURE2.." "..LEVEL_UP_HONOR_LINK
+										link=LEVEL_UP_FEATURE2..LEVEL_UP_HONOR_LINK
 									},
 
-	["AreaLootUnlocked"] 		= 	{	icon="Interface\\Icons\\ability_priest_holybolts01",
-										subIcon=SUBICON_TEXCOOR_LOCK,
-										text= AREA_LOOTING_UNLOCKED,
-										subText= LEVEL_UP_FEATURE,
-										instructionalText = AREA_LOOTING_UNLOCKED_DESC,
-										link=AREA_LOOTING_UNLOCKED_CHAT_DISPLAY
-									},
-
------- HACKS BELOW
+------ HACKS BELOW		
  	["Teleports"] 			= {	spellID=109424	},
 	["PortalsHorde"]		= {	spellID=109400	},
 	["PortalsAlliance"]		= {	spellID=109401	},
-
+									
  	["LockMount1"] 			= {	spellID=5784	},
  	["LockMount2"] 			= {	spellID=23161	},
  	["PaliMountHorde1"] 	= {	spellID=34769	},
@@ -164,7 +162,7 @@ LEVEL_UP_TYPES = {
  	["PaliMountTauren2"] 	= {	spellID=69826	},
  	["PaliMountDraenei1"] 	= {	spellID=73629	},
  	["PaliMountDraenei2"] 	= {	spellID=73630	},
- 	["PaliMountZandalariTroll1"] 	= {	spellID=290608	},
+	
 	["TrackBeast"] 			= {	spellID=1494  },
 	["TrackHumanoid"] 		= {	spellID=19883  },
 	["TrackUndead"] 		= {	spellID=19884  },
@@ -176,27 +174,49 @@ LEVEL_UP_TYPES = {
 ------ END HACKS
 }
 
-local LevelUpSpellsCache = {
-	spells = { },
-	spec = nil,
-	Store = function(self, level)
-		if not self.spells[level] then
-			self.spells[level] = {GetCurrentLevelSpells(level)};
-		end
-	end,
-	Get = function(self, level)
-		return self.spells[level] or {GetCurrentLevelSpells(level)};
-	end,
-	CheckSpec = function(self)
-		local spec = GetSpecialization();
-		if spec ~= self.spec then
-			self.spec = spec;
-			self.spells = { };
-			local level = UnitLevel("player") + 1;
-			self:Store(level);
-		end
-	end,
-};
+
+LEVEL_UP_CLASS_HACKS = {
+	
+	["MAGEHorde"] 		= {
+							--  Level  = {unlock}
+								[24] = {"Teleports"},
+								[42] = {"PortalsHorde"},
+							},
+	["MAGEAlliance"]	= {
+							--  Level  = {unlock}
+								[24] = {"Teleports"},
+								[42] = {"PortalsAlliance"},
+							},
+	["WARLOCK"] 		= {
+							--  Level  = {unlock}
+								[20] = {"LockMount1"},
+								[40] = {"LockMount2"},
+							},
+	["PALADINHorde"] 		= {
+							--  Level  = {unlock}
+								[20] = {"PaliMountHorde1"},
+								[40] = {"PaliMountHorde2"},
+							},
+	["PALADINAlliance"] 	= {
+							--  Level  = {unlock}
+								[20] = {"PaliMountAlliance1"},
+								[40] = {"PaliMountAlliance2"},
+							},
+	["PALADINTauren"]	= {
+							--  Level  = {unlock}
+								[20] = {"PaliMountTauren1"},
+								[40] = {"PaliMountTauren2"},
+							},	
+	["PALADINDraenei"]	= {
+							--  Level  = {unlock}
+								[20] = {"PaliMountDraenei1"},
+								[40] = {"PaliMountDraenei2"},
+							},
+	["DEMONHUNTER"]		= {
+							--  Level  = {unlock}
+								[99] = {"TalentsUnlocked"},
+							},
+}
 
 GARRISON_ABILITY_HACKS = {
 	[26] = {
@@ -209,16 +229,13 @@ GARRISON_ABILITY_HACKS = {
 LEVEL_UP_TRAP_LEVELS = {427, 77, 135}
 
 function LevelUpDisplay_OnLoad(self)
-	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self:RegisterEvent("PLAYER_LEVEL_UP");
-	self:RegisterEvent("PLAYER_LEVEL_CHANGED");
 	self:RegisterEvent("UNIT_LEVEL");
 	--self:RegisterEvent("SCENARIO_UPDATE");	this is now handled from the ObjectiveTracker
 	self:RegisterEvent("PET_BATTLE_FINAL_ROUND"); -- display winner, start listening for additional results
 	self:RegisterEvent("PET_BATTLE_CLOSE");        -- stop listening for additional results
 	self:RegisterEvent("QUEST_BOSS_EMOTE");
-	self:RegisterEvent("MYTHIC_PLUS_NEW_WEEKLY_RECORD");
-	self:RegisterEvent("MYTHIC_PLUS_NEW_SEASON_RECORD");
+	self:RegisterEvent("CHALLENGE_MODE_NEW_RECORD");
 	self:RegisterEvent("PET_JOURNAL_TRAP_LEVEL_SET");
 	self:RegisterEvent("PET_BATTLE_LEVEL_CHANGED");
 	self:RegisterEvent("PET_BATTLE_CAPTURED");
@@ -226,22 +243,19 @@ function LevelUpDisplay_OnLoad(self)
 	self:RegisterEvent("GARRISON_BUILDING_ACTIVATED");
 	self:RegisterEvent("CHARACTER_UPGRADE_SPELL_TIER_SET");
 	self:RegisterEvent("QUEST_TURNED_IN");
-	self:RegisterEvent("UNIT_PET");
-	self:RegisterEvent("JAILERS_TOWER_LEVEL_UPDATE");
-	self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
 	self.currSpell = 0;
-
+	
 	self.PlayBanner = function(self, data)
 		self.type = data.type;
 		LevelUpDisplay_StartDisplay(self, data.unlockList);
 	end
-
+	
 	self.StopBanner = function(self)
 		LevelUpDisplay_StopAllAnims(self);
 		self:Hide();	--We'll restart this toast on PLAYER_ENTERING_WORLD
 		self.currSpell = 0;
 	end
-
+	
 	self.ResumeBanner = function(self, data)
 		self.type = data.type;
 		LevelUpDisplay_StartDisplay(self, data.unlockList);
@@ -250,28 +264,18 @@ end
 
 function LevelUpDisplay_OnEvent(self, event, ...)
 	local arg1 = ...;
-	if event == "PLAYER_ENTERING_WORLD" then
-		LevelUpDisplay_InitPlayerStates(self);
-		LevelUpDisplay_InitPlayerStates(LevelUpDisplaySide);
-		LevelUpSpellsCache:CheckSpec();
-	elseif event == "PLAYER_LEVEL_UP" then
-		-- NOTE: PLAYER_LEVEL_UP happens BEFORE the client player's level is actually updated.
-		-- Since LevelUpDisplaySide is not shown every time the player levels up, we need to initialize the player states here
-		-- This is to avoid the player seeing toasts for several levels at a time if they click on the Level Up link after gaining several levels in one session
-		LevelUpDisplay_InitPlayerStates(LevelUpDisplaySide);	
-	elseif event == "PLAYER_LEVEL_CHANGED" then
-		local oldLevel, newLevel, real = ...;
-		if real and oldLevel ~= 0 and newLevel ~= 0 then
-			LevelUpSpellsCache:Store(newLevel + 1);
-			if newLevel > oldLevel then
-				self.level = newLevel;
-				self.type = LEVEL_UP_TYPE_CHARACTER;
-				LevelUpDisplay_Show(self);
-				LevelUpDisplaySide:Hide();
-			elseif newLevel < oldLevel then
-				LevelUpDisplay_InitPlayerStates(self)
-				LevelUpDisplay_InitPlayerStates(LevelUpDisplaySide);
-			end
+	if event == "PLAYER_LEVEL_UP" then
+		local level = ...
+		self.level = level;
+		self.type = LEVEL_UP_TYPE_CHARACTER;
+		LevelUpDisplay_Show(self);
+		LevelUpDisplaySide:Hide();
+	elseif event == "UNIT_LEVEL" and arg1 == "pet" then
+		if (UnitName("pet") ~= UNKNOWNOBJECT) then
+			self.level = UnitLevel("pet");
+			self.type = LEVEL_UP_TYPE_PET;
+			LevelUpDisplay_Show(self);
+			LevelUpDisplaySide:Hide();
 		end
 	elseif ( event == "PET_BATTLE_FINAL_ROUND" ) then
 		self.type = TOAST_PET_BATTLE_WINNER;
@@ -284,12 +288,12 @@ function LevelUpDisplay_OnEvent(self, event, ...)
 		end
 	elseif ( event == "PET_BATTLE_LEVEL_CHANGED" ) then
 		local activePlayer, activePetSlot, newLevel = ...;
-		if (activePlayer == Enum.BattlePetOwner.Ally) then
+		if (activePlayer == LE_BATTLE_PET_ALLY) then
 			LevelUpDisplay_AddBattlePetLevelUpEvent(self, activePlayer, activePetSlot, newLevel);
 		end
 	elseif ( event == "PET_BATTLE_CAPTURED" ) then
 		local fromPlayer, activePetSlot = ...;
-		if (fromPlayer == Enum.BattlePetOwner.Enemy) then
+		if (fromPlayer == LE_BATTLE_PET_ENEMY) then
 			LevelUpDisplay_AddBattlePetCaptureEvent(self, fromPlayer, activePetSlot);
 		end
 	elseif ( event == "PET_BATTLE_LOOT_RECEIVED" ) then
@@ -302,7 +306,7 @@ function LevelUpDisplay_OnEvent(self, event, ...)
 		self.time = displayTime;
 		self.sound = warningSound;
 		LevelUpDisplay_Show(self);
-	elseif ( event == "MYTHIC_PLUS_NEW_WEEKLY_RECORD" ) then
+	elseif ( event == "CHALLENGE_MODE_NEW_RECORD" ) then
 		local mapID, recordTime, level = ...;
 		self.type = TOAST_CHALLENGE_MODE_RECORD;
 		self.mapID = mapID;
@@ -325,18 +329,11 @@ function LevelUpDisplay_OnEvent(self, event, ...)
 		LevelUpDisplay_AddSpellBucketUnlockEvent(self, tierIndex);
 	elseif ( event == "QUEST_TURNED_IN") then
 		local questID, xp, money = ...;
-
+		
 		if questID == WORLD_QUESTS_AVAILABLE_QUEST_ID then
 			self.type = TOAST_WORLD_QUESTS_UNLOCKED;
 			LevelUpDisplay_Show(self);
 		end
-	elseif (event == "JAILERS_TOWER_LEVEL_UPDATE") then 
-		self.type = LEVEL_UP_TYPE_SCENARIO;
-		local level, type, textureKit = ...; 
-		self.jailersTowerLevelUpdateInfo = { level = level, type = type, textureKit = textureKit };
-		LevelUpDisplay_Show(self);
-	elseif (event == "PLAYER_SPECIALIZATION_CHANGED") then
-		LevelUpSpellsCache:CheckSpec();
 	end
 end
 
@@ -353,49 +350,26 @@ end
 
 function LevelUpDisplay_PlayScenario()
 	LevelUpDisplay.type = LEVEL_UP_TYPE_SCENARIO;
-	LevelUpDisplay.jailersTowerLevelUpdateInfo = nil;
 	LevelUpDisplay_Show(LevelUpDisplay);
 end
 
-function LevelUpDisplay_InitPlayerStates(self)
-	for func, stateInfo in pairs(LEVEL_UP_PLAYER_STATE_CHECKS) do
-		stateInfo[self] = nil;
-		if func() then
-			stateInfo[self] = true;
-		end
-	end
-end
-
 function LevelUpDisplay_BuildCharacterList(self)
-	local name = "";
-	local icon, spellLink, link;
+	local name, icon, link = "",nil,nil;
 	self.unlockList = {};
 
-	for func, stateInfo in pairs(LEVEL_UP_PLAYER_STATE_CHECKS) do
-		if func() then
-			if not stateInfo[self] then
-				if not C_PlayerInfo.IsPlayerNPERestricted() or stateInfo.allowedInNPE then
-					self.unlockList[#self.unlockList +1] = LEVEL_UP_TYPES[stateInfo.unlockType];
-				end
-				stateInfo[self] = true;
-			end
+	if LEVEL_UP_EVENTS[self.level] then
+		for _, unlockType in pairs(LEVEL_UP_EVENTS[self.level]) do
+			self.unlockList[#self.unlockList +1] = LEVEL_UP_TYPES[unlockType];
 		end
 	end
-
-	self.currSpell = 1;
-
-	if  C_PlayerInfo.IsPlayerNPERestricted() then
-		return;
-	end
-
-	local spells = LevelUpSpellsCache:Get(self.level);
-	for _,spell in pairs(spells) do
+	
+	local spells = {GetCurrentLevelSpells(self.level)};
+	for _,spell in pairs(spells) do		
 		name, _, icon = GetSpellInfo(spell);
-		spellLink = GetSpellLink(spell);
 		self.unlockList[#self.unlockList +1] = { entryType = "spell", text = name, subText = LEVEL_UP_ABILITY, icon = icon, subIcon = SUBICON_TEXCOOR_BOOK,
-																link=LEVEL_UP_ABILITY2.." "..spellLink
+																link=LEVEL_UP_ABILITY2.." "..GetSpellLink(spell)
 															};
-	end
+	end	
 
 	local dungeons = {GetLevelUpInstances(self.level, false)};
 	for _,dungeon in pairs(dungeons) do
@@ -410,7 +384,7 @@ function LevelUpDisplay_BuildCharacterList(self)
 																	};
 		end
 	end
-
+	
 	local raids = {GetLevelUpInstances(self.level, true)};
 	for _,raid in pairs(raids) do
 		name, icon, link = GetDungeonInfo(raid);
@@ -425,22 +399,43 @@ function LevelUpDisplay_BuildCharacterList(self)
 		end
 	end
 
-	local levelUpBGs = C_PvP.GetLevelUpBattlegrounds(self.level);
-	local normalBGs = "";
-	local numNormalBGs = 0;
-	local epicBGs = "";
-	local numEpicBGs = 0;
-	for _, battlegroundInfo in ipairs(levelUpBGs) do
-		if battlegroundInfo.isEpic then
-			self.unlockList[#self.unlockList +1] = { entryType = "battleground", text = battlegroundInfo.name, subText = LEVEL_UP_EPIC_BATTLEGROUND, icon = battlegroundInfo.icon, subIcon = SUBICON_TEXCOOR_LOCK,
-																		link = LEVEL_UP_EPIC_BATTLEGROUND2.." "..LEVEL_UP_UNLOCKED_BG_LINK:format(battlegroundInfo.id, battlegroundInfo.name);
-																	};			
-		else
-			self.unlockList[#self.unlockList +1] = { entryType = "battleground", text = battlegroundInfo.name, subText = LEVEL_UP_BATTLEGROUND, icon = battlegroundInfo.icon, subIcon = SUBICON_TEXCOOR_LOCK,
-																		link = LEVEL_UP_BATTLEGROUND2.." "..LEVEL_UP_UNLOCKED_BG_LINK:format(battlegroundInfo.id, battlegroundInfo.name);
-																	};		
-		end
+
+	-- This loop is LEVEL_UP_CLASS_HACKS
+	local race, raceFile = UnitRace("player");
+	local _, class = UnitClass("player");
+	local factionName = UnitFactionGroup("player");
+	local hackTable = LEVEL_UP_CLASS_HACKS[class..raceFile] or LEVEL_UP_CLASS_HACKS[class..factionName] or LEVEL_UP_CLASS_HACKS[class];
+	if  hackTable and hackTable[self.level] then
+		hackTable = hackTable[self.level];
+		for _,spelltype in pairs(hackTable) do
+			if LEVEL_UP_TYPES[spelltype] and LEVEL_UP_TYPES[spelltype].spellID then 
+				if LEVEL_UP_TYPES[spelltype].feature then
+					name, _, icon = GetSpellInfo(LEVEL_UP_TYPES[spelltype].spellID);
+					self.unlockList[#self.unlockList +1] = { text = name, subText = LEVEL_UP_FEATURE, icon = icon, subIcon = SUBICON_TEXCOOR_LOCK,
+																			link=LEVEL_UP_FEATURE2.." "..GetSpellLink(LEVEL_UP_TYPES[spelltype].spellID)
+																		};
+				else
+					name, _, icon = GetSpellInfo(LEVEL_UP_TYPES[spelltype].spellID);
+					self.unlockList[#self.unlockList +1] = { text = name, subText = LEVEL_UP_ABILITY, icon = icon, subIcon = SUBICON_TEXCOOR_BOOK,
+																			link=LEVEL_UP_ABILITY2.." "..GetSpellLink(LEVEL_UP_TYPES[spelltype].spellID)
+																		};
+				end
+			elseif LEVEL_UP_TYPES[spelltype] then
+				self.unlockList[#self.unlockList +1] = LEVEL_UP_TYPES[spelltype];
+			end
+		end	
 	end
+	
+	
+	local features = {GetCurrentLevelFeatures(self.level)};
+	for _,feature in pairs(features) do		
+		name, _, icon = GetSpellInfo(feature);
+		self.unlockList[#self.unlockList +1] = { entryType = "spell", text = name, subText = LEVEL_UP_FEATURE, icon = icon, subIcon = SUBICON_TEXCOOR_LOCK,
+																link=LEVEL_UP_FEATURE2.." "..GetSpellLink(feature)
+															};
+	end	
+
+	self.currSpell = 1;
 end
 
 function LevelUpDisplay_BuildSpellBucketList(self)
@@ -464,11 +459,20 @@ function LevelUpDisplay_BuildSpellBucketList(self)
 	self.currSpell = 1;
 end
 
-function LevelUpDisplay_BuildBattlePetList(self)
+function LevelUpDisplay_BuildPetList(self)
+	local name, icon = "","";
 	self.unlockList = {};
 
-	-- TODO: Battle Pet spell slots & spells
+	-- TODO: Pet Spells
+	
+	self.currSpell = 1;
+end
 
+function LevelUpDisplay_BuildBattlePetList(self)
+	self.unlockList = {};
+	
+	-- TODO: Battle Pet spell slots & spells
+	
 	self.currSpell = 1;
 end
 
@@ -484,8 +488,7 @@ function LevelUpDisplay_BuildGarrisonAbilityList(self)
 	local spellID = GARRISON_ABILITY_HACKS[self.buildingID][faction];
 	local abilityText = GARRISON_ABILITY_HACKS[self.buildingID].Subtext;
 	local name, _, texture = GetSpellInfo(spellID);
-	local spellLink = GetSpellLink(spellID);
-	tinsert(self.unlockList, { text = name, subText = abilityText, icon = texture, subIcon = SUBICON_TEXCOOR_BOOK, link = LEVEL_UP_ABILITY2.." "..spellLink});
+	tinsert(self.unlockList, { text = name, subText = abilityText, icon = texture, subIcon = SUBICON_TEXCOOR_BOOK, link = LEVEL_UP_ABILITY2.." "..GetSpellLink(spellID)});
 
 	self.currSpell = 1;
 end
@@ -495,17 +498,17 @@ function LevelUpDisplay_BuildPetBattleWinnerList(self)
 	self.winnerString = PET_BATTLE_RESULT_LOSE;
 	if(C_PetBattles.IsWildBattle()) then
 		self.winnerSoundKitID = 34090; --UI_PetBattle_PVE_Defeat
-	elseif(C_PetBattles.IsPlayerNPC(Enum.BattlePetOwner.Enemy)) then
+	elseif(C_PetBattles.IsPlayerNPC(LE_BATTLE_PET_ENEMY)) then
 		self.winnerSoundKitID = 34094; --UI_PetBattle_Special_Defeat
 	else
 		self.winnerSoundKitID = 34092; --UI_PetBattle_PVP_Defeat
 	end
 
-	if ( self.winner == Enum.BattlePetOwner.Ally ) then
+	if ( self.winner == LE_BATTLE_PET_ALLY ) then
 		self.winnerString = PET_BATTLE_RESULT_WIN;
 		if(C_PetBattles.IsWildBattle()) then
 			self.winnerSoundKitID = 34089; --UI_PetBattle_PVE_Victory
-		elseif(C_PetBattles.IsPlayerNPC(Enum.BattlePetOwner.Enemy)) then
+		elseif(C_PetBattles.IsPlayerNPC(LE_BATTLE_PET_ENEMY)) then
 			self.winnerSoundKitID = 34093; --UI_PetBattle_Special_Victory
 		else
 			self.winnerSoundKitID = 34091; --UI_PetBattle_PVP_Victory
@@ -517,7 +520,7 @@ end
 function LevelUpDisplay_BuildWorldQuestBucketList(self)
 	self.unlockList = {};
 	table.insert(self.unlockList,
-			{
+			{	
 				entryType = "worldquest",
 				icon="Interface\\Icons\\icon_treasuremap",
 				subIcon=SUBICON_TEXCOOR_LOCK,
@@ -550,7 +553,7 @@ function LevelUpDisplay_AddBattlePetTrapUpgradeEvent(self, trapLevel)
 end
 
 function LevelUpDisplay_AddBattlePetLevelUpEvent(self, activePlayer, activePetSlot, newLevel)
-	if (activePlayer ~= Enum.BattlePetOwner.Ally) then
+	if (activePlayer ~= LE_BATTLE_PET_ALLY) then
 		return;
 	end
 
@@ -559,22 +562,22 @@ function LevelUpDisplay_AddBattlePetLevelUpEvent(self, activePlayer, activePetSl
 		LevelUpDisplay_Show(self);
 	end
 
-	local petID = C_PetJournal.GetPetLoadOutInfo(activePetSlot - 1);
+	local petID = C_PetJournal.GetPetLoadOutInfo(activePetSlot);
 	if (petID == nil) then
 		return;
 	end
-
+	
 	local speciesID, customName, petLevel, xp, maxXp, displayID, isFavorite, name, petIcon = C_PetJournal.GetPetInfoByPetID(petID);
 	if (not speciesID) then
 		return;
 	end
-
-	table.insert(self.unlockList,
-		{
-		entryType = "petlevelup",
-		text = format(PET_LEVEL_UP_REACHED, customName or name),
-		subText = format(LEVEL_GAINED,newLevel),
-		icon = petIcon,
+	
+	table.insert(self.unlockList, 
+		{ 
+		entryType = "petlevelup", 
+		text = format(PET_LEVEL_UP_REACHED, customName or name), 
+		subText = format(LEVEL_GAINED,newLevel), 
+		icon = petIcon, 
 		subIcon = SUBICON_TEXCOOR_ARROW,
 		});
 	local abilityID = PetBattleFrame_GetAbilityAtLevel(speciesID, newLevel);
@@ -631,18 +634,18 @@ function LevelUpDisplay_CreateOrAppendItem(self, createType, info)
 end
 
 function LevelUpDisplay_AddBattlePetCaptureEvent(self, fromPlayer, activePetSlot)
-	if (fromPlayer ~= Enum.BattlePetOwner.Enemy) then
+	if (fromPlayer ~= LE_BATTLE_PET_ENEMY) then
 		return;
 	end
-
+	
 	local petName = C_PetBattles.GetName(fromPlayer, activePetSlot);
 	local petIcon = C_PetBattles.GetIcon(fromPlayer, activePetSlot);
 	local quality = C_PetBattles.GetBreedQuality(fromPlayer, activePetSlot);
-
-	local info = {
-		entryType = "petcapture",
-		text = BATTLE_PET_CAPTURED,
-		subText = petName,
+	
+	local info = { 
+		entryType = "petcapture", 
+		text = BATTLE_PET_CAPTURED, 
+		subText = petName, 
 		icon = petIcon,
 		quality = quality
 	};
@@ -654,17 +657,14 @@ function LevelUpDisplay_AddBattlePetLootReward(self, typeIdentifier, itemLink, q
 	if ( typeIdentifier == "item" ) then
 		local name, link, rarity, level, minLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture = GetItemInfo(itemLink);
 		info = {
-			entryType = "petbattleloot",
-			text = BATTLE_PET_LOOT_RECEIVED,
+			entryType = "petbattleloot", 
+			text = BATTLE_PET_LOOT_RECEIVED, 
 			subText = name, --Item name
 			icon = itemTexture, --Item icon
 			quality = rarity, --Item quality
 		};
 	elseif ( typeIdentifier == "currency" ) then
-		local currencyInfo = C_CurrencyInfo.GetCurrencyInfoFromLink(itemLink);
-		local name = currencyInfo.name;
-		local icon = currencyInfo.iconFileID;
-		local rarity = currencyInfo.quality;
+		local name, quantity, icon, earnedThisWeek, weeklyMax, maxQuantity, discovered, rarity = GetCurrencyInfo(itemLink);
 		info = {
 			entryType = "petbattleloot",
 			text = BATTLE_PET_LOOT_RECEIVED,
@@ -686,7 +686,7 @@ end
 function LevelUpDisplay_IsExclusiveQueued( currBanner, queuedBanner )
 	if( currBanner.frame ~= LevelUpDisplay or queuedBanner.frame ~= LevelUpDisplay ) then
 		return false;
-	end
+	end	
 	-- A banner of the same type is queued. Don't requeue.
 	return currBanner.type == queuedBanner.type;
 end
@@ -695,16 +695,6 @@ function LevelUpDisplay_Start(self, beginUnlockList)
 	TopBannerManager_Show(LevelUpDisplay, {type = self.type, unlockList = beginUnlockList}
 										,	LevelUpDisplay_IsExclusiveQueued);
 end
-
-local textureKitRegionFormatStrings = {
-	["BG1"] = "%s-TitleBG",
-	["BG2"] = "%s-TitleBG",
-}
-
-local defaultAtlases = {
-	["BG1"] = "legioninvasion-title-bg",
-	["BG2"] = "legioninvasion-title-bg",
-}
 
 function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 	if ( self:IsShown() ) then
@@ -717,10 +707,10 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 	SubZoneTextFrame:Hide();
 	self.challengeModeBits.MedalFlare:Hide();
 	self.challengeModeBits.MedalIcon:Hide();
-	self.challengeModeBits.BottomFiligree:Hide();
+	self.challengeModeBits.BottomFiligree:Hide();	
 	local playAnim;
 	local scenarioType = 0;
-	if self.currSpell == 0 then
+	if  self.currSpell == 0 then
 		local unlockList = beginUnlockList;
 		if ( not self.type ) then
 			self.type = self.queuedType;
@@ -728,21 +718,17 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 			self.queuedType = nil;
 			self.queuedItems = nil;
 		end
-		if ( self.type == LEVEL_UP_TYPE_SCENARIO and not self.jailersTowerLevelUpdateInfo) then
-			local name, currentStage, numStages, flags, textureKit, _;
-			name, currentStage, numStages, flags, _, _, _, _, _, scenarioType, _, textureKit = C_Scenario.GetInfo();
+		if ( self.type == LEVEL_UP_TYPE_SCENARIO ) then
+			local name, currentStage, numStages, flags, _;
+			name, currentStage, numStages, flags, _, _, _, _, _, scenarioType = C_Scenario.GetInfo();
 			if (not IsBoostTutorialScenario()) then
 				if ( currentStage > 0 and currentStage <= numStages ) then
 					local stageName, stageDescription = C_Scenario.GetStepInfo();
-
-					self.scenarioFrame.level:ClearAllPoints();
 					if( bit.band(flags, SCENARIO_FLAG_SUPRESS_STAGE_TEXT) == SCENARIO_FLAG_SUPRESS_STAGE_TEXT) then
 						-- Bypass the Stage name portion...
 						self.scenarioFrame.level:SetText(stageName);
 						self.scenarioFrame.name:SetText("");
-						self.scenarioFrame.level:SetPoint("TOP", self.scenarioFrame, "TOP", 0, -22);
 					else
-						self.scenarioFrame.level:SetPoint("TOP", self.scenarioFrame, "TOP", 0, -14);
 						if ( currentStage == numStages ) then
 							self.scenarioFrame.level:SetText(SCENARIO_STAGE_FINAL);
 						else
@@ -750,46 +736,21 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 						end
 						self.scenarioFrame.name:SetText(stageName);
 					end
-
-					if textureKit then
-						playAnim = self.scenarioFrame.TextureKitNewStage;
-						SetupTextureKitOnRegions(textureKit, self.scenarioFrame, textureKitRegionFormatStrings, TextureKitConstants.DoNotSetVisibility, TextureKitConstants.UseAtlasSize);
+					if (scenarioType == LE_SCENARIO_TYPE_LEGION_INVASION) then
+						playAnim = self.scenarioFrame.LegionInvasionNewStage;
 					else
-						if scenarioType == LE_SCENARIO_TYPE_LEGION_INVASION then
-							playAnim = self.scenarioFrame.LegionInvasionNewStage;
-						else
-							playAnim = self.scenarioFrame.newStage;
-						end
-
-						SetupAtlasesOnRegions(self.scenarioFrame, defaultAtlases, true);
+						playAnim = self.scenarioFrame.newStage;
 					end
-
 					self.scenarioFrame.description:SetText(stageDescription);
 					LevelUpDisplay:SetPoint("TOP", 0, -250);
 				end
 			end
 		elseif ( self.type == TOAST_CHALLENGE_MODE_RECORD ) then
 			self.challengeModeFrame.LevelCompleted:SetFormattedText(CHALLENGE_MODE_POWER_LEVEL, self.level);
-			self.challengeModeFrame.RecordTime:SetFormattedText(CHALLENGE_MODE_NEW_BEST, SecondsToClock(self.recordTime / 1000, true));
+			self.challengeModeFrame.RecordTime:SetFormattedText(CHALLENGE_MODE_NEW_BEST, GetTimeStringFromSeconds(self.recordTime / 1000));
 			PlaySound(SOUNDKIT.UI_CHALLENGES_NEW_RECORD);
 			LevelUpDisplay:SetPoint("TOP", 0, -190);
 			playAnim = self.challengeModeFrame.challengeComplete;
-		elseif ( self.type == LEVEL_UP_TYPE_SCENARIO and self.jailersTowerLevelUpdateInfo) then
-			self.scenarioFrame.level:ClearAllPoints();
-			self.scenarioFrame.level:SetPoint("TOP", self.scenarioFrame, "TOP", 0, -14);
-			local typeString = C_ScenarioInfo.GetJailersTowerTypeString(self.jailersTowerLevelUpdateInfo.type);
-			if(typeString) then	
-				self.scenarioFrame.level:SetText(typeString); 
-			end 
-
-			self.scenarioFrame.name:SetText(JAILERS_TOWER_SCENARIO_FLOOR:format(self.jailersTowerLevelUpdateInfo.level));
-			self.scenarioFrame.description:SetText("");
-			playAnim = self.scenarioFrame.TextureKitNewStage;
-			local textureKit = select(12, C_Scenario.GetInfo());
-			if (textureKit) then 
-				SetupTextureKitOnRegions(textureKit, self.scenarioFrame, textureKitRegionFormatStrings, TextureKitConstants.DoNotSetVisibility, TextureKitConstants.UseAtlasSize);
-			end 
-			LevelUpDisplay:SetPoint("TOP", 0, -250);
 		else
 			LevelUpDisplay:SetPoint("TOP", 0, -190);
 			playAnim = self.levelFrame.levelUp;
@@ -800,6 +761,11 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 			if ( self.type == LEVEL_UP_TYPE_CHARACTER ) then
 				LevelUpDisplay_BuildCharacterList(self);
 				self.levelFrame.reachedText:SetText(LEVEL_UP_YOU_REACHED)
+				self.levelFrame.levelText:SetFormattedText(LEVEL_GAINED,self.level);
+			elseif ( self.type == LEVEL_UP_TYPE_PET ) then
+				LevelUpDisplay_BuildPetList(self);
+				local petName = UnitName("pet");
+				self.levelFrame.reachedText:SetFormattedText(PET_LEVEL_UP_REACHED, petName or "");
 				self.levelFrame.levelText:SetFormattedText(LEVEL_GAINED,self.level);
 			elseif ( self.type == TOAST_PET_BATTLE_WINNER ) then
 				LevelUpDisplay_BuildPetBattleWinnerList(self);
@@ -957,13 +923,12 @@ function LevelUpDisplay_AnimStep(self, fast)
 		self.spellFrame.rarityValue:SetText("");
 		self.spellFrame.rarityValue:Hide();
 		self.spellFrame.instructionalText:SetText("");
-
+		
 		if (not spellInfo.entryType or
 			spellInfo.entryType == "spell" or
 			spellInfo.entryType == "dungeon" or
 			spellInfo.entryType == "heroicdungeon" or
-			spellInfo.entryType == "worldquest" or
-			spellInfo.entryType == "battleground"
+			spellInfo.entryType == "worldquest"
 			) then
 			self.spellFrame.name:SetText(spellInfo.text);
 			self.spellFrame.flavorText:SetText(spellInfo.subText);
@@ -1116,9 +1081,9 @@ end
 
 function LevelUpDisplay_ShowSideDisplay(level, levelUpType, arg1)
 	if LevelUpDisplaySide.level and LevelUpDisplaySide.level == level and LevelUpDisplaySide.type == levelUpType and LevelUpDisplaySide.arg1 == arg1 then
-		if LevelUpDisplaySide:IsVisible() then
-			LevelUpDisplaySide:Hide();
-		else
+		if LevelUpDisplaySide:IsVisible() then		
+			LevelUpDisplaySide:Hide();	
+		else	
 			LevelUpDisplaySide:Show();
 		end
 	else
@@ -1140,6 +1105,11 @@ function LevelUpDisplaySide_OnShow(self)
 		LevelUpDisplay_BuildCharacterList(self);
 		self.reachedText:SetText(LEVEL_UP_YOU_REACHED);
 		self.levelText:SetFormattedText(LEVEL_GAINED,self.level);
+	elseif ( self.type == LEVEL_UP_TYPE_PET ) then
+		LevelUpDisplay_BuildPetList(self);
+		local petName = self.arg1;
+		self.reachedText:SetFormattedText(PET_LEVEL_UP_REACHED, petName);
+		self.levelText:SetFormattedText(LEVEL_GAINED,self.level);
 	elseif ( self.type == LEVEL_UP_TYPE_SPELL_BUCKET ) then
 		LevelUpDisplay_BuildSpellBucketList(self);
 		self.reachedText:Hide();
@@ -1151,7 +1121,7 @@ function LevelUpDisplaySide_OnShow(self)
 	end
 	self.goldBG:SetTexCoord(unpack(levelUpTexCoords[self.type].goldBG));
 	self.dot:SetTexCoord(unpack(levelUpTexCoords[self.type].dot));
-
+	
 	if (levelUpTexCoords[self.type].tint) then
 		self.goldBG:SetVertexColor(unpack(levelUpTexCoords[self.type].tint));
 		self.dot:SetVertexColor(unpack(levelUpTexCoords[self.type].tint));
@@ -1159,22 +1129,22 @@ function LevelUpDisplaySide_OnShow(self)
 		self.goldBG:SetVertexColor(1, 1, 1);
 		self.dot:SetVertexColor(1, 1, 1);
 	end
-
+	
 	if (levelUpTexCoords[self.type].textTint) then
 		self.levelText:SetTextColor(unpack(levelUpTexCoords[self.type].textTint));
 	else
 		self.levelText:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
 	end
-
+	
 	local i = 1;
 	local displayFrame = _G["LevelUpDisplaySideUnlockFrame1"];
-	while i <=  #self.unlockList do
+	while i <=  #self.unlockList do	
 		if not displayFrame then -- make frames as needed
 			displayFrame = CreateFrame("FRAME", "LevelUpDisplaySideUnlockFrame"..i, LevelUpDisplaySide, "LevelUpSkillTemplate");
 			displayFrame:SetPoint("TOP",  _G["LevelUpDisplaySideUnlockFrame"..(i-1)], "BOTTOM", 0, -1);
 			displayFrame:SetAlpha(0.0);
 		end
-		i = i+1;
+		i = i+1;		
 		displayFrame = _G["LevelUpDisplaySideUnlockFrame"..i];
 	end
 	self:SetHeight(65);
@@ -1184,14 +1154,14 @@ end
 function LevelUpDisplaySide_OnHide(self)
 	local displayFrame = _G["LevelUpDisplaySideUnlockFrame1"];
 	local i = 1;
-	while displayFrame do
+	while displayFrame do 	
 		if displayFrame.sideAnimIn:IsPlaying() then
 			displayFrame.sideAnimIn:Stop();
-		end
+		end				
 		displayFrame:SetAlpha(0.0);
 		i = i+1;
 		displayFrame = _G["LevelUpDisplaySideUnlockFrame"..i];
-	end
+	end	
 end
 
 
@@ -1199,7 +1169,7 @@ function LevelUpDisplaySide_AnimStep(self)
 
 	if self.currSpell > 1 then
 		_G["LevelUpDisplaySideUnlockFrame"..(self.currSpell-1)]:SetAlpha(1.0);
-	end
+	end	
 
 	if self.currSpell <= #self.unlockList then
 		local spellInfo = self.unlockList[self.currSpell];
@@ -1229,25 +1199,26 @@ function LevelUpDisplaySide_Remove()
 end
 
 
--- Chat print function
+-- Chat print function 
 function LevelUpDisplay_ChatPrint(self, level, levelUpType, ...)
 	-- Certain situations don't display any level up text, set filters here.
 	local shouldDisplayBucketUnlocks = not IsBoostTutorialScenario();
 
 	local info;
-
-	if not self.chatLevelUP then
-		self.chatLevelUP = {};
-	end
-
-	self.chatLevelUP.level = level;
-	self.chatLevelUP.type = levelUpType;
-	self.chatLevelUP.unlockList = nil;
-
+	local chatLevelUP = {level = level, type = levelUpType};
 	local levelstring;
 	if ( levelUpType == LEVEL_UP_TYPE_CHARACTER ) then
-		LevelUpDisplay_BuildCharacterList(self.chatLevelUP);
+		LevelUpDisplay_BuildCharacterList(chatLevelUP);
 		levelstring = format(LEVEL_UP, level, level);
+		info = ChatTypeInfo["SYSTEM"];
+	elseif ( levelUpType == LEVEL_UP_TYPE_PET ) then
+		LevelUpDisplay_BuildPetList(chatLevelUP);
+		local petName = UnitName("pet");
+		if (petName) then
+			levelstring = format(PET_LEVEL_UP, petName, level, petName, level);
+		else
+			levelstring = "";
+		end
 		info = ChatTypeInfo["SYSTEM"];
 	elseif ( shouldDisplayBucketUnlocks and levelUpType == LEVEL_UP_TYPE_SPELL_BUCKET ) then
 		local allUnlocked, _, name = GetSpellsForCharacterUpgradeTier(level);
@@ -1255,12 +1226,12 @@ function LevelUpDisplay_ChatPrint(self, level, levelUpType, ...)
 			local class = UnitClass("player");
 			levelstring = format(SPELL_BUCKET_ALL_ABILITIES_UNLOCKED_MESSAGE, class);
 		else
-			LevelUpDisplay_BuildSpellBucketList(self.chatLevelUP);
+			LevelUpDisplay_BuildSpellBucketList(chatLevelUP);
 			levelstring = format(SPELL_BUCKET_LEVEL_UP, level, name or "");
 		end
 		info = ChatTypeInfo["SYSTEM"];
 	elseif ( levelUpType == TOAST_WORLD_QUESTS_UNLOCKED ) then
-		LevelUpDisplay_BuildWorldQuestBucketList(self.chatLevelUP);
+		LevelUpDisplay_BuildWorldQuestBucketList(chatLevelUP);
 		info = ChatTypeInfo["SYSTEM"];
 	end
 
@@ -1268,8 +1239,8 @@ function LevelUpDisplay_ChatPrint(self, level, levelUpType, ...)
 		self:AddMessage(levelstring, info.r, info.g, info.b, info.id);
 	end
 
-	if (self.chatLevelUP.unlockList) then
-		for _,skill in pairs(self.chatLevelUP.unlockList) do
+	if (chatLevelUP.unlockList) then
+		for _,skill in pairs(chatLevelUP.unlockList) do
 			if skill.entryType == "heroicdungeon" then
 				local name, link = EJ_GetTierInfo(skill.tier);
 				self:AddMessage(LEVEL_UP_HEROIC2..link, info.r, info.g, info.b, info.id);
@@ -1409,7 +1380,7 @@ end
 
 function BossBanner_SetAnimState(self, animState)
 	local entry = BB_ANIMATION_CONTROL[animState];
-	if ( entry ) then
+	if ( entry ) then		
 		local redirected = entry.onStartFunc(self, entry);
 		if ( not redirected ) then
 			self.animState = animState;
@@ -1433,7 +1404,7 @@ function BossBanner_OnUpdate(self, elapsed)
 		-- keep it at 2 seconds left
 		self.animTimeLeft = 2;
 	end
-	if ( self.animTimeLeft <= 0 ) then
+	if ( self.animTimeLeft <= 0 ) then		
 		BossBanner_SetAnimState(self, self.animState + 1);
 		if ( not self.animTimeLeft ) then
 			self.animState = nil;
@@ -1471,7 +1442,7 @@ function BossBanner_OnEvent(self, event, ...)
 				-- banner is not displaying and have not done loot for this encounter yet
 				-- TODO: animate in kill banner
 				TopBannerManager_Show(self, { encounterID = encounterID, name = nil, mode = "LOOT" });
-			end
+			end		
 		end
 	end
 end
@@ -1490,7 +1461,7 @@ function BossBanner_OnLootItemLeave(self)
 	GameTooltip:Hide();
 	BossBanner.showingTooltip = false;
 end
-
+		
 function BossBanner_Play(self, data)
 	if ( data ) then
 		if ( data.mode == "KILL" ) then
@@ -1503,13 +1474,10 @@ function BossBanner_Play(self, data)
 			end
 			self.Title:Show();
 			self:Show();
-			self.encounterID = data.encounterID;
+			self.encounterID = data.encounterID;			
 			BossBanner_BeginAnims(self);
 			PlaySound(SOUNDKIT.UI_RAID_BOSS_DEFEATED);
 		elseif ( data.mode == "LOOT" ) then
-			if(C_Loot.IsLegacyLootModeEnabled()) then
-				return
-			end
 			self.BannerTop:SetAlpha(1);
 			self.BannerBottom:SetAlpha(1);
 			self.BannerMiddle:SetAlpha(1);

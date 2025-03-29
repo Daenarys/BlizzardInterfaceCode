@@ -35,7 +35,7 @@
 				<CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
 				<DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
 			</CheckButton>
-
+			
 			<Frame parentKey="lockedIndicator" hidden="true">
 				<Size x="17" y="21"/>
 				<Anchors>
@@ -51,7 +51,7 @@
 					</Layer>
 				</Layers>
 			</Frame>
-
+			
 			<Frame parentKey="alert" hidden="true">
 				<Size x="28" y="28"/>
 				<Anchors>
@@ -64,7 +64,7 @@
 				</Layers>
 				<Scripts>
 					<OnLoad function="RaiseFrameLevel"/>
-				</Scripts>
+				</Scripts>					
 			</Frame>
 		</Frames>
 		<Scripts>
@@ -267,6 +267,17 @@
 				<Anchors>
 					<Anchor point="TOP"/>
 				</Anchors>
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+					<BackgroundInsets>
+						<AbsInset left="11" right="12" top="12" bottom="11"/>
+					</BackgroundInsets>
+					<TileSize>
+						<AbsValue val="32"/>
+					</TileSize>
+					<EdgeSize>
+						<AbsValue val="32"/>
+					</EdgeSize>
+				</Backdrop>
 				<Layers>
 					<Layer level="ARTWORK">
 						<FontString name="$parentLabel" inherits="GameFontHighlight" justifyH="CENTER" text="READY_CHECK">
@@ -277,7 +288,6 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Frame parentKey="Border" inherits="DialogBorderTemplate"/>
 					<Button name="$parentCloseButton">
 						<Size x="32" y="32"/>
 						<Anchors>
@@ -370,8 +380,19 @@
 					</Frame>
 				</Frames>
 			</Frame>
-			<Frame name="LFGDungeonReadyDialog" setAllPoints="true" toplevel="true" enableMouse="true" inherits="BackdropTemplate">
+			<Frame name="LFGDungeonReadyDialog" setAllPoints="true" toplevel="true" enableMouse="true">
 				<Size x="306" y="193"/>
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+					<BackgroundInsets>
+						<AbsInset left="11" right="12" top="12" bottom="11"/>
+					</BackgroundInsets>
+					<TileSize>
+						<AbsValue val="32"/>
+					</TileSize>
+					<EdgeSize>
+						<AbsValue val="32"/>
+					</EdgeSize>
+				</Backdrop>
 				<Layers>
 					<Layer level="BACKGROUND">
 						<Texture name="$parentBackground" parentKey="background" file="Interface\LFGFrame\UI-LFG-BACKGROUND-RANDOMDUNGEON">
@@ -416,7 +437,6 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Frame parentKey="Border" inherits="DialogBorderTemplate"/>
 					<Button name="$parentCloseButton">
 						<Size x="32" y="32"/>
 						<Anchors>
@@ -433,7 +453,7 @@
 						<PushedTexture file="Interface\Buttons\UI-Panel-HideButton-Down"/>
 						<HighlightTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Highlight" alphaMode="ADD"/>
 					</Button>
-					<Button name="$parentEnterDungeonButton" inherits="UIPanelButtonTemplate" text="ENTER_LFG" parentKey="enterButton">
+					<Button name="$parentEnterDungeonButton" inherits="UIPanelButtonTemplate" text="ENTER_DUNGEON" parentKey="enterButton">
 						<Size x="115" y="22"/>
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOM" x="-7" y="25"/>
@@ -508,27 +528,27 @@
 							<Anchor point="BOTTOM" relativeTo="$parentRoleIcon" relativePoint="TOP" x="0" y="10"/>
 						</Anchors>
 						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture file="Interface\LFGFrame\UI-LFG-SEPARATOR" parentKey="underline">
+									<Size x="170" y="40"/>
+									<Anchors>
+										<Anchor point="TOP" x="0" y="0"/>
+									</Anchors>
+									<TexCoords left="0" right="0.6640625" top="0" bottom="0.3125"/>
+								</Texture>
+							</Layer>
 							<Layer level="ARTWORK">
-								<FontString name="$parentName" inherits="GameFontNormalLarge" justifyH="CENTER" parentKey="name" maxLines="2">
-									<Size x="284" y="0"/>
+								<FontString name="$parentName" inherits="GameFontNormalLarge" justifyH="CENTER" parentKey="name">
+									<Size x="300" y="20"/>
 									<Anchors>
 										<Anchor point="TOP" x="0" y="-13"/>
 									</Anchors>
 								</FontString>
 								<FontString name="$parentStatusText" inherits="GameFontNormal" justifyH="CENTER" parentKey="statusText">
 									<Anchors>
-										<Anchor point="TOP" relativePoint="BOTTOM" relativeKey="$parent.name" x="0" y="-12"/>
+										<Anchor point="BOTTOM"/>
 									</Anchors>
 								</FontString>
-							</Layer>
-							<Layer level="BACKGROUND">
-								<Texture file="Interface\LFGFrame\UI-LFG-SEPARATOR" parentKey="underline">
-									<Size x="170" y="40"/>
-									<Anchors>
-										<Anchor point="TOP" relativePoint="BOTTOM" relativeKey="$parent.name" x="0" y="25"/>
-									</Anchors>
-									<TexCoords left="0" right="0.6640625" top="0" bottom="0.3125"/>
-								</Texture>
 							</Layer>
 						</Layers>
 						<Scripts>
@@ -572,11 +592,12 @@
 			</OnEvent>
 			<OnShow>
 				LFGDungeonReadyPopup_Update();
-				QueueUpdater:RequestInfo();
-				QueueUpdater:AddRef();
+
+				--Request new lock info (which comes with which rewards we're getting) in case the rewards changed.
+				RequestLFDPlayerLockInfo();
+				RequestLFDPartyLockInfo();
 			</OnShow>
 			<OnHide>
-				QueueUpdater:RemoveRef();
 				self.closeIn = nil;
 				self:SetScript("OnUpdate", nil);
 			</OnHide>
@@ -611,14 +632,6 @@
 			</Layer>
 			<Layer level="OVERLAY" textureSubLevel="1">
 				<Texture parentKey="IconBorder" file="Interface\Common\WhiteIconFrame" hidden="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Icon"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="2">
-				<Texture parentKey="IconOverlay" hidden="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Icon"/>
 						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon"/>
@@ -778,6 +791,47 @@
 					<OnLeave function="GameTooltip_Hide"/>
 				</Scripts>
 			</Frame>
+			<Frame name="$parentBonusRepFrame" parentKey="bonusRepFrame">
+				<Size x="200" y="35"/>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="Label" inherits="GameFontHighlight" text="LFG_BONUS_REPUTATION">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPLEFT" x="18" y="0"/>
+							</Anchors>
+						</FontString>
+						<FontString parentKey="ChosenFaction" inherits="GameFontNormal" hidden="true">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Label" relativePoint="BOTTOMLEFT" x="0" y="-3"/>
+							</Anchors>
+						</FontString>
+						<Texture parentKey="Icon" file="Interface\Common\ReputationStar">
+							<Size x="16" y="16"/>
+							<Anchors>
+								<Anchor point="RIGHT" relativeKey="$parent.Label" relativePoint="LEFT" x="0" y="1"/>
+							</Anchors>
+							<TexCoords left="0" right="0.5" top="0" bottom="0.5"/>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Button parentKey="ChooseButton" inherits="UIPanelButtonTemplate" text="LFG_CHOOSE_BONUS_REPUTATION">
+						<Size x="160" y="22"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" relativeKey="$parent.Label" relativePoint="BOTTOMLEFT" x="0" y="-1"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								ToggleCharacter("ReputationFrame", true);
+							</OnClick>
+						</Scripts>
+					</Button>
+				</Frames>
+				<Scripts>
+					<OnLoad function="LFGRewardsFrameBonusRep_OnLoad"/>
+					<OnEvent function="LFGRewardsFrameBonusRep_OnEvent"/>
+				</Scripts>
+			</Frame>
 			<Frame name="$parentSpacer" parentKey="spacer">
 				<Size x="2" y="2"/>
 				<Anchors>
@@ -799,6 +853,17 @@
 
 	<Frame name="LFGInvitePopup" parent="UIParent" frameStrata="DIALOG" hidden="true">
 		<Size x="306" y="180"/>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+			<BackgroundInsets>
+				<AbsInset left="11" right="12" top="12" bottom="11"/>
+			</BackgroundInsets>
+			<TileSize>
+				<AbsValue val="32"/>
+			</TileSize>
+			<EdgeSize>
+				<AbsValue val="32"/>
+			</EdgeSize>
+		</Backdrop>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString name="$parentText" inherits="GameFontHighlight" justifyH="CENTER">
@@ -816,7 +881,6 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="Border" inherits="DialogBorderTemplate"/>
 			<Button name="$parentRoleButtonTank" inherits="LFGRoleButtonTemplate" parentArray="RoleButtons" id="1">
 				<Size x="70" y="70"/>
 				<KeyValues>

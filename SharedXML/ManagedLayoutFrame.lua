@@ -46,12 +46,6 @@ function ManagedLayoutFrameMixin:SetContents(contents)
 		contentFrame.layoutIndex = i;
 		contentFrame:Show();
 	end
-
-	self:MarkDirty();
-end
-
-function ManagedLayoutFrameMixin:EnumerateActive()
-	return self.contentFramePool:EnumerateActive();
 end
 
 ContentFrameMixin = {}

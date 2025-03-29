@@ -1,8 +1,17 @@
-local questItems = {};
 
-local function AutoQuestPopupTracker_Initialize(owningModule)
-	owningModule:AddBlockOffset("AutoQuestPopUpBlockTemplate", -39, -4);
-	owningModule.initializedPopUpTracker = true;
+AUTO_QUEST_POPUP_TRACKER_MODULE = ObjectiveTracker_GetModuleInfoTable();
+AUTO_QUEST_POPUP_TRACKER_MODULE.updateReasonModule = OBJECTIVE_TRACKER_UPDATE_MODULE_AUTO_QUEST_POPUP;
+AUTO_QUEST_POPUP_TRACKER_MODULE.updateReasonEvents = OBJECTIVE_TRACKER_UPDATE_QUEST + OBJECTIVE_TRACKER_UPDATE_QUEST_ADDED;
+AUTO_QUEST_POPUP_TRACKER_MODULE.blockTemplate = "AutoQuestPopUpBlockTemplate";
+AUTO_QUEST_POPUP_TRACKER_MODULE.blockType = "ScrollFrame";
+AUTO_QUEST_POPUP_TRACKER_MODULE.freeBlocks = { };
+AUTO_QUEST_POPUP_TRACKER_MODULE.usedBlocks = { };
+AUTO_QUEST_POPUP_TRACKER_MODULE.Header = ObjectiveTrackerFrame.BlocksFrame.QuestHeader;		-- shares Quest header
+AUTO_QUEST_POPUP_TRACKER_MODULE.blockOffsetX = -39;
+AUTO_QUEST_POPUP_TRACKER_MODULE.blockOffsetY = -4;
+
+function AUTO_QUEST_POPUP_TRACKER_MODULE:OnFreeBlock(block)
+	block.init = nil;
 end
 
 function AutoQuestPopupTracker_OnFinishSlide(block)
@@ -17,78 +26,33 @@ end
 
 local SLIDE_DATA = { startHeight = 0, endHeight = 68, duration = 0.4, onFinishFunc = AutoQuestPopupTracker_OnFinishSlide };
 
-function AutoQuestPopupTracker_OnFreeBlock(block)
-	block.init = nil;
-end
-
-local function AutoQuestPopupTracker_ShouldDisplayQuest(questID, owningModule)
-	return not C_QuestLog.IsQuestBounty(questID) and owningModule:ShouldDisplayQuest(QuestCache:Get(questID));
-end
-
-local function AutoQuestPopupTracker_UpdateExclamationIcon(itemID, popUpType, blockContents)
-	if itemID then
-		local texture = select(10, GetItemInfo(itemID));
-		blockContents.Exclamation:SetTexCoord(0.078125, 0.921875, 0.078125, 0.921875);
-		blockContents.Exclamation:SetSize(35, 35);
-		SetPortraitToTexture(blockContents.Exclamation, texture);
-	else
-		blockContents.Exclamation:SetTexture("Interface\\QuestFrame\\AutoQuest-Parts");
-		blockContents.Exclamation:SetTexCoord(0.13476563, 0.17187500, 0.01562500, 0.53125000);
-		blockContents.Exclamation:SetSize(19, 33);
-	end
-end
-
-local function AutoQuestPopupTracker_UpdateQuestIcon(questID, popUpType, blockContents)
-	local isCampaign = QuestUtil.ShouldQuestIconsUseCampaignAppearance(questID);
-	blockContents.QuestIconBadgeBorder:SetShown(not isCampaign);
-
-	local isComplete = popUpType == "COMPLETE";
-	blockContents.QuestionMark:SetShown(not isCampaign and isComplete);
-	blockContents.Exclamation:SetShown(not isCampaign and not isComplete);
-
-	if not isComplete then
-		AutoQuestPopupTracker_UpdateExclamationIcon(questItems[questID], popUpType, blockContents);
-	end
-
-	if isCampaign then
-		blockContents.QuestIconBg:SetTexCoord(0, 1, 0, 1);
-		blockContents.QuestIconBg:SetAtlas("AutoQuest-Badge-Campaign", TextureKitConstants.UseAtlasSize);
-	else
-		blockContents.QuestIconBg:SetSize(60, 60);
-		blockContents.QuestIconBg:SetTexture("Interface/QuestFrame/AutoQuest-Parts");
-		blockContents.QuestIconBg:SetTexCoord(0.30273438, 0.41992188, 0.01562500, 0.95312500);
-	end
-end
-
-function AutoQuestPopupTracker_Update(owningModule)
+function AUTO_QUEST_POPUP_TRACKER_MODULE:Update()
+	AUTO_QUEST_POPUP_TRACKER_MODULE:BeginLayout();
+	
 	if( SplashFrame:IsShown() ) then
+		AUTO_QUEST_POPUP_TRACKER_MODULE:EndLayout();
 		return;
-	end
-
-	if not owningModule.initializedPopUpTracker then
-		AutoQuestPopupTracker_Initialize(owningModule);
 	end
 
 	for i = 1, GetNumAutoQuestPopUps() do
 		local questID, popUpType = GetAutoQuestPopUp(i);
-		if AutoQuestPopupTracker_ShouldDisplayQuest(questID, owningModule) then
-			local questTitle = C_QuestLog.GetTitleForQuestID(questID);
+		if ( not IsQuestBounty(questID) ) then
+			local questTitle = GetQuestLogTitle(GetQuestLogIndexByID(questID));
 			if ( questTitle and questTitle ~= "" ) then
-				local block = owningModule:GetBlock(questID, "ScrollFrame", "AutoQuestPopUpBlockTemplate");
+				local block = AUTO_QUEST_POPUP_TRACKER_MODULE:GetBlock(questID);
 				-- fixed height, just add the block right away
 				block.height = 68;
 				if ( ObjectiveTracker_AddBlock(block) ) then
 					if ( not block.init ) then
-						local blockContents = block.ScrollChild;
-						AutoQuestPopupTracker_UpdateQuestIcon(questID, popUpType, blockContents);
-
-						if popUpType == "COMPLETE" then
-							if ( C_QuestLog.IsQuestTask(questID) ) then
+						local blockContents = block.ScrollChild;			
+						if ( popUpType == "COMPLETE" ) then
+							blockContents.QuestionMark:Show();
+							blockContents.Exclamation:Hide();
+							if ( IsQuestTask(questID) ) then
 								blockContents.TopText:SetText(QUEST_WATCH_POPUP_CLICK_TO_COMPLETE_TASK);
 							else
 								blockContents.TopText:SetText(QUEST_WATCH_POPUP_CLICK_TO_COMPLETE);
 							end
-
 							blockContents.BottomText:Hide();
 							blockContents.TopText:SetPoint("TOP", 0, -15);
 							if (blockContents.QuestName:GetStringWidth() > blockContents.QuestName:GetWidth()) then
@@ -96,10 +60,21 @@ function AutoQuestPopupTracker_Update(owningModule)
 							else
 								blockContents.QuestName:SetPoint("TOP", 0, -29);
 							end
-
 							block.popUpType = "COMPLETED";
-						elseif popUpType == "OFFER" then
+						elseif ( popUpType == "OFFER" ) then
 							local blockContents = block.ScrollChild;
+							blockContents.QuestionMark:Hide();
+                            if (questID == QUEST_FRAME_AUTO_ACCEPT_QUEST_ID and QUEST_FRAME_AUTO_ACCEPT_QUEST_START_ITEM_ID ~= 0) then
+                                local texture = select(10, GetItemInfo(QUEST_FRAME_AUTO_ACCEPT_QUEST_START_ITEM_ID));
+                                blockContents.Exclamation:SetTexCoord(0.078125, 0.921875, 0.078125, 0.921875);
+                                blockContents.Exclamation:SetSize(35, 35);
+                                SetPortraitToTexture(blockContents.Exclamation, texture);
+                            else
+                                blockContents.Exclamation:SetTexture("Interface\\QuestFrame\\AutoQuest-Parts");
+                                blockContents.Exclamation:SetTexCoord(0.13476563, 0.17187500, 0.01562500, 0.53125000);
+                                blockContents.Exclamation:SetSize(19, 33);
+                            end
+							blockContents.Exclamation:Show();
 							blockContents.TopText:SetText(QUEST_WATCH_POPUP_QUEST_DISCOVERED);
 							blockContents.BottomText:Show();
 							blockContents.BottomText:SetText(QUEST_WATCH_POPUP_CLICK_TO_VIEW);
@@ -115,16 +90,16 @@ function AutoQuestPopupTracker_Update(owningModule)
 					block:Show();
 				else
 					block.used = nil;
-					break;
+					break;			
 				end
 			end
 		end
 	end
+	AUTO_QUEST_POPUP_TRACKER_MODULE:EndLayout();
 end
 
-function AutoQuestPopupTracker_AddPopUp(questID, popUpType, itemID)
+function AutoQuestPopupTracker_AddPopUp(questID, popUpType)
 	if ( AddAutoQuestPopUp(questID, popUpType) ) then
-		questItems[questID] = itemID;
 		ObjectiveTracker_Expand();
 		ObjectiveTracker_Update(OBJECTIVE_TRACKER_UPDATE_QUEST_ADDED, questID);
 		PlaySound(SOUNDKIT.UI_AUTO_QUEST_COMPLETE);
@@ -135,19 +110,14 @@ end
 
 function AutoQuestPopupTracker_RemovePopUp(questID)
 	RemoveAutoQuestPopUp(questID);
-	if GetNumAutoQuestPopUps() == 0 then
-		wipe(questItems);
-	end
 	ObjectiveTracker_Update(OBJECTIVE_TRACKER_UPDATE_QUEST);
 end
 
-function AutoQuestPopUpTracker_OnMouseUp(block, button, upInside)
-	if button == "LeftButton" and upInside then
-		if ( block.popUpType == "OFFER" ) then
-			ShowQuestOffer(block.id);
-		else
-			ShowQuestComplete(block.id);
-		end
-		AutoQuestPopupTracker_RemovePopUp(block.id);
+function AutoQuestPopUpTracker_OnMouseDown(block)
+	if ( block.popUpType == "OFFER" ) then
+		ShowQuestOffer(GetQuestLogIndexByID(block.id));
+	else
+		ShowQuestComplete(GetQuestLogIndexByID(block.id));
 	end
+	AutoQuestPopupTracker_RemovePopUp(block.id);
 end

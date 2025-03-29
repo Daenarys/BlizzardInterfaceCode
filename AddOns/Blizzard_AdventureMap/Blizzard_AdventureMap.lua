@@ -7,8 +7,8 @@ function AdventureMapMixin:SetupTitle()
 	self.BorderFrame.Bg:SetColorTexture(0, 0, 0, 1);
 	self.BorderFrame.Bg:SetParent(self);
 	self.BorderFrame.TopTileStreaks:Hide();
-
-	self.BorderFrame:SetPortraitToAsset([[Interface/Icons/inv_misc_map02]]);
+	
+	SetPortraitToTexture(self.BorderFrame.portrait, [[Interface/Icons/inv_misc_map02]]);
 end
 
 -- Override
@@ -19,16 +19,14 @@ function AdventureMapMixin:OnLoad()
 	self:SetMapInsetPool(mapInsetPool);
 
 	self:RegisterEvent("ADVENTURE_MAP_UPDATE_INSETS");
-
+	
 	self:SetupTitle();
 
 	self:AddStandardDataProviders();
-	self:ClearAreaTableIDAvailableForInsets();
 end
 
 function AdventureMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(AdventureMap_QuestChoiceDataProviderMixin));
-	self:AddDataProvider(CreateFromMixins(QuestSessionDataProviderMixin));
 end
 
 function AdventureMapMixin:ClearAreaTableIDAvailableForInsets()
@@ -41,9 +39,9 @@ end
 
 -- Override
 function AdventureMapMixin:OnShow()
-	local mapID = C_AdventureMap.GetMapID();
+	local continentID = C_AdventureMap.GetContinentInfo();
+	self:SetMapID(continentID);
 	self:ClearAreaTableIDAvailableForInsets();
-	self:SetMapID(mapID);
 	MapCanvasMixin.OnShow(self);
 end
 
@@ -51,7 +49,6 @@ end
 function AdventureMapMixin:OnHide()
 	MapCanvasMixin.OnHide(self);
 
-	AdventureMapQuestChoiceDialog:OnParentHide(self);
 	C_AdventureMap.Close();
 end
 

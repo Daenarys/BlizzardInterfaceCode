@@ -79,8 +79,24 @@
 		<CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
 		<DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
 	</CheckButton>
-	<Slider name="CompactUnitFrameProfilesSliderTemplate" inherits="HorizontalSliderTemplate" virtual="true">
-		<Size x="144" y="17"/>
+	<Slider name="CompactUnitFrameProfilesSliderTemplate" orientation="HORIZONTAL" virtual="true" enableMouse="true">
+		<Size>
+			<AbsDimension x="144" y="17"/>
+		</Size>
+		<HitRectInsets>
+			<AbsInset left="0" right="0" top="-10" bottom="-10"/>
+		</HitRectInsets>
+		<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
+			<EdgeSize>
+				<AbsValue val="8"/>
+			</EdgeSize>
+			<TileSize>
+				<AbsValue val="8"/>
+			</TileSize>
+			<BackgroundInsets>
+				<AbsInset left="3" right="3" top="6" bottom="6"/>
+			</BackgroundInsets>
+		</Backdrop>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString name="$parentLabel" inherits="GameFontHighlight" parentKey="label">
@@ -109,18 +125,36 @@
 			</Layer>
 		</Layers>
 		<Scripts>
+			<!--OnLoad>
+				CompactUnitFrameProfilesSlider_Initialize(self);
+			</OnLoad-->
 			<OnValueChanged>
 				CompactUnitFrameProfilesSlider_OnValueChanged(self, value, userInput);
 			</OnValueChanged>
 		</Scripts>
+		<ThumbTexture name="$parentThumb" file="Interface\Buttons\UI-SliderBar-Button-Horizontal">
+			<Size>
+				<AbsDimension x="32" y="32"/>
+			</Size>
+		</ThumbTexture>
 	</Slider>
 
 	<Frame name="CompactUnitFrameProfileDialogWithCoverTemplate" frameStrata="DIALOG" hidden="true" virtual="true">
 		<Anchors>
 			<Anchor point="CENTER"/>
 		</Anchors>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background-Dark" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+			<BackgroundInsets>
+				<AbsInset left="11" right="12" top="12" bottom="11"/>
+			</BackgroundInsets>
+			<TileSize>
+				<AbsValue val="32"/>
+			</TileSize>
+			<EdgeSize>
+				<AbsValue val="32"/>
+			</EdgeSize>
+		</Backdrop>
 		<Frames>
-			<Frame parentKey="Border" inherits="DialogBorderDarkTemplate"/>
 			<Frame name="$parentCover" parentKey="cover" useParentLevel="true" enableMouse="true">
 				<Layers>
 					<Layer level="BACKGROUND" textureSubLevel="-5">
@@ -634,7 +668,7 @@
 							<Anchor point="TOPLEFT" relativeTo="$parentHealthTextDropdown" relativePoint="BOTTOMLEFT" x="10" y="-15"/>
 						</Anchors>
 						<Scripts>
-							<OnLoad inherit="prepend">
+							<OnLoad>
 								CompactUnitFrameProfilesSlider_InitializeWidget(self, "frameHeight", SHORT, TALL);
 							</OnLoad>
 						</Scripts>
@@ -644,7 +678,7 @@
 							<Anchor point="LEFT" relativeTo="$parentHeightSlider" relativePoint="RIGHT" x="40" y="0"/>
 						</Anchors>
 						<Scripts>
-							<OnLoad inherit="prepend">
+							<OnLoad>
 								CompactUnitFrameProfilesSlider_InitializeWidget(self, "frameWidth", NARROW, WIDE);
 							</OnLoad>
 						</Scripts>

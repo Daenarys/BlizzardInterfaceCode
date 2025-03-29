@@ -17,8 +17,6 @@ function LoopingSoundEffectMixin:OnLoad(startingSound, loopingSound, endingSound
 end
 
 function LoopingSoundEffectMixin:StartLoopingSound()
-	self:CancelLoopingSound();
-
 	if self.loopStartSoundEffect then
 		PlaySound(self.loopStartSoundEffect);
 	end

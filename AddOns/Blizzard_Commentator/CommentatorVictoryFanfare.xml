@@ -8,7 +8,7 @@
 			<Anchor point="TOP" x="0" y="-170"/>
 		</Anchors>
 		<Frames>
-			<ModelScene parentKey="BackgroundModelScene" enableMouse="false" inherits="NonInteractableModelSceneMixinTemplate">
+			<ModelScene parentKey="BackgroundModelScene" enableMouse="false" inherits="ModelSceneMixinTemplate">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="UIParent"/>
 					<Anchor point="BOTTOMRIGHT" relativeTo="UIParent"/>
@@ -28,7 +28,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						Commentator:ExitInstance();
+						PvPCommentator:ExitInstance();
 					</OnClick>
 				</Scripts>
 			</Button>

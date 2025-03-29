@@ -2,7 +2,7 @@
 ..\FrameXML\UI.xsd">
 	<Script file="PVPHonorSystem.lua"/>
 
-	<Frame name="PVPHonorRewardCodeTemplate" virtual="true" mixin="PVPHonorRewardCodeMixin">
+	<Frame name="PVPHonorRewardCodeTemplate" virtual="true" mixin="PVPHonorRewardMixin">
 		<Scripts>
 			<OnLoad method="OnLoad"/>
 			<OnEvent method="OnEvent"/>
@@ -93,6 +93,7 @@
 							self:OnAnimFinished(...);
 							self:GetParent().Level:SetText(UnitHonorLevel("player"));
 							PVPHonorXPBar_SetNextAvailable(self:GetParent());
+							HonorExhaustionTick_Update(self.ExhaustionTick);
 						end
 					</OnLoad>
 					<OnEnter function="PVPHonorXPBar_OnEnter"/>
@@ -196,6 +197,12 @@
 						<Anchors>
 							<Anchor point="TOP" relativeKey="$parent.Border" relativePoint="BOTTOM" x="0" y="16"/>
 						</Anchors>
+						<Scripts>
+							<OnClick function="PVPHonorXPBarPrestige_OnClick"/>
+							<OnShow>
+								self:SetWidth(self:GetTextWidth()+40);
+							</OnShow>
+						</Scripts>
 					</Button>
 				</Frames>
 				<Scripts>
@@ -308,10 +315,10 @@
                         </Layers>
                         <Scripts>
                             <OnEnter>
-								GameTooltip:SetOwner(self, 'ANCHOR_RIGHT');
-								GameTooltip:SetText(string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, GetMaxLevelForLatestExpansion()));
-								GameTooltip:Show();
-							</OnEnter>
+                                GameTooltip:SetOwner(self, 'ANCHOR_RIGHT');
+                                GameTooltip:SetText(string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_LEVEL_CURRENT]));
+                                GameTooltip:Show();
+                            </OnEnter>
                             <OnLeave function="GameTooltip_Hide"/>
                         </Scripts>
                      </Frame>
@@ -323,6 +330,7 @@
 							self:OnAnimFinished(...);
 							self:GetParent().Level:SetText(UnitHonorLevel("player"));
 							PVPHonorXPBar_SetNextAvailable(self:GetParent());
+							HonorExhaustionTick_Update(self.ExhaustionTick);
 						end
 					</OnLoad>
 					<OnEnter function="PVPHonorXPBar_OnEnter"/>
@@ -426,6 +434,7 @@
 							<Anchor point="TOP" relativeKey="$parent.Border" relativePoint="BOTTOM" x="0" y="16"/>
 						</Anchors>
 						<Scripts>
+							<OnClick function="PVPHonorXPBarPrestige_OnClick"/>
 							<OnShow>
 								self:SetWidth(self:GetTextWidth()+40);
 							</OnShow>
@@ -446,7 +455,6 @@
 		</Frames>
 		<KeyValues>
 			<KeyValue type="boolean" key="isSmall" value="true"/>
-			<KeyValue type="boolean" key="canPrestigeHere" value="true"/>
 		</KeyValues>
 		<Scripts>
 			<OnLoad function="PVPHonorXPBar_OnLoad"/>
@@ -989,5 +997,9 @@
 				</Scripts>
 			</AnimationGroup>
 		</Animations>
+		<Scripts>
+			<OnLoad function="PrestigeLevelUpBanner_OnLoad"/>
+			<OnEvent function="PrestigeLevelUpBanner_OnEvent"/>
+		</Scripts>
 	</Frame>
 </Ui>

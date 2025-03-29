@@ -3,7 +3,6 @@ INTERFACEOPTIONS_ADDONCATEGORIES = {};
 
 local blizzardCategories = {};
 
-local securecall = securecall;
 local next = next;
 local function SecureNext(elements, key)
 	return securecall(next, elements, key);
@@ -15,7 +14,7 @@ local strlower = strlower;
 
 -- [[ InterfaceOptionsList functions ]] --
 
-function InterfaceOptionsList_DisplayPanel (frame)
+function InterfaceOptionsList_DisplayPanel (frame)	
 	if ( InterfaceOptionsFramePanelContainer.displayedPanel ) then
 		InterfaceOptionsFramePanelContainer.displayedPanel:Hide();
 	end
@@ -103,7 +102,7 @@ function InterfaceCategoryList_Update ()
 	if ( numCategories > numButtons and ( not InterfaceOptionsFrameCategoriesList:IsShown() ) ) then
 		OptionsList_DisplayScrollBar(InterfaceOptionsFrameCategories);
 	elseif ( numCategories <= numButtons and ( InterfaceOptionsFrameCategoriesList:IsShown() ) ) then
-		OptionsList_HideScrollBar(InterfaceOptionsFrameCategories);
+		OptionsList_HideScrollBar(InterfaceOptionsFrameCategories);	
 	end
 
 	FauxScrollFrame_Update(InterfaceOptionsFrameCategoriesList, numCategories, numButtons, buttons[1]:GetHeight());
@@ -125,7 +124,7 @@ function InterfaceCategoryList_Update ()
 				OptionsList_SelectButton(InterfaceOptionsFrameCategories, buttons[i]);
 			end
 		end
-
+		
 	end
 
 	if ( selection ) then
@@ -155,9 +154,12 @@ function InterfaceAddOnsList_Update ()
 	local numButtons = #buttons;
 
 	-- Show the AddOns tab if it's not empty.
-	local showTabs = numAddOnCategories > 0;
-	InterfaceOptionsFrameTab1:SetShown(showTabs);
-	InterfaceOptionsFrameTab2:SetShown(showTabs);
+	if ( ( InterfaceOptionsFrameTab2 and not InterfaceOptionsFrameTab2:IsShown() ) and numAddOnCategories > 0 ) then
+		InterfaceOptionsFrameCategoriesTop:Hide();
+		InterfaceOptionsFrameAddOnsTop:Hide();
+		InterfaceOptionsFrameTab1:Show();
+		InterfaceOptionsFrameTab2:Show();
+	end
 
 	if ( numAddOnCategories > numButtons and ( not InterfaceOptionsFrameAddOnsList:IsShown() ) ) then
 		-- We need to show the scroll bar, we have more elements than buttons.
@@ -180,7 +182,7 @@ function InterfaceAddOnsList_Update ()
 			OptionsList_HideButton(buttons[i]);
 		else
 			OptionsList_DisplayButton(buttons[i], element);
-
+			
 			if ( selection ) and ( selection == element ) and ( not InterfaceOptionsFrameAddOns.selection ) then
 				OptionsList_SelectButton(InterfaceOptionsFrameAddOns, buttons[i]);
 			end
@@ -307,7 +309,7 @@ function InterfaceOptionsOptionsFrame_RefreshAddOns ()
 	end
 end
 
-local UVARINFO = {
+UVARINFO = {
 	["REMOVE_CHAT_DELAY"] = { default = "0", cvar = "removeChatDelay", event = "REMOVE_CHAT_DELAY_TEXT" },
 	["LOCK_ACTIONBAR"] = { default = "0", cvar = "lockActionBars", event = "LOCK_ACTIONBAR_TEXT" },
 	["SHOW_BUFF_DURATIONS"] = { default = "1", cvar = "buffDurations", event = "SHOW_BUFF_DURATION_TEXT", func = function () SHOW_BUFF_DURATIONS = GetCVar("buffDurations"); BuffFrame_UpdatePositions(); end},
@@ -373,7 +375,7 @@ function InterfaceOptionsFrame_OnLoad (self)
 	InterfaceOptionsFrame_InitializeUVars();
 	PanelTemplates_SetNumTabs(self, 2);
 	InterfaceOptionsFrame.selectedTab = 1;
-	PanelTemplates_UpdateTabs(self);
+	PanelTemplates_UpdateTabs(self);	
 end
 
 function InterfaceOptionsFrame_OnEvent (self, event, ...)
@@ -410,9 +412,15 @@ function InterfaceOptionsFrame_TabOnClick ()
 	if ( InterfaceOptionsFrame.selectedTab == 1 ) then
 		InterfaceOptionsFrameCategories:Show();
 		InterfaceOptionsFrameAddOns:Hide();
+		InterfaceOptionsFrameTab1TabSpacer:Show();
+		InterfaceOptionsFrameTab2TabSpacer1:Hide();
+		InterfaceOptionsFrameTab2TabSpacer2:Hide();		
 	else
 		InterfaceOptionsFrameCategories:Hide();
 		InterfaceOptionsFrameAddOns:Show();
+		InterfaceOptionsFrameTab1TabSpacer:Hide();
+		InterfaceOptionsFrameTab2TabSpacer1:Show();
+		InterfaceOptionsFrameTab2TabSpacer2:Show();
 	end
 end
 
@@ -458,7 +466,7 @@ function InterfaceOptionsFrame_OpenToCategory (panel)
 				OptionsListButtonToggle_OnClick(button.toggle);
 			end
 		end
-
+		
 		if ( not InterfaceOptionsFrame:IsShown() ) then
 			InterfaceOptionsFrame_Show();
 		end
@@ -500,24 +508,24 @@ end
 --
 -- The following members and methods are used by the Interface Options frame to display and organize panels.
 --
--- panel.name - string (required)
---	The name of the AddOn or group of configuration options.
+-- panel.name - string (required)	
+--	The name of the AddOn or group of configuration options. 
 --	This is the text that will display in the AddOn options list.
 --
 -- panel.parent - string (optional)
---	Name of the parent of the AddOn or group of configuration options.
+--	Name of the parent of the AddOn or group of configuration options. 
 --	This identifies "panel" as the child of another category.
 --	If the parent category doesn't exist, "panel" will be displayed as a regular category.
 --
 -- panel.okay - function (optional)
---	This method will run when the player clicks "okay" in the Interface Options.
+--	This method will run when the player clicks "okay" in the Interface Options. 
 --
 -- panel.cancel - function (optional)
---	This method will run when the player clicks "cancel" in the Interface Options.
+--	This method will run when the player clicks "cancel" in the Interface Options. 
 --	Use this to revert their changes.
 --
 -- panel.default - function (optional)
---	This method will run when the player clicks "defaults".
+--	This method will run when the player clicks "defaults". 
 --	Use this to revert their changes to your defaults.
 --
 -- panel.refresh - function (optional)
@@ -552,12 +560,12 @@ end
 --
 -- EXAMPLE -- Create a frame with a control, an okay and a cancel method
 --
---	--[[ Create a frame to use as the panel ]] --
+--	--[[ Create a frame to use as the panel ]] -- 
 --	local panel = CreateFrame("FRAME", "ExamplePanel");
 --	panel.name = "My AddOn";
 --
 --	-- [[ When the player clicks okay, set the original value to the current setting ]] --
---	panel.okay =
+--	panel.okay = 
 --		function (self)
 --			self.originalValue = MY_VARIABLE;
 --		end
@@ -628,7 +636,7 @@ function InterfaceOptions_AddCategory (frame, addOn, position)
 						categories[i].hasChildren = true;
 						categories[i].collapsed = true;
 						AddAddOnCategory(categories, i + 1, frame);
-						return;
+						return;						
 					end
 
 					frame.hidden = ( categories[i].collapsed );

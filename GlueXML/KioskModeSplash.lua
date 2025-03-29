@@ -30,19 +30,7 @@ local kioskModeData = {
 			["DEMONHUNTER"] = true,
 			["DEATHKNIGHT"] = true,
 		},
-		["alliedRaces"] = { 
-			["LIGHTFORGEDDRAENEI"] = true,
-			["HIGHMOUNTAINTAUREN"] = true,
-			["NIGHTBORNE"] = true,
-			["VOIDELF"] = true,
-			["DARKIRONDWARF"] = true,
-			["KULTIRAN"] = true,
-			["MECHAGNOME"] = true,
-			["MAGHARORC"] = true,
-			["ZANDALARITROLL"] = true,
-			["VULPERA"] = true,
-		},
-		["template"] = { ["enabled"] = true, ["index"] = 1, ["ignoreClasses"] = { } },
+		["trial"] = { ["enabled"] = true, ["ignoreClasses"] = { "DEMONHUNTER" } },
 	},
 	["newcharacter"] = {
 		["races"] = {
@@ -74,83 +62,59 @@ local kioskModeData = {
 			["DEMONHUNTER"] = false,
 			["DEATHKNIGHT"] = false,
 		},
-		["alliedRaces"] = { 
-			["LIGHTFORGEDDRAENEI"] = false,
-			["HIGHMOUNTAINTAUREN"] = false,
-			["NIGHTBORNE"] = false,
-			["VOIDELF"] = false,
-			["DARKIRONDWARF"] = false,
-			["KULTIRAN"] = false,
-			["MECHAGNOME"] = false,
-			["MAGHARORC"] = false,
-			["ZANDALARITROLL"] = false,
-			["VULPERA"] = false,
-		},
 	}
 }
 
-KioskModeSplashMixin = {}
-
-function KioskModeSplashMixin:OnLoad()
+function KioskModeSplash_OnLoad(self)
 	self.autoEnterWorld = false;
 	self.mode = nil;
-
-	self.NewExpansionButton.Text:SetText("Enter Bastion");
 end
 
-function KioskModeSplashMixin:OnShow()
+function KioskModeSplash_OnShow(self)
 	self.mode = nil;
 end
 
-function KioskModeSplashMixin:SetMode(mode)
+function KioskModeSplash_OnKeyDown(self,key)
+	if CheckKioskModeRealmKey() then
+		C_RealmList.RequestChangeRealmList();
+	elseif CheckKioskModeQuitKey() then
+		QuitGame();
+	end
+end
+
+function KioskModeSplash_SetMode(mode)
 	KioskModeSplash.mode = mode;
 end
 
-function KioskModeSplashMixin:GetModeData()
+function KioskModeSplash_GetModeData()
 	return kioskModeData[KioskModeSplash.mode];
 end
 
-function KioskModeSplashMixin:GetMode()
-	return KioskModeSplash.mode;
-end
-
-function KioskModeSplashMixin:GetIDForSelection(type, selection)
+function KioskModeSplash_GetIDForSelection(type, selection)
 	if (type == "races") then
-		return C_CharacterCreation.GetRaceIDFromName(selection);
+		return RACE_NAME_BUTTON_ID_MAP[selection];
 	elseif (type == "classes") then
-		return C_CharacterCreation.GetClassIDFromName(selection);
+		return CLASS_NAME_BUTTON_ID_MAP[selection];
 	end
 
 	return nil;
 end
 
-function KioskModeSplashMixin:SetAutoEnterWorld(value)
+function KioskModeSplash_SetAutoEnterWorld(value)
 	KioskModeSplash.autoEnterWorld = value;
 end
 
-function KioskModeSplashMixin:GetAutoEnterWorld()
+function KioskModeSplash_GetAutoEnterWorld()
 	return KioskModeSplash.autoEnterWorld;
 end
 
-function KioskModeSplashMixin:StartSession()
-	Kiosk.StartSession();
-end
-
-NewCharacterButtonMixin = {}
-
-function NewCharacterButtonMixin:OnClick(button, down)
-	KioskModeSplashMixin:StartSession();
-
+function KioskModeSplashChoice_OnClick(self, button, down)
 	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	KioskModeSplashMixin:SetMode("newcharacter");
-end
+	if (self:GetID() == 1) then
+		KioskModeSplash_SetMode("highlevel");
+	else
+		KioskModeSplash_SetMode("newcharacter");
+	end
 
-NewExpansionButtonMixin = {}
-
-function NewExpansionButtonMixin:OnClick(button, down)
-	KioskModeSplashMixin:StartSession();
-
-	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	KioskModeSplashMixin:SetMode("highlevel");
 	GlueParent_SetScreen("charcreate");
 end

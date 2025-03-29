@@ -3,7 +3,6 @@ MOVIE_CAPTION_FADE_TIME = 1.0;
 
 function MovieFrame_OnLoad(self)
 	self:RegisterEvent("PLAY_MOVIE");
-	self:RegisterEvent("STOP_MOVIE");
 end
 
 function MovieFrame_OnEvent(self, event, ...)
@@ -12,8 +11,6 @@ function MovieFrame_OnEvent(self, event, ...)
 		if ( movieID ) then
 			MovieFrame_PlayMovie(self, movieID);
 		end
-	elseif (event == "STOP_MOVIE") then
-		MovieFrame_StopMovie(self);
 	end
 end
 
@@ -28,18 +25,11 @@ function MovieFrame_PlayMovie(self, movieID)
 	end
 end
 
-function MovieFrame_StopMovie(self)
-	self:StopMovie(movieID);
-	self:Hide();
-	GameMovieFinished();
-end
-
 function MovieFrame_OnShow(self)
 	WorldFrame:Hide();
 	self.uiParentShown = UIParent:IsShown();
 	UIParent:Hide();
 	self:EnableSubtitles(GetCVarBool("movieSubtitle"));
-	SpellStopTargeting();
 end
 
 function MovieFrame_OnHide(self)
@@ -49,15 +39,6 @@ function MovieFrame_OnHide(self)
 	if ( self.uiParentShown ) then
 		UIParent:Show();
 		SetUIVisibility(true);
-	end
-end
-
-function MovieFrame_OnCinematicStopped()
-	-- It's possible that both frames are trying to play around the same time, but the cinematic stop comes after we've already started a movie
-	-- In that case just make sure the UI stays hidden
-	if MovieFrame:IsShown() and UIParent:IsShown() then
-		MovieFrame.uiParentShown = true;
-		UIParent:Hide();
 	end
 end
 

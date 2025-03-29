@@ -59,6 +59,17 @@
 	</Button>
 	<Frame name="RoleSelectionTemplate" mixin="RoleSelectionMixin" virtual="true">
 		<Size x="306" y="160"/>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+			<BackgroundInsets>
+				<AbsInset left="11" right="12" top="12" bottom="11"/>
+			</BackgroundInsets>
+			<TileSize>
+				<AbsValue val="32"/>
+			</TileSize>
+			<EdgeSize>
+				<AbsValue val="32"/>
+			</EdgeSize>
+		</Backdrop>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString inherits="GameFontHighlight" justifyH="CENTER" text="SELECT_YOUR_ROLE">
@@ -75,7 +86,6 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="Border" inherits="DialogBorderTemplate"/>
 			<Button parentKey="CloseButton">
 				<Size x="32" y="32"/>
 				<Anchors>

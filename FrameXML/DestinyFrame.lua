@@ -5,34 +5,21 @@ function DestinyFrame_OnEvent(self, event)
 	self:Show();
 end
 
-local destinyHordeHelpTipInfo = {
-	text = RECRUIT_A_FRIEND_FACTION_PANDAREN_HORDE,
-	buttonStyle = HelpTip.ButtonStyle.None,
-	targetPoint = HelpTip.Point.RightEdgeCenter,
-	useParentStrata = true,
-	offsetX = -15,
-};
-
-local destinyAllianceHelpTipInfo = {
-	text = RECRUIT_A_FRIEND_FACTION_PANDAREN_ALLIANCE,
-	buttonStyle = HelpTip.ButtonStyle.None,
-	targetPoint = HelpTip.Point.LeftEdgeCenter,
-	useParentStrata = true,
-	offsetX = 15,
-};
-
 function DestinyFrame_UpdateRecruitInfo(self)
 	local active, faction = C_RecruitAFriend.GetRecruitInfo();
-	if active then
-		if PLAYER_FACTION_GROUP[faction] == "Horde" then
-			HelpTip:Show(DestinyHordeButton, destinyHordeHelpTipInfo);
-			HelpTip:HideAll(DestinyAllianceButton);
+	if ( active ) then
+		if ( PLAYER_FACTION_GROUP[faction] == "Horde" ) then
+			self.RecruitAFriendSuggestion:ClearAllPoints();
+			self.RecruitAFriendSuggestion:SetPoint("LEFT", DestinyHordeButton, "RIGHT", 10, 0);
+			RecruitAFriend_ShowInfoDialog(self.RecruitAFriendSuggestion, RECRUIT_A_FRIEND_FACTION_PANDAREN_HORDE);
+			RecruitAFriend_SetInfoDialogDirection(self.RecruitAFriendSuggestion, "left");
 		else
-			HelpTip:Show(DestinyAllianceButton, destinyAllianceHelpTipInfo);
-			HelpTip:HideAll(DestinyHordeButton);
+			self.RecruitAFriendSuggestion:ClearAllPoints();
+			self.RecruitAFriendSuggestion:SetPoint("RIGHT", DestinyAllianceButton, "LEFT", -10, 0);
+			RecruitAFriend_ShowInfoDialog(self.RecruitAFriendSuggestion, RECRUIT_A_FRIEND_FACTION_PANDAREN_ALLIANCE);
+			RecruitAFriend_SetInfoDialogDirection(self.RecruitAFriendSuggestion, "right");
 		end
 	else
-		HelpTip:HideAll(DestinyAllianceButton);
-		HelpTip:HideAll(DestinyHordeButton);
+		self.RecruitAFriendSuggestion:Hide();
 	end
 end

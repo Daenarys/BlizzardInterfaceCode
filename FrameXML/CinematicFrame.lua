@@ -1,27 +1,33 @@
 
 function CinematicFrame_OnDisplaySizeChanged(self)
 	if (self:IsShown()) then
-		local width = CinematicFrame:GetWidth();
-		local height = CinematicFrame:GetHeight();
-
-		local viewableHeight = width * 9 / 16;
-		local worldFrameHeight = WorldFrame:GetHeight();
-		local halfDiff = math.max(math.floor((worldFrameHeight - viewableHeight) / 2), 0);
-
-		WorldFrame:ClearAllPoints();
-		WorldFrame:SetPoint("TOPLEFT", nil, "TOPLEFT", 0, -halfDiff);
-		WorldFrame:SetPoint("BOTTOMRIGHT", nil, "BOTTOMRIGHT", 0, halfDiff);
-
-		local blackBarHeight = math.max(halfDiff, 40);
-		UpperBlackBar:SetHeight( blackBarHeight );
-		LowerBlackBar:SetHeight( blackBarHeight );
+	  local width = CinematicFrame:GetWidth();
+	  local height = CinematicFrame:GetHeight();
+	  
+	  local desiredHeight = width / 2;
+	  if ( desiredHeight > height ) then
+		  desiredHeight = height;
+	  end
+	  
+	  local blackBarHeight = ( height - desiredHeight ) / 2;
+  
+	  UpperBlackBar:SetHeight( blackBarHeight );
+	  LowerBlackBar:SetHeight( blackBarHeight );
+  
+	  CinematicFrame.Subtitle1:ClearAllPoints();
+	  CinematicFrame.Subtitle1:SetPoint("LEFT", CinematicFrame.LowerBlackBar, "LEFT", 5, 0);
+	  CinematicFrame.Subtitle1:SetPoint("RIGHT", CinematicFrame.LowerBlackBar, "RIGHT", -5, 0);
+	  if (CinematicFrame.Subtitle1:GetBottom() < 0) then
+		  CinematicFrame.Subtitle1:ClearAllPoints();
+		  CinematicFrame.Subtitle1:SetPoint("BOTTOMLEFT", CinematicFrame.LowerBlackBar, "TOPLEFT", 5, 5);
+		  CinematicFrame.Subtitle1:SetPoint("BOTTOMRIGHT", CinematicFrame.LowerBlackBar, "TOPRIGHT", -5, 5);
+	  end
 	end
 end
 
 function CinematicFrame_OnLoad(self)
 	self:RegisterEvent("CINEMATIC_START");
 	self:RegisterEvent("CINEMATIC_STOP");
-	self:RegisterEvent("HIDE_SUBTITLE");
 
 	--For subtitles. We only support say/yell right now.
 	self:RegisterEvent("CHAT_MSG_SAY");
@@ -35,14 +41,9 @@ function CinematicFrame_OnShow(self)
 	CinematicFrame_OnDisplaySizeChanged(self)
 end
 
-function CinematicFrame_OnHide(self)
-	WorldFrame:SetAllPoints(nil);
-end
-
 function CinematicFrame_OnEvent(self, event, ...)
 	local arg1 = ...;
 	if ( event == "CINEMATIC_START" ) then
-		EventRegistry:TriggerEvent("CinematicFrame.CinematicStarting");
 		for i=1, #self.Subtitles do
 			self.Subtitles[i]:SetText("");
 			self.Subtitles[i]:Hide();
@@ -51,16 +52,13 @@ function CinematicFrame_OnEvent(self, event, ...)
 		self.closeDialog:Hide();
 		ShowUIPanel(self, 1);
 		RaidNotice_Clear(self.raidBossEmoteFrame);
-
+		
 		LowHealthFrame:EvaluateVisibleState();
 	elseif ( event == "CINEMATIC_STOP" ) then
 		HideUIPanel(self);
 		RaidNotice_Clear(RaidBossEmoteFrame);	--Clear the normal boss emote frame. If there are any messages left over from the cinematic, we don't want to show them.
-
+		
 		LowHealthFrame:EvaluateVisibleState();
-
-		MovieFrame_OnCinematicStopped();
-		EventRegistry:TriggerEvent("CinematicFrame.CinematicStopped");
 	elseif ( event == "CHAT_MSG_SAY" or event == "CHAT_MSG_MONSTER_SAY" or
 		event == "CHAT_MSG_YELL" or event == "CHAT_MSG_MONSTER_YELL" ) then
 		local message, sender, lang, channel, target, flag, zone, localid, name, instanceId, lineId, guidString, bnId, isMobile, isSubtitle, hideSenderInLetterbox = ...;
@@ -74,14 +72,12 @@ function CinematicFrame_OnEvent(self, event, ...)
 			else
 				body = format(SUBTITLE_FORMAT, sender, message);
 			end
-
+				
 			local chatType = string.match(event, "CHAT_MSG_(.*)");
 			CinematicFrame_AddSubtitle(chatType, body);
 		end
 	elseif ( event == "DISPLAY_SIZE_CHANGED") then
 		CinematicFrame_OnDisplaySizeChanged(self);
-	elseif ( event == "HIDE_SUBTITLE") then
-		CinematicFrame_HideSubtitle(self)
 	end
 end
 
@@ -95,7 +91,7 @@ function CinematicFrame_AddSubtitle(chatType, body)
 	end
 
 	if ( not fontString ) then
-		--Scroll everything up.
+		--Scroll everything up. 
 		for i=1, #CinematicFrame.Subtitles - 1 do
 			CinematicFrame.Subtitles[i]:SetText(CinematicFrame.Subtitles[i + 1]:GetText());
 		end
@@ -103,14 +99,12 @@ function CinematicFrame_AddSubtitle(chatType, body)
 	end
 
 	fontString:SetText(body);
-	fontString:Show();
-end
-
-function CinematicFrame_HideSubtitle(self)
-	for i=1, #self.Subtitles do
-		self.Subtitles[i]:SetText("");
-		self.Subtitles[i]:Hide();
+	if (CinematicFrame.Subtitle1:GetBottom() < 0) then
+		CinematicFrame.Subtitle1:ClearAllPoints();
+		CinematicFrame.Subtitle1:SetPoint("BOTTOMLEFT", CinematicFrame.LowerBlackBar, "TOPLEFT", 5, 5);
+		CinematicFrame.Subtitle1:SetPoint("BOTTOMRIGHT", CinematicFrame.LowerBlackBar, "TOPRIGHT", -5, 5);
 	end
+	fontString:Show();
 end
 
 function CinematicFrame_OnKeyDown(self, key)

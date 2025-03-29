@@ -91,9 +91,7 @@ end
 
 local LOCAL_PrintHandler =
     function(...)
-       if DEFAULT_CHAT_FRAME then
-           DEFAULT_CHAT_FRAME:AddMessage(strjoin(" ", tostringall(...)));
-	   end
+        DEFAULT_CHAT_FRAME:AddMessage(strjoin(" ", tostringall(...)));
     end
 
 function setprinthandler(func)

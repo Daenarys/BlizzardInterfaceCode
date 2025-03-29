@@ -1,9 +1,21 @@
 
 NUM_FACTIONS_DISPLAYED = 15;
 REPUTATIONFRAME_FACTIONHEIGHT = 26;
+FACTION_BAR_COLORS = {
+	[1] = {r = 0.8, g = 0.3, b = 0.22},
+	[2] = {r = 0.8, g = 0.3, b = 0.22},
+	[3] = {r = 0.75, g = 0.27, b = 0},
+	[4] = {r = 0.9, g = 0.7, b = 0},
+	[5] = {r = 0, g = 0.6, b = 0.1},
+	[6] = {r = 0, g = 0.6, b = 0.1},
+	[7] = {r = 0, g = 0.6, b = 0.1},
+	[8] = {r = 0, g = 0.6, b = 0.1},
+};
 MAX_PLAYER_LEVEL = 0;
 REPUTATIONFRAME_ROWSPACING = 23;
 MAX_REPUTATION_REACTION = 8;
+
+SHOWED_LFG_PULSE = false;
 
 function ReputationFrame_OnLoad(self)
 	ReputationWatchBar_UpdateMaxLevel();
@@ -12,18 +24,18 @@ function ReputationFrame_OnLoad(self)
 	end
 	--]]
 	self.paragonFramesPool = CreateFramePool("FRAME", self, "ReputationParagonFrameTemplate");
-	self:RegisterEvent("UPDATE_EXPANSION_LEVEL");
 end
 
 function ReputationFrame_OnShow(self)
-	CharacterFrame:SetTitle(UnitPVPName("player"));
-	ReputationFrame_Update();
+	CharacterFrameTitleText:SetText(UnitPVPName("player"));
+	ReputationFrame_Update(true);
+	SHOWED_LFG_PULSE = true;
 	self:RegisterEvent("QUEST_LOG_UPDATE");
 	self:RegisterEvent("UPDATE_FACTION");
+	self:RegisterEvent("LFG_BONUS_FACTION_ID_UPDATED");
 
-	local parent = self:GetParent();
-	if HelpTip:IsShowing(parent, REPUTATION_EXALTED_PLUS_HELP) then
-		HelpTip:Hide(parent, REPUTATION_EXALTED_PLUS_HELP);
+	if (self:GetParent().ReputationTabHelpBox:IsShown()) then
+		self:GetParent().ReputationTabHelpBox:Hide();
 		SetCVarBitfield("closedInfoFrames",	LE_FRAME_TUTORIAL_REPUTATION_EXALTED_PLUS, true);
 	end
 end
@@ -31,13 +43,12 @@ end
 function ReputationFrame_OnHide(self)
 	self:UnregisterEvent("QUEST_LOG_UPDATE");
 	self:UnregisterEvent("UPDATE_FACTION");
+	self:UnregisterEvent("LFG_BONUS_FACTION_ID_UPDATED");
 end
 
 function ReputationFrame_OnEvent(self, event, ...)
-	if ( event == "UPDATE_FACTION" or event == "QUEST_LOG_UPDATE" ) then
+	if ( event == "UPDATE_FACTION" or event == "LFG_BONUS_FACTION_ID_UPDATED" or event == "QUEST_LOG_UPDATE" ) then
 		ReputationFrame_Update();
-	elseif ( event == "UPDATE_EXPANSION_LEVEL" ) then
-		ReputationWatchBar_UpdateMaxLevel();
 	end
 end
 
@@ -62,14 +73,14 @@ function ReputationFrame_SetRowType(factionRow, isChild, isHeader, hasRep)	--row
 		factionButton:SetPoint("LEFT", factionRow, "LEFT", 3, 0);
 		factionButton:Show();
 		factionTitle:SetPoint("LEFT",factionButton,"RIGHT", 10, 0);
-		if (hasRep) then
+		if (hasRep) then 
 			factionTitle:SetPoint("RIGHT", factionBar, "LEFT", -3, 0);
 		else
 			factionTitle:SetPoint("RIGHT", factionBar, "RIGHT", -3, 0);
 		end
 
 		factionTitle:SetFontObject(GameFontNormalLeft);
-		factionBackground:Hide()
+		factionBackground:Hide()	
 		factionLeftTexture:SetHeight(15);
 		factionLeftTexture:SetWidth(60);
 		factionRightTexture:SetHeight(15);
@@ -77,6 +88,7 @@ function ReputationFrame_SetRowType(factionRow, isChild, isHeader, hasRep)	--row
 		factionLeftTexture:SetTexCoord(0.765625, 1.0, 0.046875, 0.28125);
 		factionRightTexture:SetTexCoord(0.0, 0.15234375, 0.390625, 0.625);
 		factionBar:SetWidth(99);
+		factionRow.LFGBonusRepButton:SetPoint("RIGHT", factionButton, "LEFT", 0, 1);
 	else
 		if ( isChild ) then
 			factionRow:SetPoint("LEFT", ReputationFrame, "LEFT", 52, 0);
@@ -94,8 +106,9 @@ function ReputationFrame_SetRowType(factionRow, isChild, isHeader, hasRep)	--row
 		factionLeftTexture:SetTexCoord(0.7578125, 1.0, 0.0, 0.328125);
 		factionRightTexture:SetTexCoord(0.0, 0.1640625, 0.34375, 0.671875);
 		factionBar:SetWidth(101)
+		factionRow.LFGBonusRepButton:SetPoint("RIGHT", factionBackground, "LEFT", -2, 0);
 	end
-
+	
 	if ( (hasRep) or (not isHeader) ) then
 		factionStanding:Show();
 		factionBar:Show();
@@ -107,7 +120,7 @@ function ReputationFrame_SetRowType(factionRow, isChild, isHeader, hasRep)	--row
 	end
 end
 
-function ReputationFrame_Update()
+function ReputationFrame_Update(showLFGPulse)
 	ReputationFrame.paragonFramesPool:ReleaseAll();
 
 	local numFactions = GetNumFactions();
@@ -119,7 +132,8 @@ function ReputationFrame_Update()
 	local factionOffset = FauxScrollFrame_GetOffset(ReputationListScrollFrame);
 
 	local gender = UnitSex("player");
-
+	local lfgBonusFactionID = GetLFGBonusFactionID();
+	
 	for i=1, NUM_FACTIONS_DISPLAYED, 1 do
 		local factionIndex = factionOffset + i;
 		local factionRow = _G["ReputationBar"..i];
@@ -129,12 +143,12 @@ function ReputationFrame_Update()
 		local factionStanding = _G["ReputationBar"..i.."ReputationBarFactionStanding"];
 		local factionBackground = _G["ReputationBar"..i.."Background"];
 		if ( factionIndex <= numFactions ) then
-			local name, description, standingID, barMin, barMax, barValue, atWarWith, canToggleAtWar, isHeader, isCollapsed, hasRep, isWatched, isChild, factionID, hasBonusRepGain, canSetInactive = GetFactionInfo(factionIndex);
+			local name, description, standingID, barMin, barMax, barValue, atWarWith, canToggleAtWar, isHeader, isCollapsed, hasRep, isWatched, isChild, factionID, hasBonusRepGain, canBeLFGBonus = GetFactionInfo(factionIndex);
 			factionTitle:SetText(name);
 			if ( isCollapsed ) then
 				factionButton:SetNormalTexture("Interface\\Buttons\\UI-PlusButton-Up");
 			else
-				factionButton:SetNormalTexture("Interface\\Buttons\\UI-MinusButton-Up");
+				factionButton:SetNormalTexture("Interface\\Buttons\\UI-MinusButton-Up"); 
 			end
 			factionRow.index = factionIndex;
 			factionRow.isCollapsed = isCollapsed;
@@ -156,7 +170,7 @@ function ReputationFrame_Update()
 			if (standingID == MAX_REPUTATION_REACTION) then
 				isCapped = true;
 			end
-			-- check if this is a friendship faction
+			-- check if this is a friendship faction 
 			local friendID, friendRep, friendMaxRep, friendName, friendText, friendTexture, friendTextLevel, friendThreshold, nextFriendThreshold = GetFriendshipReputation(factionID);
 			if (friendID ~= nil) then
 				factionStandingtext = friendTextLevel;
@@ -192,11 +206,23 @@ function ReputationFrame_Update()
 			factionBar:SetValue(barValue);
 			local color = FACTION_BAR_COLORS[colorIndex];
 			factionBar:SetStatusBarColor(color.r, color.g, color.b);
-
+			
 			factionBar.BonusIcon:SetShown(hasBonusRepGain);
 
-			ReputationFrame_SetRowType(factionRow, isChild, isHeader, hasRep);
+			factionRow.LFGBonusRepButton.factionID = factionID;
+			factionRow.LFGBonusRepButton:SetShown(canBeLFGBonus);
+			factionRow.LFGBonusRepButton:SetChecked(lfgBonusFactionID == factionID);
+			factionRow.LFGBonusRepButton:SetEnabled(lfgBonusFactionID ~= factionID);
+			if ( showLFGPulse and not SHOWED_LFG_PULSE and not lfgBonusFactionID ) then
+				factionRow.LFGBonusRepButton.Glow:Show();
+				factionRow.LFGBonusRepButton.GlowAnim:Play();
+			else
+				factionRow.LFGBonusRepButton.Glow:Hide();
+				factionRow.LFGBonusRepButton.GlowAnim:Stop();
+			end
 
+			ReputationFrame_SetRowType(factionRow, isChild, isHeader, hasRep);
+			
 			factionRow:Show();
 
 			-- Update details if this is the selected faction
@@ -223,7 +249,7 @@ function ReputationFrame_Update()
 						ReputationDetailAtWarCheckBox:Disable();
 						ReputationDetailAtWarCheckBoxText:SetTextColor(GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
 					end
-					if ( canSetInactive ) then
+					if ( not isHeader ) then
 						ReputationDetailInactiveCheckBox:Enable();
 						ReputationDetailInactiveCheckBoxText:SetTextColor(ReputationDetailInactiveCheckBoxText:GetFontObject():GetTextColor());
 					else
@@ -240,6 +266,10 @@ function ReputationFrame_Update()
 					else
 						ReputationDetailMainScreenCheckBox:SetChecked(false);
 					end
+					ReputationDetailFrame:SetHeight(canBeLFGBonus and 225 or 203);
+					ReputationDetailLFGBonusReputationCheckBox:SetShown(canBeLFGBonus);
+					ReputationDetailLFGBonusReputationCheckBox:SetChecked(lfgBonusFactionID == factionID);
+					ReputationDetailLFGBonusReputationCheckBox.factionID = factionID;
 					_G["ReputationBar"..i.."ReputationBarHighlight1"]:Show();
 					_G["ReputationBar"..i.."ReputationBarHighlight2"]:Show();
 				end
@@ -270,9 +300,39 @@ function ReputationBar_OnClick(self)
 	end
 end
 
+function ReputationBarLFGBonusRepButton_OnClick(self)
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+	ReputationBar_SetLFBonus(self.factionID);
+end
+
+function ReputationBar_SetLFBonus(factionID)
+	SetLFGBonusFactionID(factionID);
+	--It feels really weird when the client waits to update until it receives a response from the server.
+	--Instead, we'll fake it. Hopefully we don't end up lying to people
+	for i=1, NUM_FACTIONS_DISPLAYED, 1 do
+		local factionRow = _G["ReputationBar"..i];
+		local button = factionRow.LFGBonusRepButton;
+		if ( factionID == 0 ) then
+			button:SetChecked(false);
+			button:Enable();
+			--button.GlowAnim:Play();
+			--button.Glow:Show();
+		elseif ( button.factionID == factionID ) then
+			button:SetChecked(true);
+			button:Disable();
+			--button.GlowAnim:Stop();
+			--button.Glow:Hide();
+		else
+			button:SetChecked(false);
+			--button.GlowAnim:Stop();
+			--button.Glow:Hide();
+		end
+	end
+end
+
 function ReputationWatchBar_UpdateMaxLevel()
 	-- Initialize max player level
-	MAX_PLAYER_LEVEL = GetMaxLevelForPlayerExpansion();
+	MAX_PLAYER_LEVEL = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()];
 end
 
 function ShowFriendshipReputationTooltip(friendshipID, parent, anchor)
@@ -291,72 +351,72 @@ function ShowFriendshipReputationTooltip(friendshipID, parent, anchor)
 			local max = nextThreshold - threshold;
 			GameTooltip:AddLine(reaction.." ("..current.." / "..max..")" , 1, 1, 1, true);
 		else
-			GameTooltip:AddLine(reaction, 1, 1, 1, true);
+			GameTooltip:AddLine(reaction);
 		end
 		GameTooltip:Show();
 	end
 end
 
-function ReputationParagonFrame_SetupParagonTooltip(frame)
-	GameTooltip.owner = frame;
-	GameTooltip.factionID = frame.factionID;
+function ReputationParagonFrame_SetupParagonTooltip(frame, factionID)
+	ReputationParagonTooltip.owner = frame;
+	ReputationParagonTooltip.factionID = factionID;
 
-	local factionName, _, standingID = GetFactionInfoByID(frame.factionID);
-	local factionStandingtext = select(7, GetFriendshipReputation(frame.factionID));
-	if not factionStandingtext then
-		local gender = UnitSex("player");
-		factionStandingtext = GetText("FACTION_STANDING_LABEL"..standingID, gender);
-	end
-	local currentValue, threshold, rewardQuestID, hasRewardPending, tooLowLevelForParagon = C_Reputation.GetFactionParagonInfo(frame.factionID);
+	local factionName, _, standingID = GetFactionInfoByID(factionID);
+	local gender = UnitSex("player");
+	local factionStandingtext = GetText("FACTION_STANDING_LABEL"..standingID, gender);
+	local currentValue, threshold, rewardQuestID, hasRewardPending, tooLowLevelForParagon = C_Reputation.GetFactionParagonInfo(factionID);
 
 	if ( tooLowLevelForParagon ) then
-		GameTooltip_SetTitle(GameTooltip, PARAGON_REPUTATION_TOOLTIP_TEXT_LOW_LEVEL, NORMAL_FONT_COLOR);
+		ReputationParagonTooltip:SetText(PARAGON_REPUTATION_TOOLTIP_TEXT_LOW_LEVEL);
 	else
-		GameTooltip_SetTitle(GameTooltip, factionStandingtext, NORMAL_FONT_COLOR);
+		ReputationParagonTooltip:SetText(factionStandingtext);
 		local description = PARAGON_REPUTATION_TOOLTIP_TEXT:format(factionName);
 		if ( hasRewardPending ) then
-			local questIndex = C_QuestLog.GetLogIndexForQuestID(rewardQuestID);
+			local questIndex = GetQuestLogIndexByID(rewardQuestID);
 			local text = GetQuestLogCompletionText(questIndex);
 			if ( text and text ~= "" ) then
 				description = text;
 			end
 		end
-		GameTooltip_AddHighlightLine(GameTooltip, description);
+		ReputationParagonTooltip:AddLine(description, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1);
 		if ( not hasRewardPending ) then
+			GameTooltip_InsertFrame(ReputationParagonTooltip, ReputationParagonTooltipStatusBar);
+			ReputationParagonTooltipStatusBar.Bar:SetMinMaxValues(0, threshold);
 			local value = mod(currentValue, threshold);
 			-- show overflow if reward is pending
 			if ( hasRewardPending ) then
 				value = value + threshold;
 			end
-			GameTooltip_ShowProgressBar(GameTooltip, 0, threshold, value, REPUTATION_PROGRESS_FORMAT:format(value, threshold));
+			ReputationParagonTooltipStatusBar.Bar:SetValue(value);
+			ReputationParagonTooltipStatusBar.Bar.Label:SetFormattedText(REPUTATION_PROGRESS_FORMAT, value, threshold);
 		end
-		GameTooltip_AddQuestRewardsToTooltip(GameTooltip, rewardQuestID);
+		GameTooltip_AddQuestRewardsToTooltip(ReputationParagonTooltip, rewardQuestID);
 	end
-	GameTooltip:Show();
+	ReputationParagonTooltip:Show();
 end
 
 function ReputationParagonWatchBar_OnEnter(self)
 	if C_Reputation.IsFactionParagon(self.factionID) then
-		self.UpdateTooltip = ReputationParagonFrame_SetupParagonTooltip;
-		GameTooltip_SetDefaultAnchor(GameTooltip, self);
-		ReputationParagonFrame_SetupParagonTooltip(self);
+		ReputationParagonTooltip:SetParent(self);
+		ReputationParagonTooltip:SetFrameStrata("TOOLTIP");
+		GameTooltip_SetDefaultAnchor(ReputationParagonTooltip, UIParent);
+		ReputationParagonFrame_SetupParagonTooltip(self, self.factionID);
 	end
 end
 
 function ReputationParagonWatchBar_OnLeave(self)
-	GameTooltip:Hide();
-	self.UpdateTooltip = nil;
+	ReputationParagonTooltip:Hide();
 end
 
 function ReputationParagonFrame_OnEnter(self)
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	self.UpdateTooltip = ReputationParagonFrame_SetupParagonTooltip;
-	ReputationParagonFrame_SetupParagonTooltip(self);
+	ReputationParagonTooltip:SetParent(self);
+	ReputationParagonTooltip:SetFrameStrata("TOOLTIP");
+	ReputationParagonTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	ReputationParagonFrame_SetupParagonTooltip(self, self.factionID);
 end
 
 function ReputationParagonFrame_OnLeave(self)
-	self.UpdateTooltip = nil;
-	GameTooltip:Hide();
+	ReputationParagonTooltip:Hide();
 end
 
 function ReputationParagonFrame_OnUpdate(self)
@@ -372,15 +432,4 @@ function ReputationParagonFrame_OnUpdate(self)
 		end
 		self.Glow:SetAlpha(alpha);
 	end
-end
-
-function ReputationDetailMainScreenCheckBox_OnClick(self)
-	if ( self:GetChecked() ) then
-		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-		SetWatchedFactionIndex(GetSelectedFaction());
-	else
-		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
-		SetWatchedFactionIndex(0);
-	end
-	StatusTrackingBarManager:UpdateBarsShown();
 end

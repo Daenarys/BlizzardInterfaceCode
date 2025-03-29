@@ -8,160 +8,83 @@ local ClickToZoomStyles = {
 
 ClickToZoomDataProviderMixin = CreateFromMixins(MapCanvasDataProviderMixin);
 
-function ClickToZoomDataProviderMixin:OnZoneLabelFadeIn(isContinent)
-	if isContinent then
-		self.MapLabel:FadeIn();
-
-		if self:ShouldShowZoomOut() then
-			self.ZoomOutMapLabel:FadeOut();
-		end
-	end
+function ClickToZoomDataProviderMixin:FadeIn()
+	self.MapLabel.FadeInAnim:Play();
 end
 
-function ClickToZoomDataProviderMixin:OnZoneLabelFadeOut(isContinent)
-	if isContinent then
-		self.MapLabel:FadeOut();
-
-		if self:ShouldShowZoomOut() then
-			self.ZoomOutMapLabel:FadeIn();
-		end
-	end
+function ClickToZoomDataProviderMixin:FadeOut()
+	self.MapLabel.FadeOutAnim:Play();
 end
 
 function ClickToZoomDataProviderMixin:OnAdded(mapCanvas)
 	MapCanvasDataProviderMixin.OnAdded(self, mapCanvas);
-
-	mapCanvas:RegisterCallback("ZoneLabelFadeInStart", self.OnZoneLabelFadeIn, self);
-	mapCanvas:RegisterCallback("ZoneLabelFadeOutStart", self.OnZoneLabelFadeOut, self);
-
-	self:UpdateZoomStyle();
+	
+	local fadeInCallback = function (event, isContinent)
+		if isContinent then
+			self:FadeIn();
+		end
+	end
+	
+	local fadeOutCallback = function (event, isContinent)
+		if isContinent then
+			self:FadeOut();
+		end
+	end
+	
+	self:GetMap():RegisterCallback("ZoneLabelFadeInStart", fadeInCallback);
+	self:GetMap():RegisterCallback("ZoneLabelFadeOutStart", fadeOutCallback);
 
 	if self.MapLabel then
-		self.MapLabel:SetParent(mapCanvas);
+		self.MapLabel:SetParent(self:GetMap());
+		self:ClearAllPoints();
 	else
-		self.MapLabel = CreateFrame("FRAME", nil, mapCanvas, "ClickToZoomDataProvider_LabelTemplate");
-
-		local showAtMaxZoom = false;
-		self.MapLabel:Init(FLIGHT_MAP_CLICK_TO_ZOOM_HINT, showAtMaxZoom);
-	end
-
-	if self.ZoomOutMapLabel then
-		self.ZoomOutMapLabel:SetParent(mapCanvas);
-	else
-		self.ZoomOutMapLabel = CreateFrame("FRAME", nil, mapCanvas, "ClickToZoomDataProvider_LabelTemplate");
-
-		local showAtMaxZoom = true;
-		self.ZoomOutMapLabel:Init(FLIGHT_MAP_CLICK_TO_ZOOM_OUT_HINT, showAtMaxZoom);
+		self.MapLabel = CreateFrame("FRAME", nil, self:GetMap(), "ClickToZoomDataProvider_LabelTemplate");
 	end
 
 	self:UpdateStyle();
-end
-
-function ClickToZoomDataProviderMixin:OnRemoved(mapCanvas)
-	mapCanvas:UnregisterCallback("ZoneLabelFadeInStart", self);
-	mapCanvas:UnregisterCallback("ZoneLabelFadeOutStart", self);	
-
-	MapCanvasDataProviderMixin.OnRemoved(self, mapCanvas);
+	self.MapLabel:SetFrameStrata("HIGH");
+	self.MapLabel:SetAlpha(1);
 end
 
 function ClickToZoomDataProviderMixin:RemoveAllData()
-	self.MapLabel:Reset();
-	self.ZoomOutMapLabel:Reset();
+	self.MapLabel.FadeInAnim:Stop()
+	self.MapLabel.FadeOutAnim:Stop()
+	self.MapLabel:SetAlpha(0);
 end
 
 function ClickToZoomDataProviderMixin:RefreshAllData(fromOnShow)
-	self.MapLabel:Refresh();
-
-	if self:ShouldShowZoomOut() then
-		self.ZoomOutMapLabel:Refresh();
+	if self:GetMap():IsZoomedOut() then
+		if not self.MapLabel.FadeInAnim:IsPlaying() then
+			self.MapLabel:SetAlpha(1);
+		end
 	else
-		self.ZoomOutMapLabel:Reset();
+		if not self.MapLabel.FadeOutAnim:IsPlaying() then
+			self.MapLabel:SetAlpha(0);
+		end
 	end
 end
 
 function ClickToZoomDataProviderMixin:UpdateStyle()
 	local style = ClickToZoomStyles[self:GetClickToZoomStyle()];
-	if style then
-		self.MapLabel:SetStyle(style);
-		self.ZoomOutMapLabel:SetStyle(style);
-	end
-end
-
-function ClickToZoomDataProviderMixin:UpdateZoomStyle()
-	local mapID = self:GetMap():GetMapID();
-	local mapInfo = C_Map.GetMapInfo(mapID);
-	self.shouldShowZoomOut = FlagsUtil.IsSet(mapInfo.flags, Enum.UIMapFlag.FlightMapShowZoomOut);
+	self.MapLabel:ClearAllPoints();
+	self.MapLabel:SetPoint(style.point, style.x, style.y);
+	local text = self.MapLabel.Text;
+	text:ClearAllPoints();
+	text:SetPoint(style.textPoint);
 end
 
 function ClickToZoomDataProviderMixin:OnMapChanged()
 	self:UpdateStyle();
-	self:UpdateZoomStyle();
-end
-
-function ClickToZoomDataProviderMixin:OnCanvasScaleChanged()
-	MapCanvasDataProviderMixin.OnCanvasScaleChanged(self);
-
-	if self:GetMap():IsAtMaxZoom() or self:GetMap():IsAtMinZoom() then
-		self:RefreshAllData();
-	end
 end
 
 function ClickToZoomDataProviderMixin:GetClickToZoomStyle()
 	local mapID = self:GetMap():GetMapID();
 	if mapID then
-		return C_Map.GetMapArtHelpTextPosition(mapID);
+		local preferredStyle = C_MapCanvas.GetPreferredHelpTextPosition(mapID);
+		if preferredStyle then
+			return preferredStyle;
+		end
 	end
 	
 	return Enum.MapCanvasPosition.BottomRight;
-end
-
-function ClickToZoomDataProviderMixin:ShouldShowZoomOut()
-	return self.shouldShowZoomOut;
-end
-
-ClickToZoomDataProvider_LabelMixin = {};
-
-function ClickToZoomDataProvider_LabelMixin:Init(text, showAtMaxZoom)
-	self.Text:SetText(text);
-	self.showAtMaxZoom = showAtMaxZoom;
-	self:SetFrameStrata("HIGH");
-	self:SetAlpha(0);
-end
-
-function ClickToZoomDataProvider_LabelMixin:SetStyle(style)
-	self:ClearAllPoints();
-	self:SetPoint(style.point, style.x, style.y);
-	local text = self.Text;
-	text:ClearAllPoints();
-	text:SetPoint(style.textPoint);
-end
-
-function ClickToZoomDataProvider_LabelMixin:FadeIn()
-	self.FadeInAnim:Play();
-end
-
-function ClickToZoomDataProvider_LabelMixin:FadeOut()
-	self.FadeOutAnim:Play();
-end
-
-function ClickToZoomDataProvider_LabelMixin:Refresh()
-	if self.showAtMaxZoom == self:GetMap():IsAtMaxZoom() then
-		if not self.FadeInAnim:IsPlaying() then
-			self:SetAlpha(1);
-		end
-	else
-		if not self.FadeOutAnim:IsPlaying() then
-			self:SetAlpha(0);
-		end
-	end
-end
-
-function ClickToZoomDataProvider_LabelMixin:Reset()
-	self.FadeInAnim:Stop()
-	self.FadeOutAnim:Stop()
-	self:SetAlpha(0);
-end
-
-function ClickToZoomDataProvider_LabelMixin:GetMap()
-	return self:GetParent();
 end

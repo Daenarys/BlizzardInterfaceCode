@@ -25,14 +25,12 @@ function AdventureMapInsetMixin:Initialize(mapCanvas, collapsed, insetIndex, map
 	self.CollapsedFrame:SetAlpha(self.collapsed and 1.0 or 0.0);
 	self.ExpandedFrame:SetShown(not self.collapsed);
 	self.CollapsedFrame:SetShown(self.collapsed);
+
+	local _, collapsedIconWidth, collapsedIconHeight = GetAtlasInfo(collapsedIcon);
 	self.CollapsedFrame.Text:SetText(string.upper(title));
 	self.CollapsedFrame.TextBackground:SetWidth(self.CollapsedFrame.Text:GetWidth() + 15);
 	self.CollapsedFrame.Icon:SetAtlas(collapsedIcon, true);
-
-	local collapsedInfo = C_Texture.GetAtlasInfo(collapsedIcon);
-	local collapsedIconWidth = collapsedInfo and collapsedInfo.width or 0;
-	local collapsedIconHeight = collapsedInfo and collapsedInfo.height or 0;
-	self.CollapsedFrame:SetSize(collapsedIconWidth, collapsedIconHeight);
+	self.CollapsedFrame:SetSize(collapsedIconWidth or 0, collapsedIconHeight or 0);
 
 	self.normalizedX = normalizedX;
 	self.normalizedY = normalizedY;
@@ -71,11 +69,11 @@ function AdventureMapInsetMixin:BuildDetailTiles(insetIndex, tileIndex, numDetai
 	end
 
 	for tileIndex = 1, numDetailTiles do
-		local textureFileDataID = C_AdventureMap.GetMapInsetDetailTileInfo(insetIndex, tileIndex);
+		local texturePath = C_AdventureMap.GetMapInsetDetailTileInfo(insetIndex, tileIndex);
 
 		local detailTile = self.detailTilePool:Acquire();
 		detailTile:SetSize(EFFECTIVE_TILE_WIDTH, EFFECTIVE_TILE_HEIGHT);
-		detailTile:SetTexture(textureFileDataID);
+		detailTile:SetTexture(texturePath);
 
 		local tileRow = math.floor((tileIndex - 1) / TILES_PER_ROW) + 1;
 		local tileCol = (tileIndex - 1) % TILES_PER_ROW + 1;
@@ -101,7 +99,7 @@ function AdventureMapInsetMixin:SyncAnimation()
 
 	self.CollapseExpandAnim.ExpandedFrameAnim:SetFromAlpha(self.ExpandedFrame:GetAlpha());
 	self.CollapseExpandAnim.CollapsedFrameAnim:SetFromAlpha(self.CollapsedFrame:GetAlpha());
-
+	
 	if self.collapsed then
 		self.CollapseExpandAnim.ExpandedFrameAnim:SetToAlpha(0.0);
 		self.CollapseExpandAnim.CollapsedFrameAnim:SetToAlpha(1.0);

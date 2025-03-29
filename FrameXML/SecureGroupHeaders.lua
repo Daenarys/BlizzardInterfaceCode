@@ -117,13 +117,6 @@ local function SetupUnitButtonConfiguration( header, newChild, defaultConfigFunc
 			                      selfHandle, configCode, selfHandle);
 		end
 	end
-
-	local copyAttributes = header:GetAttribute("_initialAttributeNames");
-	if ( type(copyAttributes) == "string" ) then
-		for name in copyAttributes:gmatch("[^,]+") do
-			newChild:SetAttribute(name, scrub(header:GetAttribute("_initialAttribute-" .. name)));
-		end
-	end
 end
 
 -- creates child frames and finished configuring them
@@ -1023,11 +1016,10 @@ function SecureAuraHeader_Update(self)
 		end
 
 		local i = 1;
-		if (AuraUtil.ForEachAura) then
-			-- Mainline iteration-style.
-			AuraUtil.ForEachAura(unit, fullFilter, nil, function(...)
-				local aura, _, duration = freshTable();
-				aura.name, _, _, _, duration, aura.expires, aura.caster, _, aura.shouldConsolidate, _ = ...;
+		repeat
+			local aura, _, duration = freshTable();
+			aura.name, _, _, _, _, duration, aura.expires, aura.caster, _, aura.shouldConsolidate, _ = UnitAura(unit, i, fullFilter);
+			if ( aura.name ) then
 				aura.filter = fullFilter;
 				aura.index = i;
 				local targetList = sortingTable;
@@ -1037,30 +1029,11 @@ function SecureAuraHeader_Update(self)
 					end
 				end
 				tinsert(targetList, aura);
-				i = i + 1;
-				return false;
-			end);
-		else
-			-- Classic iteration-style. (TODO: Unify me!)
-			repeat
-				local aura, _, duration = freshTable();
-				aura.name, _, _, _, duration, aura.expires, aura.caster, _, aura.shouldConsolidate, _ = UnitAura(unit, i, fullFilter);
-				if ( aura.name ) then
-					aura.filter = fullFilter;
-					aura.index = i;
-					local targetList = sortingTable;
-					if ( consolidateTable and aura.shouldConsolidate ) then
-						if ( not aura.expires or duration > consolidateDuration or (aura.expires - time >= max(consolidateThreshold, duration * consolidateFraction)) ) then
-							targetList = consolidateTable;
-						end
-					end
-					tinsert(targetList, aura);
-				else
-					releaseTable(aura);
-				end
-				i = i + 1;
-			until ( not aura.name );
-		end
+			else
+				releaseTable(aura);
+			end
+			i = i + 1;
+		until ( not aura.name );
 	end
 	if ( includeWeapons and not weaponPosition ) then
 		weaponPosition = 0;

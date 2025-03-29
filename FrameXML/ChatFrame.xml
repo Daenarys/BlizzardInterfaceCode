@@ -17,7 +17,7 @@
 			</OnHyperlinkClick>
 		</Scripts>
 	</ScrollingMessageFrame>
-	<EditBox name="ChatFrameEditBoxTemplate" inherits="AutoCompleteEditBoxTemplate" autoFocus="false" ignoreArrows="true" frameStrata="DIALOG" toplevel="true" historyLines="32" bytes="512" visibleBytes="255" invisibleBytes="255" hidden="true" virtual="true">
+	<EditBox name="ChatFrameEditBoxTemplate" inherits="AutoCompleteEditBoxTemplate" autoFocus="false" ignoreArrows="true" frameStrata="DIALOG" toplevel="true" historyLines="32" letters="255" invisibleBytes="256" hidden="true" virtual="true">
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture name="$parentLeft" file="Interface\ChatFrame\UI-ChatInputBorder-Left2">
@@ -71,18 +71,6 @@
 				<FontString name="$parentHeaderSuffix" inherits="ChatFontNormal" parentKey="headerSuffix" text="CHAT_HEADER_SUFFIX">
 					<Anchors>
 						<Anchor point="LEFT" relativeTo="$parentHeader" relativePoint="RIGHT"/>
-					</Anchors>
-				</FontString>
-				<FontString name="$parentNewcomerHint" inherits="ChatFontNormal" parentKey="NewcomerHint">
-					<Anchors>
-						<Anchor point="LEFT" relativeTo="$parentHeader"/>
-					</Anchors>
-					<Color color="DISABLED_FONT_COLOR"/>
-				</FontString>
-				<FontString name="$parentPrompt" inherits="ChatFontNormal" hidden="true" ignoreParentAlpha="true" parentKey="prompt">
-					<Size x="0" y="14"/>
-					<Anchors>
-						<Anchor point="LEFT" x="15" y="0"/>
 					</Anchors>
 				</FontString>
 			</Layer>
@@ -149,7 +137,7 @@
 				ChatEdit_OnChar(self)
 			</OnChar>
 		</Scripts>
-		<FontString inherits="ChatFontNormal"/>
+		<FontString inherits="ChatFontNormal" bytes="512"/>
 	</EditBox>
 	<Frame name="ChatChannelDropDown" inherits="UIDropDownMenuTemplate"/>
 	<Frame name="ChatBNPlayerDropDown" inherits="UIDropDownMenuTemplate"/>

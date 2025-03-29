@@ -1,29 +1,15 @@
 function CinematicsFrame_OnLoad(self)
-	local buttonPadding = 8;
-	local framePadding = 80;
-	local maxVideos = GetClientDisplayExpansionLevel() + 1;
-	local columnSize = math.ceil(maxVideos / 2);
-	local height = 0;
-	local rightColumnHeight = 0;
-
-	for i, button in ipairs(self.CinematicsButtons) do
-		if(i > maxVideos) then
+	local button;
+	local height = 80;
+	local numMovies = GetClientDisplayExpansionLevel() + 1;	
+	for i = 1, numMovies do
+		button = _G["CinematicsButton"..i];
+		if ( not button ) then
 			break;
 		end
 		button:Show();
-		if i < columnSize then
-			height = height + button:GetHeight() + buttonPadding;
-		else
-			rightColumnHeight = rightColumnHeight + button:GetHeight() + buttonPadding;
-		end
+		height = height + button:GetHeight() + 8;
 	end
-
-	if maxVideos > 1 then
-		self.CinematicsButtons[columnSize+1]:ClearAllPoints();
-		self.CinematicsButtons[columnSize+1]:SetPoint("TOPRIGHT", self, "TOPRIGHT", -40, -44);
-	end
-
-	height = math.max(height, rightColumnHeight) + framePadding;
 	CinematicsFrame:SetHeight(height);
 end
 
@@ -135,17 +121,14 @@ end
 function CinematicsFrame_OnShow(self)
 	self:Raise();
 	local numMovies = GetClientDisplayExpansionLevel() + 1;
-	for i, button in ipairs(self.CinematicsButtons) do
-		if(i > numMovies) then
+	for i = 1, numMovies do
+		local button = _G["CinematicsButton"..i];
+		if ( not button ) then
 			break;
 		end
+		button:Show();
 		CinematicsButton_Update(button);
 	end
-	GlueParent_AddModalFrame(self);
-end
-
-function CinematicsFrame_OnHide(self)
-	GlueParent_RemoveModalFrame(self);
 end
 
 function CinematicsFrame_OnKeyDown(self, key)

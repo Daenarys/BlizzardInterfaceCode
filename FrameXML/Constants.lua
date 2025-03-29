@@ -1,25 +1,57 @@
-﻿--
+--
 -- New constants should be added to this file and other constants
 -- deprecated and moved to this file.
 --
 
-WORLD_QUEST_ICONS_BY_PROFESSION = {
-	[Constants.ProfessionIDs.PROFESSION_FIRST_AID] = "worldquest-icon-firstaid",
-	[Constants.ProfessionIDs.PROFESSION_BLACKSMITHING] = "worldquest-icon-blacksmithing",
-	[Constants.ProfessionIDs.PROFESSION_LEATHERWORKING] = "worldquest-icon-leatherworking",
-	[Constants.ProfessionIDs.PROFESSION_ALCHEMY] = "worldquest-icon-alchemy",
-	[Constants.ProfessionIDs.PROFESSION_HERBALISM] = "worldquest-icon-herbalism",
-	[Constants.ProfessionIDs.PROFESSION_MINING] = "worldquest-icon-mining",
-	[Constants.ProfessionIDs.PROFESSION_ENGINEERING] = "worldquest-icon-engineering",
-	[Constants.ProfessionIDs.PROFESSION_ENCHANTING] = "worldquest-icon-enchanting",
-	[Constants.ProfessionIDs.PROFESSION_JEWELCRAFTING] = "worldquest-icon-jewelcrafting",
-	[Constants.ProfessionIDs.PROFESSION_INSCRIPTION] = "worldquest-icon-inscription",
-	[Constants.ProfessionIDs.PROFESSION_ARCHAEOLOGY] = "worldquest-icon-archaeology",
-	[Constants.ProfessionIDs.PROFESSION_FISHING] = "worldquest-icon-fishing",
-	[Constants.ProfessionIDs.PROFESSION_COOKING] = "worldquest-icon-cooking",
-	[Constants.ProfessionIDs.PROFESSION_TAILORING] = "worldquest-icon-tailoring",
-	[Constants.ProfessionIDs.PROFESSION_SKINNING] = "worldquest-icon-skinning",
-};
+--
+-- Expansion Info
+--
+MAX_PLAYER_LEVEL_TABLE = {};
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_CLASSIC] = 60;
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_BURNING_CRUSADE] = 70;
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_WRATH_OF_THE_LICH_KING] = 80;
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_CATACLYSM] = 85;
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_MISTS_OF_PANDARIA] = 90;
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_WARLORDS_OF_DRAENOR] = 100;
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_LEGION] = 110;
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_8_0] = 110;
+
+NPE_TUTORIAL_COMPLETE_LEVEL = 10;
+
+--
+-- Colors
+--
+NORMAL_FONT_COLOR_CODE		= "|cffffd200";
+HIGHLIGHT_FONT_COLOR_CODE	= "|cffffffff";
+RED_FONT_COLOR_CODE			= "|cffff2020";
+GREEN_FONT_COLOR_CODE		= "|cff20ff20";
+GRAY_FONT_COLOR_CODE		= "|cff808080";
+YELLOW_FONT_COLOR_CODE		= "|cffffff00";
+LIGHTYELLOW_FONT_COLOR_CODE	= "|cffffff9a";
+ORANGE_FONT_COLOR_CODE		= "|cffff7f3f";
+ACHIEVEMENT_COLOR_CODE		= "|cffffff00";
+BATTLENET_FONT_COLOR_CODE	= "|cff82c5ff";
+DISABLED_FONT_COLOR_CODE	= "|cff7f7f7f";
+FONT_COLOR_CODE_CLOSE		= "|r";
+
+NORMAL_FONT_COLOR			= CreateColor(1.0, 0.82, 0.0);
+HIGHLIGHT_FONT_COLOR		= CreateColor(1.0, 1.0, 1.0);
+RED_FONT_COLOR				= CreateColor(1.0, 0.1, 0.1);
+DIM_RED_FONT_COLOR			= CreateColor(0.8, 0.1, 0.1);
+DULL_RED_FONT_COLOR			= CreateColor(0.75, 0.15, 0.15);
+GREEN_FONT_COLOR			= CreateColor(0.1, 1.0, 0.1);
+GRAY_FONT_COLOR				= CreateColor(0.5, 0.5, 0.5);
+YELLOW_FONT_COLOR			= CreateColor(1.0, 1.0, 0.0);
+LIGHTYELLOW_FONT_COLOR		= CreateColor(1.0, 1.0, 0.6);
+ORANGE_FONT_COLOR			= CreateColor(1.0, 0.5, 0.25);
+PASSIVE_SPELL_FONT_COLOR	= CreateColor(0.77, 0.64, 0.0);
+BATTLENET_FONT_COLOR 		= CreateColor(0.510, 0.773, 1.0);
+TRANSMOGRIFY_FONT_COLOR		= CreateColor(1, 0.5, 1);
+DISABLED_FONT_COLOR			= CreateColor(0.498, 0.498, 0.498);
+LIGHTBLUE_FONT_COLOR		= CreateColor(0.53, 0.67, 1.0);
+LIGHTGRAY_FONT_COLOR		= CreateColor(0.6, 0.6, 0.6);
+PAPER_FRAME_EXPANDED_COLOR	= CreateColor(0.929, 0.788, 0.620);
+PAPER_FRAME_COLLAPSED_COLOR = CreateColor(0.827, 0.659, 0.463);
 
 CHAT_FONT_HEIGHTS = {
 	[1] = 12,
@@ -27,6 +59,36 @@ CHAT_FONT_HEIGHTS = {
 	[3] = 16,
 	[4] = 18
 };
+
+MATERIAL_TEXT_COLOR_TABLE = {
+	["Default"] = {0.18, 0.12, 0.06},
+	["Stone"] = {1.0, 1.0, 1.0},
+	["Parchment"] = {0.18, 0.12, 0.06},
+	["Marble"] = {0, 0, 0},
+	["Silver"] = {0.12, 0.12, 0.12},
+	["Bronze"] = {0.18, 0.12, 0.06},
+	["ParchmentLarge"] = {.141, 0, 0}
+};
+MATERIAL_TITLETEXT_COLOR_TABLE = {
+	["Default"] = {0, 0, 0},
+	["Stone"] = {0.93, 0.82, 0},
+	["Parchment"] = {0, 0, 0},
+	["Marble"] = {0.93, 0.82, 0},
+	["Silver"] = {0.93, 0.82, 0},
+	["Bronze"] = {0.93, 0.82, 0},
+	["ParchmentLarge"] = {.208, 0, 0}
+};
+
+FRIENDS_BNET_NAME_COLOR = {r=0.510, g=0.773, b=1.0};
+FRIENDS_BNET_BACKGROUND_COLOR = {r=0, g=0.694, b=0.941, a=0.05};
+FRIENDS_WOW_NAME_COLOR = {r=0.996, g=0.882, b=0.361};
+FRIENDS_WOW_BACKGROUND_COLOR = {r=1.0, g=0.824, b=0.0, a=0.05};
+FRIENDS_GRAY_COLOR = {r=0.486, g=0.518, b=0.541};
+FRIENDS_OFFLINE_BACKGROUND_COLOR = {r=0.588, g=0.588, b=0.588, a=0.05};
+FRIENDS_BNET_NAME_COLOR_CODE = "|cff82c5ff";
+FRIENDS_BROADCAST_TIME_COLOR_CODE = "|cff4381a8"
+FRIENDS_WOW_NAME_COLOR_CODE = "|cfffde05c";
+FRIENDS_OTHER_NAME_COLOR_CODE = "|cff7b8489";
 
 HTML_START = "<html><body><p>";
 HTML_START_CENTERED = "<html><body><p align=\"center\">";
@@ -65,6 +127,15 @@ WARLOCK_SOULBURN = 117198;
 WARLOCK_GREEN_FIRE = 101508;
 BATTLEGROUND_ENLISTMENT_BONUS = 241260;
 
+SCHOOL_MASK_NONE	= 0x00;
+SCHOOL_MASK_PHYSICAL	= 0x01;
+SCHOOL_MASK_HOLY	= 0x02;
+SCHOOL_MASK_FIRE	= 0x04;
+SCHOOL_MASK_NATURE	= 0x08;
+SCHOOL_MASK_FROST	= 0x10;
+SCHOOL_MASK_SHADOW	= 0x20;
+SCHOOL_MASK_ARCANE	= 0x40;
+
 SCHOOL_STRINGS = {
 	STRING_SCHOOL_PHYSICAL,
 	STRING_SCHOOL_HOLY,
@@ -78,13 +149,29 @@ SCHOOL_STRINGS = {
 
 MAX_POWER_PER_EMBER = 10;
 
+--
+-- Talent
+--
+SHOW_TALENT_LEVEL = 15;
+SHOW_PVP_TALENT_LEVEL = 100;
+SHOW_PVP_LEVEL = 10;
+SHOW_LFD_LEVEL = 15;
+SHOW_MASTERY_LEVEL = 78;
+CLASS_TALENT_LEVELS = {
+	["DEFAULT"]		= { 15, 30, 45, 60, 75, 90, 100 };
+	["DEATHKNIGHT"]	= { 56, 57, 58, 60, 75, 90, 100 };
+	["DEMONHUNTER"]	= { 99, 100, 102, 104, 106, 108, 110 };
+}
+
 SPECIALIZATION_TAB = 1;
 TALENTS_TAB = 2;
-NUM_TALENT_FRAME_TABS = 2;
+PVP_TALENTS_TAB = 3;
+NUM_TALENT_FRAME_TABS = 3;
 
 --
 -- Specs
 --
+SHOW_SPEC_LEVEL = 10
 SPEC_WARLOCK_AFFLICTION = 1;	--These are spec indices
 SPEC_WARLOCK_DEMONOLOGY = 2;
 SPEC_WARLOCK_DESTRUCTION = 3;
@@ -137,35 +224,35 @@ ITEM_UNIQUE_EQUIPPED = -1;
 MAX_NUM_SOCKETS = 3;
 
 BAG_ITEM_QUALITY_COLORS = {
-	[Enum.ItemQuality.Common] = COMMON_GRAY_COLOR,
-	[Enum.ItemQuality.Uncommon] = UNCOMMON_GREEN_COLOR,
-	[Enum.ItemQuality.Rare] = RARE_BLUE_COLOR,
-	[Enum.ItemQuality.Epic] = EPIC_PURPLE_COLOR,
-	[Enum.ItemQuality.Legendary] = LEGENDARY_ORANGE_COLOR,
-	[Enum.ItemQuality.Artifact] = ARTIFACT_GOLD_COLOR,
-	[Enum.ItemQuality.Heirloom] = HEIRLOOM_BLUE_COLOR,
-	[Enum.ItemQuality.WoWToken] = HEIRLOOM_BLUE_COLOR,
+	[LE_ITEM_QUALITY_COMMON] = {r=0.65882,g=0.65882,b=0.65882},
+	[LE_ITEM_QUALITY_UNCOMMON] = {r=0.08235, g=0.70196, b=0},
+	[LE_ITEM_QUALITY_RARE] = {r=0, g=0.56863, b=0.94902},
+	[LE_ITEM_QUALITY_EPIC] = {r=0.78431, g=0.27059, b=0.98039},
+	[LE_ITEM_QUALITY_LEGENDARY] = {r=1, g=0.50196, b=0},
+	[LE_ITEM_QUALITY_ARTIFACT] = {r=0.90196, g=0.8, b=0.50196},
+	[LE_ITEM_QUALITY_HEIRLOOM] = {r=0, g=0.8, b=1},
+	[LE_ITEM_QUALITY_WOW_TOKEN] = {r=0, g=0.8, b=1},
 }
 
 NEW_ITEM_ATLAS_BY_QUALITY = {
-	[Enum.ItemQuality.Poor] = "bags-glow-white",
-	[Enum.ItemQuality.Common] = "bags-glow-white",
-	[Enum.ItemQuality.Uncommon] = "bags-glow-green",
-	[Enum.ItemQuality.Rare] = "bags-glow-blue",
-	[Enum.ItemQuality.Epic] = "bags-glow-purple",
-	[Enum.ItemQuality.Legendary] = "bags-glow-orange",
-	[Enum.ItemQuality.Artifact] = "bags-glow-artifact",
-	[Enum.ItemQuality.Heirloom] = "bags-glow-heirloom",
+	[LE_ITEM_QUALITY_POOR] = "bags-glow-white",
+	[LE_ITEM_QUALITY_COMMON] = "bags-glow-white",
+	[LE_ITEM_QUALITY_UNCOMMON] = "bags-glow-green",
+	[LE_ITEM_QUALITY_RARE] = "bags-glow-blue",
+	[LE_ITEM_QUALITY_EPIC] = "bags-glow-purple",
+	[LE_ITEM_QUALITY_LEGENDARY] = "bags-glow-orange",
+	[LE_ITEM_QUALITY_ARTIFACT] = "bags-glow-artifact",
+	[LE_ITEM_QUALITY_HEIRLOOM] = "bags-glow-heirloom",
 };
 
 -- Loot
 LOOT_BORDER_BY_QUALITY = {
-	[Enum.ItemQuality.Uncommon] = "loottoast-itemborder-green",
-	[Enum.ItemQuality.Rare] = "loottoast-itemborder-blue",
-	[Enum.ItemQuality.Epic] = "loottoast-itemborder-purple",
-	[Enum.ItemQuality.Legendary] = "loottoast-itemborder-orange",
-	[Enum.ItemQuality.Heirloom] = "loottoast-itemborder-heirloom",
-	[Enum.ItemQuality.Artifact] = "loottoast-itemborder-artifact",
+	[LE_ITEM_QUALITY_UNCOMMON] = "loottoast-itemborder-green",
+	[LE_ITEM_QUALITY_RARE] = "loottoast-itemborder-blue",
+	[LE_ITEM_QUALITY_EPIC] = "loottoast-itemborder-purple",
+	[LE_ITEM_QUALITY_LEGENDARY] = "loottoast-itemborder-orange",
+	[LE_ITEM_QUALITY_HEIRLOOM] = "loottoast-itemborder-heirloom",
+	[LE_ITEM_QUALITY_ARTIFACT] = "loottoast-itemborder-artifact",
 };
 
 LOOT_ROLL_TYPE_PASS = 0;
@@ -372,6 +459,31 @@ COMBATLOG_FILTER_EVERYTHING =	0xFFFFFFFF;
 --
 CALENDAR_FIRST_WEEKDAY			= 1;		-- 1=SUN 2=MON 3=TUE 4=WED 5=THU 6=FRI 7=SAT
 
+-- Event Types
+CALENDAR_EVENTTYPE_RAID			= 1;
+CALENDAR_EVENTTYPE_DUNGEON		= 2;
+CALENDAR_EVENTTYPE_PVP			= 3;
+CALENDAR_EVENTTYPE_MEETING		= 4;
+CALENDAR_EVENTTYPE_OTHER		= 5;
+CALENDAR_MAX_EVENTTYPE			= CALENDAR_EVENTTYPE_OTHER;
+
+-- Invite Statuses
+CALENDAR_INVITESTATUS_INVITED		= 1;
+CALENDAR_INVITESTATUS_ACCEPTED		= 2;
+CALENDAR_INVITESTATUS_DECLINED		= 3;
+CALENDAR_INVITESTATUS_CONFIRMED		= 4;
+CALENDAR_INVITESTATUS_OUT			= 5;
+CALENDAR_INVITESTATUS_STANDBY		= 6;
+CALENDAR_INVITESTATUS_SIGNEDUP		= 7;
+CALENDAR_INVITESTATUS_NOT_SIGNEDUP	= 8;
+CALENDAR_INVITESTATUS_TENTATIVE		= 9;
+CALENDAR_MAX_INVITESTATUS			= CALENDAR_INVITESTATUS_TENTATIVE;
+
+-- Invite Types
+CALENDAR_INVITETYPE_NORMAL		= 1;
+CALENDAR_INVITETYPE_SIGNUP		= 2;
+CALENDAR_MAX_INVITETYPE			= CALENDAR_INVITETYPE_SIGNUP;
+
 --
 -- Difficulty
 --
@@ -382,7 +494,6 @@ QuestDifficultyColors = {
 	["standard"]		= { r = 0.25, g = 0.75, b = 0.25, font = "QuestDifficulty_Standard" };
 	["trivial"]			= { r = 0.50, g = 0.50, b = 0.50, font = "QuestDifficulty_Trivial" };
 	["header"]			= { r = 0.70, g = 0.70, b = 0.70, font = "QuestDifficulty_Header" };
-	["disabled"]		= { r = 0.498, g = 0.498, b = 0.498, font = "QuestDifficulty_Impossible" };
 };
 
 QuestDifficultyHighlightColors = {
@@ -392,7 +503,6 @@ QuestDifficultyHighlightColors = {
 	["standard"]		= { r = 0.43, g = 0.93, b = 0.43, font = "QuestDifficulty_Standard" };
 	["trivial"]			= { r = 0.70, g = 0.70, b = 0.70,  font = "QuestDifficulty_Trivial" };
 	["header"]			= { r = 1.00, g = 1.00, b = 1.00, font = "QuestDifficulty_Header" };
-	["disabled"]		= { r = 0.60, g = 0.60, b = 0.60, font = "QuestDifficulty_Impossible" };
 };
 
 --
@@ -463,6 +573,10 @@ SHOW_SEARCH_BAR_NUM_FRIENDS = 12;
 -- Search box
 MIN_CHARACTER_SEARCH = 3;
 
+-- faction
+PLAYER_FACTION_GROUP = { [0] = "Horde", [1] = "Alliance" };
+PLAYER_FACTION_COLORS = { [0] = {r=0.90, g=0.05, b=0.07}, [1]={r=0.29, g=0.33, b=0.91}}
+
 -- Panel default size
 PANEL_DEFAULT_WIDTH = 338;
 PANEL_DEFAULT_HEIGHT = 424;
@@ -489,36 +603,18 @@ CALENDAR_WEEKDAY_NAMES = {
 	WEEKDAY_SATURDAY,
 };
 
--- month names show up differently for full date displays in some languages
-CALENDAR_FULLDATE_MONTH_NAMES = {
-	FULLDATE_MONTH_JANUARY,
-	FULLDATE_MONTH_FEBRUARY,
-	FULLDATE_MONTH_MARCH,
-	FULLDATE_MONTH_APRIL,
-	FULLDATE_MONTH_MAY,
-	FULLDATE_MONTH_JUNE,
-	FULLDATE_MONTH_JULY,
-	FULLDATE_MONTH_AUGUST,
-	FULLDATE_MONTH_SEPTEMBER,
-	FULLDATE_MONTH_OCTOBER,
-	FULLDATE_MONTH_NOVEMBER,
-	FULLDATE_MONTH_DECEMBER,
-};
-
 
 -- Druid Forms.
 CAT_FORM = 1;
 BEAR_FORM = 5;
 MOONKIN_FORM = 31;
 
--- Rogue Forms
-ROGUE_STEALTH = 30;
-
 -- PVP Global Lua Constants
 CONQUEST_CURRENCY = 390;
 HONOR_CURRENCY = 392;
 JUSTICE_CURRENCY = 395;
 VALOR_CURRENCY = 396;
+SHOW_CONQUEST_LEVEL = 70;
 
 -- Looking for Guild Parameters
 LFGUILD_PARAM_QUESTS 	= 1;
@@ -613,7 +709,6 @@ CHALLENGE_MEDAL_TEXTURES_SMALL = {
 -- Player Reporting
 PLAYER_REPORT_TYPE_SPAM = "spam";
 PLAYER_REPORT_TYPE_LANGUAGE = "language";
-PLAYER_REPORT_TYPE_ABUSE = "abuse";
 PLAYER_REPORT_TYPE_BAD_PLAYER_NAME = "badplayername";
 PLAYER_REPORT_TYPE_BAD_GUILD_NAME = "badguildname";
 PLAYER_REPORT_TYPE_CHEATING = "cheater";
@@ -630,6 +725,7 @@ QUEST_TYPE_SCENARIO = 98;
 MAX_QUESTS = 25;
 MAX_OBJECTIVES = 20;
 MAX_QUESTLOG_QUESTS = 25;
+MAX_WATCHABLE_QUESTS = 25;
 
 WORLD_QUESTS_TIME_CRITICAL_MINUTES = 15;
 WORLD_QUESTS_TIME_LOW_MINUTES = 75;
@@ -647,13 +743,24 @@ LFG_CATEGORY_NAMES = {
 	[LE_LFG_CATEGORY_BATTLEFIELD] = LFG_CATEGORY_BATTLEFIELD,
 }
 
+-- Instance Difficulty
+DIFFICULTY_DUNGEON_NORMAL = 1;
+DIFFICULTY_DUNGEON_HEROIC = 2;
+DIFFICULTY_RAID10_NORMAL = 3;
+DIFFICULTY_RAID25_NORMAL = 4;
+DIFFICULTY_RAID10_HEROIC = 5;
+DIFFICULTY_RAID25_HEROIC = 6;
+DIFFICULTY_RAID_LFR = 7;
+DIFFICULTY_DUNGEON_CHALLENGE = 8;
+DIFFICULTY_RAID40 = 9;
+DIFFICULTY_PRIMARYRAID_NORMAL = 14;
+DIFFICULTY_PRIMARYRAID_HEROIC = 15;
+DIFFICULTY_PRIMARYRAID_MYTHIC = 16;
+DIFFICULTY_PRIMARYRAID_LFR = 17;
+
 -- PVP
 MAX_ARENA_TEAMS = 2;
 MAX_WORLD_PVP_QUEUES = 2;
-CONQUEST_SIZE_STRINGS = { ARENA_2V2, ARENA_3V3, BATTLEGROUND_10V10 };
-CONQUEST_TYPE_STRINGS = { ARENA, ARENA, BATTLEGROUNDS };
-CONQUEST_SIZES = {2, 3, 10};
-CONQUEST_BRACKET_INDEXES = { 1, 2, 4 }; -- 5v5 was removed
 
 -- Chat
 CHANNEL_INVITE_TIMEOUT = 60;
@@ -668,9 +775,16 @@ SCENARIO_FLAG_DEPRECATED3			= 0x00000008;
 LUA_WARNING_TREAT_AS_ERROR = 0;
 
 -- Quest Tags
-QUEST_ICONS_FILE = "Interface\\QuestFrame\\QuestTypeIcons";
-QUEST_ICONS_FILE_WIDTH = 128;
-QUEST_ICONS_FILE_HEIGHT = 64;
+QUEST_TAG_GROUP = 1;
+QUEST_TAG_PVP = 41;
+QUEST_TAG_RAID = 62;
+QUEST_TAG_DUNGEON = 81;
+QUEST_TAG_LEGENDARY = 83;
+QUEST_TAG_HEROIC = 85;
+QUEST_TAG_RAID10 = 88;
+QUEST_TAG_RAID25 = 89;
+QUEST_TAG_SCENARIO = 98;
+QUEST_TAG_ACCOUNT = 102;
 
 QUEST_TAG_TCOORDS = {
 	["COMPLETED"] = { 0.140625, 0.28125, 0, 0.28125 },
@@ -680,24 +794,22 @@ QUEST_TAG_TCOORDS = {
 	["STORY"] = { 0.703125, 0.84375, 0.28125, 0.5625 },
 	["ALLIANCE"] = { 0.421875, 0.5625, 0.28125, 0.5625 },
 	["HORDE"] = { 0.5625, 0.703125, 0.28125, 0.5625 },
-	["EXPIRING_SOON"] = { 0.84375, 0.984375, 0.5625, 0.84375 },
-	["EXPIRING"] = { 0.703125, 0.84375, 0.5625, 0.84375 },
-	[Enum.QuestTag.Dungeon] = { 0.421875, 0.5625, 0, 0.28125 },
-	[Enum.QuestTag.Scenario] = { 0.5625, 0.703125, 0, 0.28125 },
-	[Enum.QuestTag.Account] = { 0.84375, 0.984375, 0, 0.28125 },
-	[Enum.QuestTag.Legendary] = { 0, 0.140625, 0.28125, 0.5625 },
-	[Enum.QuestTag.Group] = { 0.140625, 0.28125, 0.28125, 0.5625 },
-	[Enum.QuestTag.PvP] = { 0.28125, 0.421875, 0.28125, 0.5625 },
-	[Enum.QuestTag.Heroic] = { 0, 0.140625, 0.5625, 0.84375 },
+	[QUEST_TAG_DUNGEON] = { 0.421875, 0.5625, 0, 0.28125 },
+	[QUEST_TAG_SCENARIO] = { 0.5625, 0.703125, 0, 0.28125 },
+	[QUEST_TAG_ACCOUNT] = { 0.84375, 0.984375, 0, 0.28125 },
+	[QUEST_TAG_LEGENDARY] = { 0, 0.140625, 0.28125, 0.5625 },
+	[QUEST_TAG_GROUP] = { 0.140625, 0.28125, 0.28125, 0.5625 },
+	[QUEST_TAG_PVP] = { 0.28125, 0.421875, 0.28125, 0.5625 },
+	[QUEST_TAG_HEROIC] = { 0, 0.140625, 0.5625, 0.84375 },
 	-- same texture for all raids
-	[Enum.QuestTag.Raid] = { 0.703125, 0.84375, 0, 0.28125 },
-	[Enum.QuestTag.Raid10] = { 0.703125, 0.84375, 0, 0.28125 },
-	[Enum.QuestTag.Raid25] = { 0.703125, 0.84375, 0, 0.28125 },
+	[QUEST_TAG_RAID] = { 0.703125, 0.84375, 0, 0.28125 },
+	[QUEST_TAG_RAID10] = { 0.703125, 0.84375, 0, 0.28125 },
+	[QUEST_TAG_RAID25] = { 0.703125, 0.84375, 0, 0.28125 },
 };
 
 WORLD_QUEST_TYPE_TCOORDS = {
-	[Enum.QuestTagType.Dungeon] = { 0.421875, 0.5625, 0, 0.28125 },
-	[Enum.QuestTagType.Raid] = { 0.703125, 0.84375, 0, 0.28125 },
+	[LE_QUEST_TAG_TYPE_DUNGEON] = { 0.421875, 0.5625, 0, 0.28125 },
+	[LE_QUEST_TAG_TYPE_RAID] = { 0.703125, 0.84375, 0, 0.28125 },
 };
 
 -- MATCH CONDITIONS
@@ -709,7 +821,7 @@ FIRST_NUMBER_CAP_VALUE = 1000;
 
 -- GARRISONS
 GARRISON_HIGH_THREAT_VALUE = 300;
-LOOT_SOURCE_GARRISON_CACHE = 10;
+
 WOW_TOKEN_ITEM_ID = 122284;
 
 -- TRANSMOG
@@ -733,15 +845,32 @@ TRANSMOG_INVALID_CODES = {
 	"",		-- invalid source
 	"",		-- invalid source quality
 	"CANNOT_USE",
-	"SLOT_FOR_RACE",
 }
 
 TRANSMOG_SOURCE_BOSS_DROP = 1;
 
-FIRST_TRANSMOG_COLLECTION_WEAPON_TYPE = Enum.TransmogCollectionType.Wand;
-LAST_TRANSMOG_COLLECTION_WEAPON_TYPE = Enum.TransmogCollectionTypeMeta.NumValues - 1;
+TRANSMOG_SLOTS = {
+	[1]  = { slot = "HEADSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_HEAD },
+	[2]  = { slot = "SHOULDERSLOT", 		transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_SHOULDER },
+	[3]  = { slot = "BACKSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_BACK },
+	[4]  = { slot = "CHESTSLOT",		 	transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_CHEST },
+	[5]  = { slot = "TABARDSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_TABARD },
+	[6]  = { slot = "SHIRTSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_SHIRT },
+	[7]  = { slot = "WRISTSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_WRIST },
+	[8]  = { slot = "HANDSSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_HANDS },
+	[9]  = { slot = "WAISTSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_WAIST },
+	[10] = { slot = "LEGSSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_LEGS },
+	[11] = { slot = "FEETSLOT", 			transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = LE_TRANSMOG_COLLECTION_TYPE_FEET },
+	[12] = { slot = "MAINHANDSLOT", 		transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = nil },
+	[13] = { slot = "SECONDARYHANDSLOT", 	transmogType = LE_TRANSMOG_TYPE_APPEARANCE,	armorCategoryID = nil },
+	[14] = { slot = "MAINHANDSLOT", 		transmogType = LE_TRANSMOG_TYPE_ILLUSION,	armorCategoryID = nil },
+	[15] = { slot = "SECONDARYHANDSLOT",	transmogType = LE_TRANSMOG_TYPE_ILLUSION,	armorCategoryID = nil },
+}
+
+FIRST_TRANSMOG_COLLECTION_WEAPON_TYPE = LE_TRANSMOG_COLLECTION_TYPE_FEET + 1;
+LAST_TRANSMOG_COLLECTION_WEAPON_TYPE = NUM_LE_TRANSMOG_COLLECTION_TYPES;
+NO_TRANSMOG_SOURCE_ID = 0;
 NO_TRANSMOG_VISUAL_ID = 0;
-REMOVE_TRANSMOG_ID = 0;
 
 -- ITEMSUBCLASSTYPES
 ITEMSUBCLASSTYPES = {
@@ -758,6 +887,48 @@ LFG_SUBTYPEID_RAID = 3;
 LFG_SUBTYPEID_SCENARIO = 4;
 LFG_SUBTYPEID_FLEXRAID = 5;
 LFG_SUBTYPEID_WORLDPVP = 6;
+
+-- CONTRIBUTIONS
+CONTRIBUTION_APPEARANCE_DATA = {
+	[Enum.ContributionState.Building] = {
+		stateName = CONTRIBUTION_UNDER_CONSTRUCTION,
+		stateColor = NORMAL_FONT_COLOR,
+		tooltipLine = CONTRIBUTION_POI_TOOLTIP_PERCENTAGE_BUILT,
+		tooltipUseTimeRemaining = false,
+		statusBarAtlas = "_Legionfall_BarFill_UnderConstruction",
+		borderAtlas = "Legionfall_YellowFrame",
+		bannerAtlas = "Legionfall_Banner",
+	},
+
+	[Enum.ContributionState.Active] = {
+		stateName = CONTRIBUTION_ACTIVE,
+		stateColor = GREEN_FONT_COLOR,
+		tooltipLine = CONTRIBUTION_ACTIVE,
+		tooltipUseTimeRemaining = false,
+		statusBarAtlas = "_Legionfall_BarFill_Active",
+		borderAtlas = "Legionfall_GreenFrame",
+		bannerAtlas = "Legionfall_Banner",
+	},
+
+	[Enum.ContributionState.UnderAttack] = {
+		stateName = CONTRIBUTION_UNDER_ATTACK,
+		stateColor = RED_FONT_COLOR,
+		tooltipLine = CONTRIBUTION_POI_TOOLTIP_REMAINING_TIME,
+		tooltipUseTimeRemaining = true,
+		statusBarAtlas = "_Legionfall_BarFill_UnderAttack",
+		borderAtlas = "Legionfall_RedFrame",
+		bannerAtlas = "Legionfall_Banner",
+	},
+
+	[Enum.ContributionState.Destroyed] = {
+		stateName = CONTRIBUTION_DESTROYED,
+		stateColor = DISABLED_FONT_COLOR,
+		tooltipLine = CONTRIBUTION_DESTROYED,
+		statusBarAtlas = "_Legionfall_BarFill_Active",
+		borderAtlas = "Legionfall_GrayFrame",
+		bannerAtlas = "Legionfall_GrayBanner",
+	},
+}
 
 -- TEXTURES
 QUESTION_MARK_ICON = "INTERFACE\\ICONS\\INV_MISC_QUESTIONMARK.BLP";
@@ -789,197 +960,3 @@ RELIC_TALENT_LINK_STYLE_POTENTIAL = 2;
 RELIC_TALENT_LINK_STYLE_ACTIVE = 3;
 RELIC_TALENT_LINK_STYLE_UPCOMING = 4;
 RELIC_TALENT_LINK_STYLE_AVAILABLE = 5;
-
--- TODO: Need to be able to expose this from client...
-Enum.ChatChannelType = {
-	None = 0,
-	Custom = 1,
-	Private_Party = 2,
-	Public_Party = 3,
-	Communities = 4,
-};
-
-CALENDAR_INVITESTATUS_INFO = {
-	["UNKNOWN"] = {
-		name		= UNKNOWN,
-		color		= NORMAL_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.Confirmed] = {
-		name		= CALENDAR_STATUS_CONFIRMED,
-		color		= GREEN_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.Available] = {
-		name		= CALENDAR_STATUS_ACCEPTED,
-		color		= GREEN_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.Declined] = {
-		name		= CALENDAR_STATUS_DECLINED,
-		color		= RED_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.Out] = {
-		name		= CALENDAR_STATUS_OUT,
-		color		= RED_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.Standby] = {
-		name		= CALENDAR_STATUS_STANDBY,
-		color		= ORANGE_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.Invited] = {
-		name		= CALENDAR_STATUS_INVITED,
-		color		= NORMAL_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.Signedup] = {
-		name		= CALENDAR_STATUS_SIGNEDUP,
-		color		= GREEN_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.NotSignedup] = {
-		name		= CALENDAR_STATUS_NOT_SIGNEDUP,
-		color		= GRAY_FONT_COLOR,
-	},
-	[Enum.CalendarStatus.Tentative] = {
-		name		= CALENDAR_STATUS_TENTATIVE,
-		color		= ORANGE_FONT_COLOR,
-	},
-};
-
-TOOLTIP_INDENT_OFFSET = 10;
-
--- "Generic" GamePad button labels
-KEY_PADDUP				= "GamePad Up";
-KEY_PADDRIGHT			= "GamePad Right";
-KEY_PADDDOWN			= "GamePad Down";
-KEY_PADDLEFT			= "GamePad Left";
-KEY_PAD1				= "GamePad 1";
-KEY_PAD2				= "GamePad 2";
-KEY_PAD3				= "GamePad 3";
-KEY_PAD4				= "GamePad 4";
-KEY_PAD5				= "GamePad 5";
-KEY_PAD6				= "GamePad 6";
-KEY_PADLSTICK			= "GamePad L Stick In";
-KEY_PADRSTICK			= "GamePad R Stick In";
-KEY_PADLSHOULDER		= "GamePad L Shoulder";
-KEY_PADRSHOULDER		= "GamePad R Shoulder";
-KEY_PADLTRIGGER			= "GamePad L Trigger";
-KEY_PADRTRIGGER			= "GamePad R Trigger";
-KEY_PADLSTICKUP			= "GamePad L Stick Up";
-KEY_PADLSTICKRIGHT		= "GamePad L Stick Right";
-KEY_PADLSTICKDOWN		= "GamePad L Stick Down";
-KEY_PADLSTICKLEFT		= "GamePad L Stick Left";
-KEY_PADRSTICKUP			= "GamePad R Stick Up";
-KEY_PADRSTICKRIGHT		= "GamePad R Stick Right";
-KEY_PADRSTICKDOWN		= "GamePad R Stick Down";
-KEY_PADRSTICKLEFT		= "GamePad R Stick Left";
-KEY_PADPADDLE1			= "GamePad Paddle 1";
-KEY_PADPADDLE2			= "GamePad Paddle 2";
-KEY_PADPADDLE3			= "GamePad Paddle 3";
-KEY_PADPADDLE4			= "GamePad Paddle 4";
-KEY_PADFORWARD			= "GamePad Forward";
-KEY_PADBACK				= "GamePad Back";
-KEY_PADSYSTEM			= "GamePad System";
-KEY_PADSOCIAL			= "GamePad Social";
--- "Letters" label style specializations
-KEY_PAD1_LTR			= "GamePad A";
-KEY_PAD2_LTR			= "GamePad B";
-KEY_PAD3_LTR			= "GamePad X";
-KEY_PAD4_LTR			= "GamePad Y";
-KEY_PADLSHOULDER_LTR	= "GamePad L Bumper";
-KEY_PADRSHOULDER_LTR	= "GamePad R Bumper";
-KEY_PADFORWARD_LTR		= "GamePad Start";
-KEY_PADBACK_LTR			= "GamePad Back";
--- "Reverse" label style specializations
-KEY_PAD1_REV			= "GamePad B";
-KEY_PAD2_REV			= "GamePad A";
-KEY_PAD3_REV			= "GamePad Y";
-KEY_PAD4_REV			= "GamePad X";
-KEY_PADLSHOULDER_REV	= "GamePad L";
-KEY_PADRSHOULDER_REV	= "GamePad R";
-KEY_PADLTRIGGER_REV		= "GamePad ZL";
-KEY_PADRTRIGGER_REV		= "GamePad ZR";
-KEY_PADFORWARD_REV		= "GamePad +";
-KEY_PADBACK_REV			= "GamePad -";
--- "Shapes" label style specializations
-KEY_PAD1_SHP			= "GamePad X";
-KEY_PAD2_SHP			= "GamePad O";
-KEY_PAD3_SHP			= "GamePad Square";
-KEY_PAD4_SHP			= "GamePad Triangle";
-KEY_PAD5_SHP			= "GamePad Mic Mute";
-KEY_PAD6_SHP			= "GamePad R TouchPad";
-KEY_PADLSTICK_SHP		= "GamePad L3";
-KEY_PADRSTICK_SHP		= "GamePad R3";
-KEY_PADLSHOULDER_SHP	= "GamePad L1";
-KEY_PADRSHOULDER_SHP	= "GamePad R1";
-KEY_PADLTRIGGER_SHP		= "GamePad L2";
-KEY_PADRTRIGGER_SHP		= "GamePad R2";
-KEY_PADFORWARD_SHP		= "GamePad Options";
-KEY_PADBACK_SHP			= "GamePad L TouchPad";
-KEY_PADSOCIAL_SHP		= "GamePad Share";
-
--- "Generic" GamePad abbreviated button labels
-KEY_ABBR_PADDUP				= "u";
-KEY_ABBR_PADDRIGHT			= "r";
-KEY_ABBR_PADDDOWN			= "d";
-KEY_ABBR_PADDLEFT			= "l";
-KEY_ABBR_PAD1				= "1";
-KEY_ABBR_PAD2				= "2";
-KEY_ABBR_PAD3				= "3";
-KEY_ABBR_PAD4				= "4";
-KEY_ABBR_PAD5				= "5";
-KEY_ABBR_PAD6				= "6";
-KEY_ABBR_PADLSTICK			= "Li";
-KEY_ABBR_PADRSTICK			= "Ri";
-KEY_ABBR_PADLSHOULDER		= "Ls";
-KEY_ABBR_PADRSHOULDER		= "Rs";
-KEY_ABBR_PADLTRIGGER		= "Lt";
-KEY_ABBR_PADRTRIGGER		= "Rt";
-KEY_ABBR_PADLSTICKUP		= "Lu";
-KEY_ABBR_PADLSTICKRIGHT		= "Lr";
-KEY_ABBR_PADLSTICKDOWN		= "Ld";
-KEY_ABBR_PADLSTICKLEFT		= "Ll";
-KEY_ABBR_PADRSTICKUP		= "Ru";
-KEY_ABBR_PADRSTICKRIGHT		= "Rr";
-KEY_ABBR_PADRSTICKDOWN		= "Rd";
-KEY_ABBR_PADRSTICKLEFT		= "Rl";
-KEY_ABBR_PADPADDLE1			= "p1";
-KEY_ABBR_PADPADDLE2			= "p2";
-KEY_ABBR_PADPADDLE3			= "p3";
-KEY_ABBR_PADPADDLE4			= "p4";
-KEY_ABBR_PADFORWARD			= "Fw";
-KEY_ABBR_PADBACK			= "Bk";
-KEY_ABBR_PADSYSTEM			= "Sy";
-KEY_ABBR_PADSOCIAL			= "So";
--- "Letters" abbreviated label style specializations
-KEY_ABBR_PAD1_LTR			= "A";
-KEY_ABBR_PAD2_LTR			= "B";
-KEY_ABBR_PAD3_LTR			= "X";
-KEY_ABBR_PAD4_LTR			= "Y";
-KEY_ABBR_PADLSHOULDER_LTR	= "LB";
-KEY_ABBR_PADRSHOULDER_LTR	= "RB";
-KEY_ABBR_PADFORWARD_LTR		= "St";
-KEY_ABBR_PADBACK_LTR		= "Bk";
--- "Reverse" abbreviated label style specializations
-KEY_ABBR_PAD1_REV			= "B";
-KEY_ABBR_PAD2_REV			= "A";
-KEY_ABBR_PAD3_REV			= "Y";
-KEY_ABBR_PAD4_REV			= "X";
-KEY_ABBR_PADLSHOULDER_REV	= "L";
-KEY_ABBR_PADRSHOULDER_REV	= "R";
-KEY_ABBR_PADLTRIGGER_REV	= "ZL";
-KEY_ABBR_PADRTRIGGER_REV	= "ZR";
-KEY_ABBR_PADFORWARD_REV		= "+";
-KEY_ABBR_PADBACK_REV		= "-";
--- "Shapes" abbreviated label style specializations
-KEY_ABBR_PAD1_SHP			= "X";
-KEY_ABBR_PAD2_SHP			= "O";
-KEY_ABBR_PAD3_SHP			= "S";
-KEY_ABBR_PAD4_SHP			= "T";
-KEY_ABBR_PAD5_SHP			= "M";
-KEY_ABBR_PAD6_SHP			= "RP";
-KEY_ABBR_PADLSTICK_SHP		= "L3";
-KEY_ABBR_PADRSTICK_SHP		= "R3";
-KEY_ABBR_PADLSHOULDER_SHP	= "L1";
-KEY_ABBR_PADRSHOULDER_SHP	= "R1";
-KEY_ABBR_PADLTRIGGER_SHP	= "L2";
-KEY_ABBR_PADRTRIGGER_SHP	= "R2";
-KEY_ABBR_PADFORWARD_SHP		= "Op";
-KEY_ABBR_PADBACK_SHP		= "LP";
-KEY_ABBR_PADSOCIAL_SHP		= "Sh";

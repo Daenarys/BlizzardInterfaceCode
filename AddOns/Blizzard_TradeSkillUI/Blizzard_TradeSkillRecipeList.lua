@@ -96,15 +96,11 @@ function TradeSkillRecipeListMixin:OnDataSourceChanged(tradeSkillChanged)
 
 	self.LearnedTab:SetShown(not isNPCCrafting);
 	self.UnlearnedTab:SetShown(not isNPCCrafting);
-	if (not isNPCCrafting and not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_TRADESKILL_UNLEARNED_TAB)) then
-		SetButtonPulse(self.UnlearnedTab, 60, 1);
-	end
 
 	self:Refresh();
 end
 
 function TradeSkillRecipeListMixin:OnHeaderButtonClicked(categoryButton, categoryInfo, mouseButton)
-	PlaySound(SOUNDKIT.UI_90_BLACKSMITHING_TREECLICK);
 	self:SetCategoryCollapsed(categoryInfo.categoryID, not self:IsCategoryCollapsed(categoryInfo.categoryID));
 end
 
@@ -122,7 +118,6 @@ end
 function TradeSkillRecipeListMixin:OnRecipeButtonClicked(recipeButton, recipeInfo, mouseButton)
 	if mouseButton == "LeftButton" then
 		self:SetSelectedRecipeID(recipeInfo.recipeID);
-		PlaySound(SOUNDKIT.UI_90_BLACKSMITHING_TREEITEMCLICK);
 	elseif mouseButton == "RightButton" then
 		if recipeInfo.learned and not C_TradeSkillUI.IsTradeSkillGuild() and not C_TradeSkillUI.IsNPCCrafting() and not C_TradeSkillUI.IsTradeSkillLinked() then
 			self.contextMenuRecipeID = recipeInfo.recipeID;
@@ -145,8 +140,6 @@ function TradeSkillRecipeListMixin:OnUnlearnedTabClicked()
 	C_TradeSkillUI.SetOnlyShowLearnedRecipes(false);
 	C_TradeSkillUI.SetOnlyShowUnlearnedRecipes(true);
 
-	SetButtonPulse(self.UnlearnedTab, 0, 1);
-	SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_TRADESKILL_UNLEARNED_TAB, true);
 	self:Refresh();
 end
 
@@ -193,17 +186,6 @@ function TradeSkillRecipeListMixin:RebuildDataList()
 	local favoritesIndex = nil;
 	local starRankLinks = {};
 
-	local emptyCategoriesToAdd = {};
-	if (not C_TradeSkillUI.GetOnlyShowUnlearnedRecipes()) then
-		local categories = {C_TradeSkillUI.GetCategories()};
-		for i, categoryID in ipairs(categories) do
-			if (C_TradeSkillUI.IsEmptySkillLineCategory(categoryID)) then
-				local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID);
-				table.insert(emptyCategoriesToAdd, categoryData);
-			end
-		end
-	end
-
 	for i, recipeID in ipairs(self.recipeIDs) do
 		if not starRankLinks[recipeID] then
 			local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeID);
@@ -237,12 +219,6 @@ function TradeSkillRecipeListMixin:RebuildDataList()
 							local parentCategoryData = C_TradeSkillUI.GetCategoryInfo(currentParentCategoryID);
 							isCurrentParentCategoryEnabled = parentCategoryData.enabled;
 							if isCurrentParentCategoryEnabled then
-								-- Make sure any base-level empty categories with higher priority are added first.
-								while (#emptyCategoriesToAdd > 0) and (emptyCategoriesToAdd[1].uiOrder < parentCategoryData.uiOrder) do
-									table.insert(self.dataList, emptyCategoriesToAdd[1]);
-									table.remove(emptyCategoriesToAdd, 1);
-								end
-
 								table.insert(self.dataList, parentCategoryData);
 							end
 						else
@@ -261,10 +237,6 @@ function TradeSkillRecipeListMixin:RebuildDataList()
 				end
 			end
 		end
-	end
-
-	for i, emptyCategory in ipairs(emptyCategoriesToAdd) do
-		table.insert(self.dataList, emptyCategory);
 	end
 end
 
@@ -450,7 +422,7 @@ function TradeSkillRecipeListMixin:RefreshDisplay()
 		end
 	end
 
-	HybridScrollFrame_Update(self, #self.dataList * ROW_HEIGHT, 389);
+	HybridScrollFrame_Update(self, #self.dataList * ROW_HEIGHT, 405);
 end
 
 function TradeSkillRecipeListMixin:FindRecipeIndexInCurrentList(recipeID)

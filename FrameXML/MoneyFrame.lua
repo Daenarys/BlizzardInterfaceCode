@@ -130,7 +130,7 @@ MoneyTypeInfo["GUILDBANKWITHDRAW"] = {
 	end,
 
 	UpdateFunc = function(self)
-		self:GetParent():UpdateWithdrawMoney();
+		GuildBankFrame_UpdateWithdrawMoney();
 		return nil;
 	end,
 
@@ -154,6 +154,18 @@ MoneyTypeInfo["TOOLTIP"] = {
 	showSmallerCoins = "Backpack",
 	collapse = 1,
 	truncateSmallCoins = nil,
+};
+
+MoneyTypeInfo["GUILDBANKCASHFLOW"] = {
+	OnloadFunc = function(self)
+		self:RegisterEvent("GUILDBANKLOG_UPDATE");
+	end,
+	UpdateFunc = function(self)
+		GuildBankFrame_UpdateCashFlowMoney();
+		return nil;
+	end,
+	collapse = 1,
+	showSmallerCoins = "Backpack",
 };
 
 MoneyTypeInfo["BLACKMARKET"] = {
@@ -222,6 +234,8 @@ function MoneyFrame_OnEvent (self, event, ...)
 		MoneyFrame_UpdateMoney(self);
 	elseif ( event == "GUILDBANK_UPDATE_WITHDRAWMONEY" and moneyType == "GUILDBANKWITHDRAW" ) then
 		MoneyFrame_UpdateMoney(self);
+	elseif ( event == "GUILDBANKLOG_UPDATE" and moneyType == "GUILDBANKCASHFLOW" ) then
+		MoneyFrame_UpdateMoney(self);
 	end
 end
 
@@ -278,16 +292,15 @@ function MoneyFrame_UpdateMoney(moneyFrame)
 	end
 end
 
-local function InitCoinButton(button, atlas, iconWidth)
-	if not button or not atlas then
-		return;
-	end
+local function CreateMoneyButtonNormalTexture (button, iconWidth)
 	local texture = button:CreateTexture();
-	texture:SetAtlas(atlas, true);
+	texture:SetTexture("Interface\\MoneyFrame\\UI-MoneyIcons");
 	texture:SetWidth(iconWidth);
 	texture:SetHeight(iconWidth);
 	texture:SetPoint("RIGHT");
 	button:SetNormalTexture(texture);
+	
+	return texture;
 end
 
 function MoneyFrame_Update(frameName, money, forceShow)
@@ -348,11 +361,12 @@ function MoneyFrame_Update(frameName, money, forceShow)
 		if ( frame.colorblind or not frame.vadjust or frame.vadjust ~= MONEY_TEXT_VADJUST ) then
 			frame.colorblind = nil;
 			frame.vadjust = MONEY_TEXT_VADJUST;
-
-			InitCoinButton(goldButton, "coin-gold", iconWidth);
-			InitCoinButton(silverButton, "coin-silver", iconWidth);
-			InitCoinButton(copperButton, "coin-copper", iconWidth);
-
+			local texture = CreateMoneyButtonNormalTexture(goldButton, iconWidth);
+			texture:SetTexCoord(0, 0.25, 0, 1);
+			texture = CreateMoneyButtonNormalTexture(silverButton, iconWidth);
+			texture:SetTexCoord(0.25, 0.5, 0, 1);
+			texture = CreateMoneyButtonNormalTexture(copperButton, iconWidth);
+			texture:SetTexCoord(0.5, 0.75, 0, 1);
 			_G[frameName.."GoldButtonText"]:SetPoint("RIGHT", -iconWidth, MONEY_TEXT_VADJUST);
 			_G[frameName.."SilverButtonText"]:SetPoint("RIGHT", -iconWidth, MONEY_TEXT_VADJUST);
 			_G[frameName.."CopperButtonText"]:SetPoint("RIGHT", -iconWidth, MONEY_TEXT_VADJUST);
@@ -572,265 +586,3 @@ function GetDenominationsFromCopper(money)
 end
 
 
-local TextureType = {
-	File = 1,
-	Atlas = 2,
-};
-
-MoneyDenominationDisplayType = {
-	Copper = { TextureType.Atlas, "coin-copper" },
-	Silver = { TextureType.Atlas, "coin-silver" },
-	Gold = { TextureType.Atlas, "coin-gold" },
-	AuctionHouseCopper = { TextureType.Atlas, "coin-copper" },
-	AuctionHouseSilver = { TextureType.Atlas, "coin-silver" },
-	AuctionHouseGold = { TextureType.Atlas, "coin-gold" },
-};
-
-MONEY_DENOMINATION_SYMBOLS_BY_DISPLAY_TYPE = {
-	[MoneyDenominationDisplayType.Copper] = COPPER_AMOUNT_SYMBOL,
-	[MoneyDenominationDisplayType.Silver] = SILVER_AMOUNT_SYMBOL,
-	[MoneyDenominationDisplayType.Gold] = GOLD_AMOUNT_SYMBOL,
-	[MoneyDenominationDisplayType.AuctionHouseCopper] = COPPER_AMOUNT_SYMBOL,
-	[MoneyDenominationDisplayType.AuctionHouseSilver] = SILVER_AMOUNT_SYMBOL,
-	[MoneyDenominationDisplayType.AuctionHouseGold] = GOLD_AMOUNT_SYMBOL,
-};
-
-MoneyDenominationDisplayMixin = {};
-
-function MoneyDenominationDisplayMixin:OnLoad()
-	self.amount = 0;
-	
-	if self.displayType == nil then
-		error("A money denomination display needs a type. Add a KeyValue entry, displayType = MoneyDenominationDisplayType.[Copper|Silver|Gold|AuctionHouseCopper|AuctionHouseSilver|AuctionHouseGold].");
-		return;
-	end
-
-	self:UpdateDisplayType();
-end
-
-function MoneyDenominationDisplayMixin:SetDisplayType(displayType)
-	self.displayType = displayType;
-	self:UpdateDisplayType();
-end
-
-function MoneyDenominationDisplayMixin:UpdateDisplayType()
-	local textureType, fileOrAtlas, l, r, b, t = unpack(self.displayType);
-
-	if textureType == TextureType.Atlas then
-		self.Icon:SetAtlas(fileOrAtlas);
-		self.Icon:SetSize(12,14);
-	else
-		self.Icon:SetTexture(fileOrAtlas);
-		self.Icon:SetSize(13,13);
-	end
-
-	self.Icon:SetTexCoord(l or 0, r or 1, b or 0, t or 1);
-	self:UpdateWidth();
-end
-
-function MoneyDenominationDisplayMixin:SetFontObject(fontObject)
-	self.Text:SetFontObject(fontObject);
-	self:UpdateWidth();
-end
-
-function MoneyDenominationDisplayMixin:GetFontObject()
-	return self.Text:GetFontObject();
-end
-
-function MoneyDenominationDisplayMixin:SetFontAndIconDisabled(disabled)
-	self:SetFontObject(disabled and PriceFontGray or PriceFontWhite);
-	self.Icon:SetAlpha(disabled and 0.5 or 1);
-end
-
-function MoneyDenominationDisplayMixin:SetFormatter(formatter)
-	self.formatter = formatter;
-end
-
-function MoneyDenominationDisplayMixin:SetForcedHidden(forcedHidden)
-	self.forcedHidden = forcedHidden;
-	self:SetShown(self:ShouldBeShown());
-end
-
-function MoneyDenominationDisplayMixin:IsForcedHidden()
-	return self.forcedHidden;
-end
-
-function MoneyDenominationDisplayMixin:SetShowsZeroAmount(showsZeroAmount)
-	self.showsZeroAmount = showsZeroAmount;
-	self:SetShown(self:ShouldBeShown());
-end
-
-function MoneyDenominationDisplayMixin:ShowsZeroAmount()
-	return self.showsZeroAmount;
-end
-
-function MoneyDenominationDisplayMixin:ShouldBeShown()
-	return not self:IsForcedHidden() and self.amount ~= nil and (self.amount > 0 or self:ShowsZeroAmount());
-end
-
-function MoneyDenominationDisplayMixin:SetAmount(amount)
-	self.amount = amount;
-
-	local shouldBeShown = self:ShouldBeShown();
-	self:SetShown(shouldBeShown);
-	if not shouldBeShown then
-		return;
-	end
-
-	local amountText = amount;
-	if self.formatter then
-		amountText = self.formatter(amount);
-	end
-
-	local colorblindMode = ENABLE_COLORBLIND_MODE == "1";
-	if colorblindMode then
-		amountText = amountText..MONEY_DENOMINATION_SYMBOLS_BY_DISPLAY_TYPE[self.displayType];
-	end
-
-	self.Text:SetText(amountText);
-	self.Icon:SetShown(not colorblindMode);
-
-	self:UpdateWidth();
-end
-
-function MoneyDenominationDisplayMixin:UpdateWidth()
-	local iconWidth = self.Icon:IsShown() and self.Icon:GetWidth() or 0;
-	local iconSpacing = 2;
-	self.Text:SetPoint("RIGHT", -(iconWidth + iconSpacing), 0);
-	self:SetWidth(self.Text:GetStringWidth() + iconWidth + iconSpacing);
-end
-
-
-MoneyDisplayFrameMixin = {};
-
-local DENOMINATION_DISPLAY_WIDTH = 36; -- Space for two characters and an anchor offset.
-
-function MoneyDisplayFrameMixin:OnLoad()
-	self.CopperDisplay:SetShowsZeroAmount(true);
-	self.SilverDisplay:SetShowsZeroAmount(true);
-	self.GoldDisplay:SetFormatter(BreakUpLargeNumbers);
-
-	if self.hideCopper then
-		self.CopperDisplay:SetForcedHidden(true);
-	end
-
-	if self.useAuctionHouseIcons then
-		self.CopperDisplay:SetDisplayType(MoneyDenominationDisplayType.AuctionHouseCopper);
-		self.SilverDisplay:SetDisplayType(MoneyDenominationDisplayType.AuctionHouseSilver);
-		self.GoldDisplay:SetDisplayType(MoneyDenominationDisplayType.AuctionHouseGold);
-	end
-
-	self:UpdateAnchoring();
-end
-
-function MoneyDisplayFrameMixin:SetFontAndIconDisabled(disabled)
-	self.CopperDisplay:SetFontAndIconDisabled(disabled);
-	self.SilverDisplay:SetFontAndIconDisabled(disabled);
-	self.GoldDisplay:SetFontAndIconDisabled(disabled);
-
-	if self.resizeToFit then
-		self:UpdateWidth();
-	end
-end
-
-function MoneyDisplayFrameMixin:SetFontObject(fontObject)
-	self.CopperDisplay:SetFontObject(fontObject);
-	self.SilverDisplay:SetFontObject(fontObject);
-	self.GoldDisplay:SetFontObject(fontObject);
-
-	if self.resizeToFit then
-		self:UpdateWidth();
-	end
-end
-
-function MoneyDisplayFrameMixin:GetFontObject()
-	return self.CopperDisplay:GetFontObject();
-end
-
-function MoneyDisplayFrameMixin:UpdateAnchoring()
-	self.CopperDisplay:ClearAllPoints();
-	self.SilverDisplay:ClearAllPoints();
-	self.GoldDisplay:ClearAllPoints();
-
-	if self.leftAlign then
-		self.GoldDisplay:SetPoint("LEFT");
-
-		if self.GoldDisplay:ShouldBeShown() then
-			self.SilverDisplay:SetPoint("RIGHT", self.GoldDisplay, "RIGHT", DENOMINATION_DISPLAY_WIDTH, 0);
-		else
-			self.SilverDisplay:SetPoint("LEFT", self.GoldDisplay, "LEFT");
-		end
-		
-		if self.SilverDisplay:ShouldBeShown() then
-			self.CopperDisplay:SetPoint("RIGHT", self.SilverDisplay, "RIGHT", DENOMINATION_DISPLAY_WIDTH, 0);
-		else
-			self.CopperDisplay:SetPoint("LEFT", self.SilverDisplay, "LEFT");
-		end
-	else
-		self.CopperDisplay:SetPoint("RIGHT");
-
-		if self.CopperDisplay:ShouldBeShown() then
-			self.SilverDisplay:SetPoint("RIGHT", -DENOMINATION_DISPLAY_WIDTH, 0);
-		else
-			self.SilverDisplay:SetPoint("RIGHT", self.CopperDisplay, "RIGHT");
-		end
-		
-		if self.SilverDisplay:ShouldBeShown() then
-			self.GoldDisplay:SetPoint("RIGHT", self.SilverDisplay, "RIGHT", -DENOMINATION_DISPLAY_WIDTH, 0);
-		else
-			self.GoldDisplay:SetPoint("RIGHT", self.SilverDisplay, "RIGHT");
-		end
-	end
-end
-
-function MoneyDisplayFrameMixin:SetAmount(rawCopper)
-	self.rawCopper = rawCopper;
-	
-	local gold = floor(rawCopper / (COPPER_PER_SILVER * SILVER_PER_GOLD));
-	local silver = floor((rawCopper - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER);
-	local copper = mod(rawCopper, COPPER_PER_SILVER);
-	self.GoldDisplay:SetAmount(gold);
-	self.SilverDisplay:SetAmount(silver);
-	self.CopperDisplay:SetAmount(copper);
-
-	if self.resizeToFit then
-		self:UpdateWidth();
-	else
-		self:UpdateAnchoring();
-	end
-end
-
-function MoneyDisplayFrameMixin:UpdateWidth()
-	local width = 0;
-	local goldDisplayed = self.GoldDisplay:IsShown()
-	if goldDisplayed then
-		width = width + self.GoldDisplay:GetWidth();
-	end
-
-	local silverDisplayed = self.SilverDisplay:IsShown();
-	if silverDisplayed then
-		if goldDisplayed then
-			width = width + DENOMINATION_DISPLAY_WIDTH;
-		else
-			width = width + self.SilverDisplay:GetWidth();
-		end
-	end
-
-	if self.CopperDisplay:IsShown() then
-		if goldDisplayed or silverDisplayed then
-			width = width + DENOMINATION_DISPLAY_WIDTH;
-		else
-			width = width + self.CopperDisplay:GetWidth();
-		end
-	end
-
-	self:SetWidth(width);
-end
-
-function MoneyDisplayFrameMixin:GetAmount()
-	return self.rawCopper;
-end
-
-function MoneyDisplayFrameMixin:SetResizeToFit(resizeToFit)
-	self.resizeToFit = resizeToFit;
-end

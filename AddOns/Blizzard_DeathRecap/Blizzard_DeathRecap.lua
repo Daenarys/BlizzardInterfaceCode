@@ -84,9 +84,13 @@ function DeathRecapFrame_OpenRecap( recapID )
 		end
 		dmgInfo.school = evtData.school;
 		
-		entry.SpellInfo.Caster:SetText(dmgInfo.caster); --may want to add honor level back to this someday, used to have prestige
+		if (dmgInfo.casterPrestige and dmgInfo.casterPrestige > 0) then
+			entry.SpellInfo.Caster:SetText(("|T%d:16:16:0:2|t %s"):format(GetPrestigeInfo(dmgInfo.casterPrestige) or 0, dmgInfo.caster));
+		else
+			entry.SpellInfo.Caster:SetText(dmgInfo.caster);
+		end
 		entry.SpellInfo.Name:SetText(spellName);
-		entry.SpellInfo.Icon:SetTexture(texture);
+		entry.SpellInfo.Icon:SetTexture(texture);		
 
 		entry.SpellInfo.spellId = spellId;
 	end

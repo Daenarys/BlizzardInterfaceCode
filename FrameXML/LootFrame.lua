@@ -19,44 +19,12 @@ function LootFrame_OnLoad(self)
 	self:RegisterEvent("UPDATE_MASTER_LOOT_LIST");
 	--hide button bar
 	ButtonFrameTemplate_HideButtonBar(self);
-
-	--[[ WOW8-76190 Corners for nine slice template are too large to accommodate 
-	the loot frame, causing overlaps between the pieces. Until an artist can adjust
-	the atlas, cull the overlaps so the composition appears to fit.]]--
-	
-	-- Maps each of the four corners to a UV relative to their corner.
-	local function MapNineSliceCornerUVs(nineSlice, topLeftRelUV, topRightRelUV, botLeftRelUV, botRightRelUV)
-		if (nineSlice) then
-			-- relU,relV expected relative to corner. dirU,dirV translate accordingly.
-			local function MapTextureUV(texture, relU, relV, dirU, dirV)
-				if (texture) then
-					local cullU = 1.0 - Saturate(relU);
-					local cullV = 1.0 - Saturate(relV);
-					local startU = cullU * Saturate(dirU);
-					local startV = cullV * Saturate(dirV);
-					local endU = startU + (1.0 - cullU);
-					local endV = startV + (1.0 - cullV);
-					texture:SetTexCoord(startU, endU, startV, endV);
-					texture:SetWidth(texture:GetWidth() * relU);
-					texture:SetHeight(texture:GetHeight() * relV);
-				end
-			end
-
-			MapTextureUV(nineSlice.TopLeftCorner, topLeftRelUV[1], topLeftRelUV[2], 0, 0);
-			MapTextureUV(nineSlice.TopRightCorner, topRightRelUV[1], topRightRelUV[2], 1.0, 0);
-			MapTextureUV(nineSlice.BottomLeftCorner, botLeftRelUV[1], botLeftRelUV[2], 0, 1.0);
-			MapTextureUV(nineSlice.BottomRightCorner, botRightRelUV[1], botRightRelUV[2], 1.0, 1.0);
-		end
-	end
-
-	MapNineSliceCornerUVs(self.NineSlice, {.65, .6}, {.25, .4}, {.55, .4}, {.35, .4});
-
 end
 
 function LootFrame_OnEvent(self, event, ...)
 	if ( event == "LOOT_OPENED" ) then
-		local autoLoot, isFromItem = ...;
-		if( autoLoot ) then
+		local autoLoot = ...;
+		if( autoLoot == 1 ) then
 			LootFrame_InitAutoLootTable( self );
 			LootFrame:SetScript("OnUpdate", LootFrame_OnUpdate);
 			self.AutoLootDelay = LOOTFRAME_AUTOLOOT_DELAY;
@@ -68,11 +36,7 @@ function LootFrame_OnEvent(self, event, ...)
 		self.page = 1;
 		LootFrame_Show(self);
 		if ( not self:IsShown()) then
-			CloseLoot(not autoLoot);	-- The parameter tells code that we were unable to open the UI
-		else
-			if ( isFromItem ) then
-				PlaySound(SOUNDKIT.UI_CONTAINER_ITEM_OPEN);
-			end
+			CloseLoot(autoLoot == 0);	-- The parameter tells code that we were unable to open the UI
 		end
 	elseif( event == "LOOT_READY" ) then
 		LootFrame_InitAutoLootTable( self );
@@ -198,11 +162,12 @@ function LootFrame_UpdateButton(index)
 	if ( numLootItems > LOOTFRAME_NUMBUTTONS ) then
 		numLootToShow = numLootToShow - 1; -- make space for the page buttons
 	end
+
 	local button = _G["LootButton"..index];
 	local slot = (numLootToShow * (LootFrame.page - 1)) + index;
 	if ( slot <= numLootItems ) then
 		if ( (LootSlotHasItem(slot)  or (self.AutoLootTable and self.AutoLootTable[slot]) )and index <= numLootToShow) then
-			local texture, item, quantity, currencyID, quality, locked, isQuestItem, questId, isActive;
+			local texture, item, quantity, quality, locked, isQuestItem, questId, isActive;
 			if(self.AutoLootTable)then
 				local entry = self.AutoLootTable[slot];
 				if( entry.hide ) then
@@ -219,13 +184,8 @@ function LootFrame_UpdateButton(index)
 					isActive = entry.isActive;
 				end
 			else
-				texture, item, quantity, currencyID, quality, locked, isQuestItem, questId, isActive = GetLootSlotInfo(slot);
+				texture, item, quantity, quality, locked, isQuestItem, questId, isActive = GetLootSlotInfo(slot);
 			end
-
-			if ( currencyID ) then 
-				item, texture, quantity, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyID, quantity, item, texture, quality);
-			end
-			
 			local text = _G["LootButton"..index.."Text"];
 			if ( texture ) then
 				local color = ITEM_QUALITY_COLORS[quality];
@@ -418,8 +378,8 @@ function GroupLootContainer_OnLoad(self)
 	self.reservedSize = 100;
 	GroupLootContainer_CalcMaxIndex(self);
 
-	local alertSystem = AlertFrame:AddExternallyAnchoredSubSystem(self);
-	AlertFrame:SetSubSystemAnchorPriority(alertSystem, 30);
+	local alertFrameGroupLootContainerSubSystem = AlertFrame:AddJustAnchorFrameSubSystem(self);
+	AlertFrame:SetSubSustemAnchorPriority(alertFrameGroupLootContainerSubSystem, 30);
 end
 
 function GroupLootContainer_CalcMaxIndex(self)
@@ -557,7 +517,7 @@ function GroupLootFrame_OnShow(self)
 	end
 
 	self.IconFrame.Icon:SetTexture(texture);
-	self.IconFrame.Border:SetAtlas(LOOT_BORDER_BY_QUALITY[quality] or LOOT_BORDER_BY_QUALITY[Enum.ItemQuality.Uncommon]);
+	self.IconFrame.Border:SetAtlas(LOOT_BORDER_BY_QUALITY[quality] or LOOT_BORDER_BY_QUALITY[LE_ITEM_QUALITY_UNCOMMON]);
 	self.Name:SetText(name);
 	local color = ITEM_QUALITY_COLORS[quality];
 	self.Name:SetVertexColor(color.r, color.g, color.b);
@@ -612,21 +572,15 @@ function GroupLootFrame_OnUpdate(self, elapsed)
 	self:SetValue(left);
 end
 
-function BonusRollFrame_StartBonusRoll(spellID, text, duration, currencyID, currencyCost, difficultyID)
+function BonusRollFrame_StartBonusRoll(spellID, text, duration, currencyID, difficultyID)
 	local frame = BonusRollFrame;
-	
-	if ( frame:IsShown() and frame.spellID == spellID ) then
-		return;
-	end
-	
+
 	-- No valid currency data--use the fall back.
 	if ( currencyID == 0 ) then
 		currencyID = BONUS_ROLL_REQUIRED_CURRENCY;
 	end
 
-	local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(currencyID);
-	local count = currencyInfo.quantity;
-	local icon = currencyInfo.iconFileID;
+	local _, count, icon = GetCurrencyInfo(currencyID);
 	if ( count == 0 ) then
 		return;
 	end
@@ -638,14 +592,14 @@ function BonusRollFrame_StartBonusRoll(spellID, text, duration, currencyID, curr
 	frame.spellID = spellID;
 	frame.endTime = time() + duration;
 	frame.remaining = duration;
-	frame.CurrentCountFrame.currencyID = currencyID;
+	frame.currencyID = currencyID;
 	frame.difficultyID = difficultyID;
-
+	
 	local instanceID, encounterID = GetJournalInfoForSpellConfirmation(spellID);
 	frame.instanceID = instanceID;
 	frame.encounterID = encounterID;
 
-	local numRequired = currencyCost;
+	local numRequired = 1;
 	frame.PromptFrame.InfoFrame.Cost:SetFormattedText(BONUS_ROLL_COST, numRequired, icon);
 	frame.CurrentCountFrame.Text:SetFormattedText(BONUS_ROLL_CURRENT_COUNT, count, icon);
 	frame.PromptFrame.Timer:SetMinMaxValues(0, duration);
@@ -708,19 +662,14 @@ function BonusRollFrame_OnEvent(self, event, ...)
 		self.rollSound = soundHandle;
 		self.RollingFrame.LootSpinner:Show();
 		self.RollingFrame.LootSpinnerFinal:Hide();
-		self.LootSpinnerBG:Show();
-		self.IconBorder:Show();
 		self.StartRollAnim:Play();
 	elseif ( event == "BONUS_ROLL_RESULT" ) then
-		local rewardType, rewardLink, rewardQuantity, rewardSpecID,_,_, currencyID, isSecondaryResult, isCorrupted = ...;
+		local rewardType, rewardLink, rewardQuantity, rewardSpecID = ...;
 		self.state = "slowing";
 		self.rewardType = rewardType;
 		self.rewardLink = rewardLink;
 		self.rewardQuantity = rewardQuantity;
 		self.rewardSpecID = rewardSpecID;
-		self.currencyID = currencyID; 
-		self.isSecondaryResult = isSecondaryResult;
-		self.isCorrupted = isCorrupted;
 		self.StartRollAnim:Finish();
 	elseif ( event == "PLAYER_LOOT_SPEC_UPDATED" ) then
 		local specID = GetLootSpecialization();
@@ -747,7 +696,6 @@ local finalAnimFrame = {
 	currency = 6,
 	money = 6,
 	artifact_power = 6,
-	coin = 6,
 }
 
 local finalTextureTexCoords = {
@@ -755,10 +703,7 @@ local finalTextureTexCoords = {
 	currency = {0.56347656, 0.59375, 0.875, 0.9921875},
 	money = {0.56347656, 0.59375, 0.875, 0.9921875},
 	artifact_power = {0.56347656, 0.59375, 0.875, 0.9921875},
-	coin = {0.56347656, 0.59375, 0.875, 0.9921875},
 }
-
-local QUARTERMASTER_COIN_ID = 163827;
 
 function BonusRollFrame_OnUpdate(self, elapsed)
 	if ( self.state == "prompt" ) then
@@ -779,20 +724,9 @@ function BonusRollFrame_OnUpdate(self, elapsed)
 			self.rollSound = nil;
 			PlaySound(SOUNDKIT.UI_BONUS_LOOT_ROLL_END);
 			self.RollingFrame.LootSpinner:Hide();
-			local rewardType = self.rewardType;
-			if( self.currencyID == C_CurrencyInfo.GetAzeriteCurrencyID() ) then
-				self.RollingFrame.LootSpinnerFinalText:SetText(BONUS_ROLL_REWARD_ARTIFACT_POWER);
-			else
-				if self.isSecondaryResult and self.rewardType == "item" then
-					local itemID = GetItemInfoInstant(self.rewardLink);
-					if itemID == QUARTERMASTER_COIN_ID then
-						rewardType = "coin";
-					end
-				end
-				self.RollingFrame.LootSpinnerFinalText:SetText(_G["BONUS_ROLL_REWARD_"..string.upper(rewardType)]);
-			end
 			self.RollingFrame.LootSpinnerFinal:Show();
-			self.RollingFrame.LootSpinnerFinal:SetTexCoord(unpack(finalTextureTexCoords[rewardType]));
+			self.RollingFrame.LootSpinnerFinal:SetTexCoord(unpack(finalTextureTexCoords[self.rewardType]));
+			self.RollingFrame.LootSpinnerFinalText:SetText(_G["BONUS_ROLL_REWARD_"..string.upper(self.rewardType)]);
 			self.FinishRollAnim:Play();
 		elseif ( self.animTime > 0.1 ) then --Slow it down
 			BonusRollFrame_AdvanceLootSpinnerAnim(self);
@@ -810,62 +744,44 @@ function GetBonusRollEncounterJournalLinkDifficulty()
 			return instanceDifficulty;
 		end
 	end
-
+	
 	return BonusRollFrame.difficultyID;
 end
 
-EncounterJournalLinkButtonMixin = {};
-
-function EncounterJournalLinkButtonMixin:IsLinkDataAvailable()
-    if ( BonusRollFrame.instanceID and BonusRollFrame.instanceID ~= 0 ) then
-        local difficultyID = GetBonusRollEncounterJournalLinkDifficulty();
-        -- Mythic+ doesn't yet have all the itemContext info available 
-        --that we need to properly show item tooltips
-        if ( difficultyID ~= nil and difficultyID ~= DifficultyUtil.ID.DungeonChallenge) then
-            return true;
-        end
-    end
-    return false;
+function EncounterJournalLinkButton_IsLinkDataAvailable()
+	return BonusRollFrame.instanceID and BonusRollFrame.encounterID and GetBonusRollEncounterJournalLinkDifficulty();
 end
 
-function EncounterJournalLinkButtonMixin:OnShow()
+function EncounterJournalLinkButton_OnShow(self)
 	local tutorialClosed = GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_BONUS_ROLL_ENCOUNTER_JOURNAL_LINK);
-	if not tutorialClosed and self:IsLinkDataAvailable() then
-		local helpTipInfo = {
-			text = ENCOUNTER_JOURNAL_LINK_BUTTON_TUTORIAL,
-			buttonStyle = HelpTip.ButtonStyle.Close,
-			cvarBitfield = "closedInfoFrames",
-			bitfieldFlag = LE_FRAME_TUTORIAL_BONUS_ROLL_ENCOUNTER_JOURNAL_LINK,
-			targetPoint = HelpTip.Point.TopEdgeCenter,
-			offsetY = -14,
-		};
-		HelpTip:Show(self:GetParent(), helpTipInfo);
+	if not tutorialClosed and EncounterJournalLinkButton_IsLinkDataAvailable() then
+		self:GetParent().EncounterJournalLinkButtonHelp:Show();
 	end
 end
 
-function EncounterJournalLinkButtonMixin:OnEnter()
+function EncounterJournalLinkButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip_SetTitle(GameTooltip, BONUS_ROLL_TOOLTIP_TITLE);
-	GameTooltip_AddNormalLine(GameTooltip, BONUS_ROLL_TOOLTIP_TEXT);
-
-	if ( self:IsLinkDataAvailable() ) then
-		GameTooltip_AddInstructionLine(GameTooltip, BONUS_ROLL_TOOLTIP_ENCOUNTER_JOURNAL_LINK);
+	GameTooltip:SetText(BONUS_ROLL_TOOLTIP_TITLE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	GameTooltip:AddLine(BONUS_ROLL_TOOLTIP_TEXT, nil, nil, nil, true);
+	
+	if ( EncounterJournalLinkButton_IsLinkDataAvailable() ) then
+		GameTooltip:AddLine(BONUS_ROLL_TOOLTIP_ENCOUNTER_JOURNAL_LINK, GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b, true);
 	end
-
+	
 	GameTooltip:Show();
 end
 
-function EncounterJournalLinkButtonMixin:OnClick()
+function OpenBonusRollEncounterJournalLink()
 	local difficultyID = GetBonusRollEncounterJournalLinkDifficulty();
-	if ( not self:IsLinkDataAvailable()) then
+	if ( not difficultyID or not BonusRollFrame.instanceID or not BonusRollFrame.encounterID) then
 		return;
 	end
-
+	
 	SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_BONUS_ROLL_ENCOUNTER_JOURNAL_LINK, true);
-	HelpTip:HideAll(BonusRollFrame.PromptFrame);
-
+	BonusRollFrame.PromptFrame.EncounterJournalLinkButtonHelp:Hide();
+	
 	EncounterJournal_LoadUI();
-
+	
 	local specialization = GetLootSpecialization();
 	if ( specialization == 0 ) then
 		specialization = GetSpecializationInfo(GetSpecialization());
@@ -885,8 +801,6 @@ function BonusRollFrame_AdvanceLootSpinnerAnim(self)
 end
 
 function BonusRollFrame_OnShow(self)
-	self.LootSpinnerBG:Hide();
-	self.IconBorder:Hide();
 	self.PromptFrame.Timer:SetFrameLevel(self:GetFrameLevel() - 1);
 	self.BlackBackgroundHoist:SetFrameLevel(self.PromptFrame.Timer:GetFrameLevel() - 1);
 	--Update the remaining time in case we were hidden for some reason
@@ -904,34 +818,19 @@ function BonusRollFrame_OnHide(self)
 end
 
 function BonusRollFrame_FinishedFading(self)
-	local rollType, roll, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, wonRoll, showRatedBG;
 	if ( self.rewardType == "item" or self.rewardType == "artifact_power" ) then
-		wonRoll = self.rewardType == "item";
+		local wonRoll = self.rewardType == "item";
 		GroupLootContainer_ReplaceFrame(GroupLootContainer, self, BonusRollLootWonFrame);
-		LootWonAlertFrame_SetUp(BonusRollLootWonFrame, self.rewardLink, self.rewardQuantity, rollType, roll, self.rewardSpecID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, self.isCorrupted, wonRoll, showRatedBG, self.isSecondaryResult);
+		LootWonAlertFrame_SetUp(BonusRollLootWonFrame, self.rewardLink, self.rewardQuantity, nil, nil, self.rewardSpecID, nil, nil, nil, nil, nil, wonRoll);
 		AlertFrame:AddAlertFrame(BonusRollLootWonFrame);
 	elseif ( self.rewardType == "money" ) then
 		GroupLootContainer_ReplaceFrame(GroupLootContainer, self, BonusRollMoneyWonFrame);
 		MoneyWonAlertFrame_SetUp(BonusRollMoneyWonFrame, self.rewardQuantity);
 		LootMoneyNotify(self.rewardQuantity, true);
 		AlertFrame:AddAlertFrame(BonusRollMoneyWonFrame);
-	elseif ( self.rewardType == "currency" ) then
-		isCurrency = true;
-		wonRoll = true;
-		GroupLootContainer_ReplaceFrame(GroupLootContainer, self, BonusRollLootWonFrame);
-		LootWonAlertFrame_SetUp(BonusRollLootWonFrame, self.rewardLink, self.rewardQuantity, rollType, roll, self.rewardSpecID, isCurrency, showFactionBG, lootSource, lessAwesome, isUpgraded, self.isCorrupted, wonRoll, showRatedBG, self.isSecondaryResult);
-		AlertFrame:AddAlertFrame(BonusRollLootWonFrame);
 	else
 		GroupLootContainer_RemoveFrame(GroupLootContainer, self);
 	end
-end
-
-function BonusRollLootWonFrame_OnLoad(self)
-	self:SetAlertContainer(AlertFrame);
-end
-
-function BonusRollMoneyWonFrame_OnLoad(self)
-	self:SetAlertContainer(AlertFrame);
 end
 
 -------------------------------------------------------------------

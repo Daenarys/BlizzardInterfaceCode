@@ -1,9 +1,7 @@
 function GameMenuFrame_OnShow(self)
 	UpdateMicroButtons();
 	Disable_BagButtons();
-	if (CanAutoSetGamePadCursorControl(true)) then
-		SetGamePadCursorControl(true);
-	end
+	VoiceChat_Toggle();
 
 	GameMenuFrame_UpdateVisibleButtons(self);
 end
@@ -15,7 +13,7 @@ function GameMenuFrame_UpdateVisibleButtons(self)
 	local buttonToReanchor = GameMenuButtonWhatsNew;
 	local reanchorYOffset = -1;
 
-	if IsCharacterNewlyBoosted() or not C_SplashScreen.CanViewSplashScreen()  then
+	if (not SplashFrameCanBeShown() or IsCharacterNewlyBoosted()) then
 		GameMenuButtonWhatsNew:Hide();
 		height = height - 20;
 		buttonToReanchor = GameMenuButtonOptions;
@@ -25,7 +23,8 @@ function GameMenuFrame_UpdateVisibleButtons(self)
 		GameMenuButtonOptions:SetPoint("TOP", GameMenuButtonWhatsNew, "BOTTOM", 0, -16);
 	end
 
-	if ( C_StorePublic.IsEnabled() ) then
+	local storeIsRestricted = IsTrialAccount() and not C_StorePublic.DoesGroupHavePurchaseableProducts(WOW_GAMES_CATEGORY_ID);
+	if ( C_StorePublic.IsEnabled() and not storeIsRestricted ) then
 		height = height + 20;
 		GameMenuButtonStore:Show();
 		buttonToReanchor:SetPoint("TOP", GameMenuButtonStore, "BOTTOM", 0, reanchorYOffset);
@@ -41,7 +40,7 @@ function GameMenuFrame_UpdateVisibleButtons(self)
 			height = height + 20;
 			GameMenuButtonLogout:SetPoint("TOP", GameMenuButtonAddons, "BOTTOM", 0, -16);
 		end
-
+		
 		if ( GameMenuButtonRatings:IsShown() ) then
 			height = height + 20;
 			GameMenuButtonLogout:SetPoint("TOP", GameMenuButtonRatings, "BOTTOM", 0, -16);
@@ -52,10 +51,13 @@ function GameMenuFrame_UpdateVisibleButtons(self)
 end
 
 function GameMenuFrame_UpdateStoreButtonState(self)
-	if ( C_StorePublic.IsDisabledByParentalControls() ) then
-		self.disabledTooltip = BLIZZARD_STORE_ERROR_PARENTAL_CONTROLS;
+	if ( IsVeteranTrialAccount() ) then
+		self.disabledTooltip = ERR_RESTRICTED_ACCOUNT_TRIAL;
 		self:Disable();
-	elseif ( Kiosk.IsEnabled() ) then
+	elseif ( C_StorePublic.IsDisabledByParentalControls() ) then
+		self.disabledTooltip = BLIZZARD_STORE_ERROR_PARENTAL_CONTROLS;
+		self:Disable();		
+	elseif ( IsKioskModeEnabled() ) then
 		self.disabledTooltip = nil;
 		self:Disable();
 	else

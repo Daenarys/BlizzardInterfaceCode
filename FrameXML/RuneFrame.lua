@@ -15,25 +15,17 @@ local RUNE_KEY_BY_SPEC = {
 	[3] = "Unholy",
 };
 
-local function GetRuneKeyBySpec(specIndex)
-	return RUNE_KEY_BY_SPEC[specIndex] or "Base";
-end
-
 local CD_EDGE_BY_SPEC = {
 	[1] = "BloodUnholy",
 	[2] = "Frost",
 	[3] = "BloodUnholy",
 };
 
-local function GetCDEdgeBySpec(specIndex)
-	return CD_EDGE_BY_SPEC[specIndex] or "BloodUnholy";
-end
-
 RuneButtonMixin = {};
 
 function RuneButtonMixin:OnEnter()
 	if ( self.tooltipText ) then
-		GameTooltip:SetOwner(self:GetParent(), "ANCHOR_BOTTOMRIGHT");
+		GameTooltip_SetDefaultAnchor(GameTooltip, self);
 		GameTooltip:SetText(self.tooltipText, 1, 1, 1);
 		GameTooltip:AddLine(RUNES_TOOLTIP, nil, nil, nil, true);
 		GameTooltip:Show();
@@ -140,8 +132,8 @@ function RuneFrameMixin:UpdateRunes(isSpecChange)
 		local cooldown = runeButton.Cooldown;
 
 		if (isSpecChange) then
-			cooldown:SetSwipeTexture("Interface\\PlayerFrame\\DK-"..GetRuneKeyBySpec(specIndex).."-Rune-CDFill");
-			cooldown:SetEdgeTexture("Interface\\PlayerFrame\\DK-"..GetCDEdgeBySpec(specIndex).."-Rune-CDSpark");
+			cooldown:SetSwipeTexture("Interface\\PlayerFrame\\DK-"..RUNE_KEY_BY_SPEC[specIndex].."-Rune-CDFill");
+			cooldown:SetEdgeTexture("Interface\\PlayerFrame\\DK-"..CD_EDGE_BY_SPEC[specIndex].."-Rune-CDSpark");
 		end
 
 		local start, duration, runeReady = GetRuneCooldown(runeIndex);
@@ -157,7 +149,7 @@ function RuneFrameMixin:UpdateRunes(isSpecChange)
 			end
 		else
 			if not runeButton.spent:IsPlaying() then
-				runeButton.Rune:SetAtlas("DK-"..GetRuneKeyBySpec(specIndex).."-Rune-Ready");
+				runeButton.Rune:SetAtlas("DK-"..RUNE_KEY_BY_SPEC[specIndex].."-Rune-Ready");
 				if (self.runesOnCooldown[index]) then
 					local _, _, runeReadyNow = GetRuneCooldown(self.runesOnCooldown[index]);
 					if (runeReadyNow) then

@@ -28,14 +28,16 @@
 			</Layer>
 		</Layers>
 	</Frame>
-	<ContainedAlertFrame  name="QuickJoinToastButton" frameStrata="LOW" frameLevel="4" parent="UIParent" inherits="QuickKeybindButtonTemplate" mixin="QuickJoinToastMixin">
+	<Button name="QuickJoinToastButton" frameStrata="LOW" frameLevel="4" parent="UIParent" mixin="QuickJoinToastMixin">
 		<Size x="32" y="32"/>
-		<KeyValues>
-			<KeyValue key="commandName" value="TOGGLESOCIAL" type="string"/>
-		</KeyValues>
+		<Anchors>
+			<Anchor point="BOTTOM" relativeTo="ChatFrameMenuButton" relativePoint="TOP"/>
+		</Anchors>
 		<Frames>
-			<Frame parentKey="Toast" inherits="QuickJoinToastTemplate" frameLevel="3"/>
-			<Frame parentKey="Toast2" inherits="QuickJoinToastTemplate" frameLevel="3"/>
+			<Frame parentKey="Toast" inherits="QuickJoinToastTemplate" frameLevel="3">
+			</Frame>
+			<Frame parentKey="Toast2" inherits="QuickJoinToastTemplate" frameLevel="3">
+			</Frame>
 		</Frames>
 		<Layers>
 			<Layer level="BACKGROUND">
@@ -71,11 +73,11 @@
 			<OnClick method="OnClick"/>
 			<OnMouseDown method="OnMouseDown"/>
 			<OnMouseUp method="OnMouseUp"/>
-			<OnEnter method="OnEnter" inherit="append"/>
+			<OnEnter method="OnEnter"/>
 			<OnEvent method="OnEvent"/>
-			<OnLeave method="OnLeave" inherit="append"/>
-			<OnShow method="OnShow" inherit="append"/>
-			<OnHide method="OnHide" inherit="append"/>
+			<OnLeave method="OnLeave"/>
+			<OnShow method="OnShow"/>
+			<OnHide method="OnHide"/>
 		</Scripts>
 		<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD"/>
 		<Animations>
@@ -135,5 +137,5 @@
 				</Scripts>
 			</AnimationGroup>
 		</Animations>
-	</ContainedAlertFrame>
+	</Button>
 </Ui>

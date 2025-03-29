@@ -45,10 +45,8 @@ function ClassNameplateBarBrewmasterMonk:OnLoad()
 	self.spec = SPEC_MONK_BREWMASTER;
 	self.powerToken = "STAGGER";
 	self.overrideTargetMode = false;
-	self.paddingOverride = 0;
 	self.currValue = 0;
-	self.Border:SetVertexColor(0, 0, 0, 1);
-	self.Border:SetBorderSizes(nil, nil, 0, 0);
+	self.Border:SetVertexColor(0, 0, 0, .8);
 	ClassNameplateBar.OnLoad(self);
 end
 
@@ -85,10 +83,7 @@ function ClassNameplateBarBrewmasterMonk:UpdatePower()
 end
 
 function ClassNameplateBarBrewmasterMonk:OnOptionsUpdated()
-	self:OnSizeChanged();
-end
-
-function ClassNameplateBarBrewmasterMonk:OnSizeChanged() -- override
-	PixelUtil.SetHeight(self, DefaultCompactNamePlatePlayerFrameSetUpOptions.healthBarHeight);
-	self.Border:UpdateSizes();
+	local width, height = C_NamePlate.GetNamePlateSelfSize();
+	self:SetWidth((width - 24)* 0.8);
+	self:SetHeight(DefaultCompactNamePlatePlayerFrameSetUpOptions.healthBarHeight);
 end

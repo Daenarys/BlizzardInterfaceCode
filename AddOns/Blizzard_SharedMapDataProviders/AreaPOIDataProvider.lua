@@ -1,127 +1,86 @@
 AreaPOIDataProviderMixin = CreateFromMixins(MapCanvasDataProviderMixin);
 
-function AreaPOIDataProviderMixin:GetPinTemplate()
-	return "AreaPOIPinTemplate";
-end
-
 function AreaPOIDataProviderMixin:OnShow()
-	self:RegisterEvent("AREA_POIS_UPDATED");
+	self:RegisterEvent("WORLD_MAP_UPDATE");
 end
 
 function AreaPOIDataProviderMixin:OnHide()
-	self:UnregisterEvent("AREA_POIS_UPDATED");
+	self:UnregisterEvent("WORLD_MAP_UPDATE");
 end
 
 function AreaPOIDataProviderMixin:OnEvent(event, ...)
-	if event == "AREA_POIS_UPDATED" then
+	if event == "WORLD_MAP_UPDATE" then
 		self:RefreshAllData();
 	end
 end
 
 function AreaPOIDataProviderMixin:RemoveAllData()
-	self:GetMap():RemoveAllPinsByTemplate(self:GetPinTemplate());
+	self:GetMap():RemoveAllPinsByTemplate("AreaPOIPinTemplate");
 end
 
 function AreaPOIDataProviderMixin:RefreshAllData(fromOnShow)
 	self:RemoveAllData();
 
-	local mapID = self:GetMap():GetMapID();
-	local areaPOIs = C_AreaPoiInfo.GetAreaPOIForMap(mapID);
-	for i, areaPoiID in ipairs(areaPOIs) do
-		local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(mapID, areaPoiID);
-		if poiInfo then
-			self:GetMap():AcquirePin(self:GetPinTemplate(), poiInfo);
+	local mapAreaID = self:GetMap():GetMapID();
+	local areaPOIs = C_WorldMap.GetAreaPOIForMap(mapAreaID, self:GetTransformFlags());
+	if areaPOIs then
+		for i, areaPoiID in ipairs(areaPOIs) do
+			local poiInfo = C_WorldMap.GetAreaPOIInfo(mapAreaID, areaPoiID, self:GetTransformFlags());
+			if poiInfo then
+				self:AddAreaPOI(poiInfo);
+			end
 		end
 	end
+end
+
+function AreaPOIDataProviderMixin:AddAreaPOI(poiInfo)
+	local pin = self:GetMap():AcquirePin("AreaPOIPinTemplate");
+	pin.poiID = poiInfo.poiID;
+
+	if poiInfo.atlasName then
+		local atlasName = poiInfo.textureKitPrefix and ("%s-%s"):format(poiInfo.textureKitPrefix, poiInfo.atlasName) or poiInfo.atlasName;
+		local _, width, height = GetAtlasInfo(atlasName);
+		pin.Texture:SetAtlas(atlasName);
+		pin.Texture:SetSize(width * 2, height * 2);
+		pin.Highlight:SetAtlas(atlasName);
+		pin.Highlight:SetSize(width * 2, height * 2);
+	else
+		local x1, x2, y1, y2 = GetPOITextureCoords(poiInfo.textureIndex);
+		pin.Texture:SetTexture("Interface/Minimap/POIIcons");
+		pin.Texture:SetSize(40, 40);
+		pin.Texture:SetTexCoord(x1, x2, y1, y2);
+		pin.Highlight:SetTexture("Interface/Minimap/POIIcons");
+		pin.Highlight:SetTexCoord(x1, x2, y1, y2);
+		pin.Highlight:SetSize(40, 40);
+	end
+
+	pin:SetPosition(poiInfo.x, poiInfo.y);
 end
 
 --[[ Area POI Pin ]]--
-AreaPOIPinMixin = BaseMapPoiPinMixin:CreateSubPin("PIN_FRAME_LEVEL_AREA_POI");
+AreaPOIPinMixin = CreateFromMixins(MapCanvasPinMixin);
 
-local AREAPOI_HIGHLIGHT_PARAMS = { backgroundPadding = 20 };
+function AreaPOIPinMixin:OnLoad()
+	self:SetAlphaLimits(2.0, 0.0, 1.0);
+	self:SetScalingLimits(1, 0.4125, 0.425);
 
-function AreaPOIPinMixin:OnAcquired(poiInfo) -- override
-	BaseMapPoiPinMixin.OnAcquired(self, poiInfo);
+	self.UpdateTooltip = self.OnMouseEnter;
 
-	self.areaPoiID = poiInfo.areaPoiID;
-	MapPinHighlight_CheckHighlightPin(poiInfo.shouldGlow, self, self.Texture, AREAPOI_HIGHLIGHT_PARAMS);
-
-	if self.textureKit == "OribosGreatVault" then
-		local function OribosGreatVaultPOIOnMouseUp(self, button, upInside)
-			if upInside and (button == "LeftButton") then
-				WeeklyRewards_ShowUI();
-			end
-		end
-
-		self:SetScript("OnMouseUp", OribosGreatVaultPOIOnMouseUp);
-	else
-		self:SetScript("OnMouseUp", nil);
-	end
+	-- Flight points can nudge area poi pins.
+	self:SetNudgeTargetFactor(0.015);
+	self:SetNudgeZoomedOutFactor(1.0);
+	self:SetNudgeZoomedInFactor(0.25);
 end
 
 function AreaPOIPinMixin:OnMouseEnter()
-	if not self.name or #self.name == 0 then
-		return;
+	local poiInfo = C_WorldMap.GetAreaPOIInfo(self:GetMap():GetMapID(), self.poiID, self:GetMap():GetTransformFlags());
+	if poiInfo then
+		WorldMap_HijackTooltip(self:GetMap());
+
+		WorldMapPOI_AddPOITimeLeftText(self, self.poiID, poiInfo.name, poiInfo.description)
 	end
-
-	self.UpdateTooltip = function() self:OnMouseEnter(); end;
-
-	local tooltipShown = self:TryShowTooltip();
-	if not tooltipShown then
-		self:GetMap():TriggerEvent("SetAreaLabel", MAP_AREA_LABEL_TYPE.POI, self.name, self.description);
-	end
-
-	EventRegistry:TriggerEvent("AreaPOIPin.MouseOver", self, tooltipShown, self.areaPoiID, self.name);
-end
-
-function AreaPOIPinMixin:TryShowTooltip()
-	local description = self.description;
-	local hasDescription = description and #description > 0;
-	local isTimed = C_AreaPoiInfo.IsAreaPOITimed(self.areaPoiID);
-	local hasWidgetSet = self.widgetSetID ~= nil;
-
-	local hasTooltip = hasDescription or isTimed or hasWidgetSet;
-
-	if hasTooltip then
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-		GameTooltip_SetTitle(GameTooltip, self.name, HIGHLIGHT_FONT_COLOR);
-
-		if hasDescription then
-			GameTooltip_AddNormalLine(GameTooltip, description);
-		end
-
-		if isTimed then
-			local secondsLeft = C_AreaPoiInfo.GetAreaPOISecondsLeft(self.areaPoiID);
-			if secondsLeft and secondsLeft > 0 then
-				local timeString = SecondsToTime(secondsLeft);
-				GameTooltip_AddNormalLine(GameTooltip, BONUS_OBJECTIVE_TIME_LEFT:format(timeString));
-			end
-		end
-
-		if self.textureKit == "OribosGreatVault" then
-			GameTooltip_AddBlankLineToTooltip(GameTooltip);
-			GameTooltip_AddInstructionLine(GameTooltip, ORIBOS_GREAT_VAULT_POI_TOOLTIP_INSTRUCTIONS);
-		end
-
-		if hasWidgetSet then
-			GameTooltip_AddWidgetSet(GameTooltip, self.widgetSetID, 10);
-		end
-
-		if self.textureKit then
-			local backdropStyle = GAME_TOOLTIP_TEXTUREKIT_BACKDROP_STYLES[self.textureKit];
-			if (backdropStyle) then
-				SharedTooltip_SetBackdropStyle(GameTooltip, backdropStyle);
-			end
-		end
-		GameTooltip:Show();
-		return true;
-	end
-
-	return false;
 end
 
 function AreaPOIPinMixin:OnMouseLeave()
-	self:GetMap():TriggerEvent("ClearAreaLabel", MAP_AREA_LABEL_TYPE.POI);
-
-	GameTooltip:Hide();
+	WorldMap_RestoreTooltip();
 end

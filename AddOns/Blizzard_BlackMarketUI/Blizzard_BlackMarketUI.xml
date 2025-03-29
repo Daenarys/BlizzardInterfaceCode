@@ -1,7 +1,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\..\FrameXML\UI.xsd">
 	<Script file="Blizzard_BlackMarketUI.lua"/>
-
+	
 <!--
 	<Button name="BlackMarketColumnButtonTemplate" virtual="true">
 		<Layers>
@@ -182,14 +182,6 @@
 							<Color r="0" g="0.8" b="1"/>
 						</Texture>
 					</Layer>
-					<Layer level="OVERLAY" textureSubLevel="1">
-						<Texture parentKey="IconOverlay" hidden="true">
-							<Size x="34" y="34"/>
-							<Anchors>
-								<Anchor point="CENTER"/>
-							</Anchors>
-						</Texture>
-					</Layer>
 				</Layers>
 				<Scripts>
 					<OnEnter>
@@ -288,28 +280,28 @@
 				<Anchor point="TOPLEFT" x="33" y="0"/>
 				<Anchor point="BOTTOMRIGHT" x="0" y="5"/>
 			</Anchors>
-			<Color color="HIGHLIGHT_LIGHT_BLUE" />
+			<Color r="0.243" g="0.570" b="1"/>
 		</HighlightTexture>
 	</Button>
 
 	<Texture name="_WoodFrameTile-Top" file="Interface\BlackMarket\_WoodFrame-TileHorizontal" virtual="true" horizTile="true" >
-		<Size x="256" y="28"/>
-		<TexCoords left="0.00000000" right="1.00000000" top="0.01562500" bottom="0.45312500"/>
+		<Size x="256" y="28"/>	
+		<TexCoords left="0.00000000" right="1.00000000" top="0.01562500" bottom="0.45312500"/>	
 	</Texture>
 
 	<Texture name="_WoodFrameTile-Bottom" file="Interface\BlackMarket\_WoodFrame-TileHorizontal" virtual="true" horizTile="true" >
-		<Size x="256" y="28"/>
-		<TexCoords left="0.00000000" right="1.00000000" top="0.48437500" bottom="0.92187500"/>
+		<Size x="256" y="28"/>	
+		<TexCoords left="0.00000000" right="1.00000000" top="0.48437500" bottom="0.92187500"/>	
 	</Texture>
 
 	<Texture name="!WoodFrameTile-Left" file="Interface\BlackMarket\!WoodFrame-TileVertical" virtual="true" vertTile="true" >
-		<Size x="28" y="256"/>
-		<TexCoords left="0.01562500" right="0.45312500" top="0.00000000" bottom="1.00000000"/>
+		<Size x="28" y="256"/>	
+		<TexCoords left="0.01562500" right="0.45312500" top="0.00000000" bottom="1.00000000"/>	
 	</Texture>
 
 	<Texture name="!WoodFrameTile-Right" file="Interface\BlackMarket\!WoodFrame-TileVertical" virtual="true" vertTile="true" >
-		<Size x="28" y="256"/>
-		<TexCoords left="0.48437500" right="0.92187500" top="0.00000000" bottom="1.00000000"/>
+		<Size x="28" y="256"/>	
+		<TexCoords left="0.48437500" right="0.92187500" top="0.00000000" bottom="1.00000000"/>	
 	</Texture>
 
 	<Frame name="WoodFrameTemplate" inherits="BaseBasicFrameTemplate" virtual="true">
@@ -384,7 +376,7 @@
 			</Layer>
 		</Layers>
 	</Frame>
-
+	
 	<Frame name="BlackMarketFrame" inherits="WoodFrameTemplate" toplevel="true" parent="UIParent" hidden="true" enableMouse="true">
 		<Size x="890" y="504"/>
 		<Layers>
@@ -434,7 +426,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<EditBox parentKey="SearchName" autoFocus="false" inherits="InputBoxTemplate" bytes="64">
+					<EditBox parentKey="SearchName" autoFocus="false" inherits="InputBoxTemplate">
 						<Size x="140" y="16"/>
 						<Anchors>
 							<Anchor point="TOPLEFT" relativeKey="$parent.SearchNameText" relativePoint="BOTTOMLEFT" x="3" y="-6"/>
@@ -451,7 +443,7 @@
 								self:ClearFocus();
 							</OnEnterPressed>
 						</Scripts>
-						<FontString inherits="ChatFontNormal"/>
+						<FontString inherits="ChatFontNormal" bytes="64"/>
 					</EditBox>
 					<EditBox parentKey="SearchMinLevel" name="BlackMarketMinLevel" letters="2" numeric="true" autoFocus="false" inherits="InputBoxTemplate">
 						<Size x="25" y="16"/>
@@ -615,7 +607,7 @@
 <!--
 						<Texture setAllPoints="true">
 							<Color r="0" g="0" b="0" a="0.75"/>
-						</Texture>
+						</Texture>		
 -->
 						<FontString parentKey="Title" inherits="QuestFont_Super_Huge" justifyH="CENTER" text="HOT_ITEM">
 							<Anchors>
@@ -703,14 +695,6 @@
 										<Anchor point="CENTER" x="0" y="0"/>
 									</Anchors>
 									<Color r="0" g="0.8" b="1"/>
-								</Texture>
-							</Layer>
-							<Layer level="OVERLAY" textureSubLevel="1">
-								<Texture parentKey="IconOverlay" hidden="true">
-									<Size x="35" y="35"/>
-									<Anchors>
-										<Anchor point="CENTER"/>
-									</Anchors>
 								</Texture>
 							</Layer>
 						</Layers>
@@ -866,7 +850,7 @@
 					<Layer level="BACKGROUND">
 						<Texture setAllPoints="true">
 							<Color r="0" g="0" b="0" a="0.5"/>
-						</Texture>
+						</Texture>		
 					</Layer>
 					<Layer level="OVERLAY">
 						<FontString parentKey="NoItems" inherits="QuestFont_Super_Huge" justifyH="CENTER" hidden="true" text="BLACK_MARKET_NO_ITEMS">

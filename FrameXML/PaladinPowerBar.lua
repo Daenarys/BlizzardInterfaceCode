@@ -1,5 +1,5 @@
 HOLY_POWER_FULL = 3;
-PALADINPOWERBAR_SHOW_LEVEL = 1;
+PALADINPOWERBAR_SHOW_LEVEL = 10;
 
 PaladinPowerBar = {};
 
@@ -7,7 +7,7 @@ function PaladinPowerBar:OnLoad()
 	self:SetTooltip(HOLY_POWER, HOLY_POWER_TOOLTIP);
 	self:SetPowerTokens("HOLY_POWER");
 	self.class = "PALADIN";
-	--self.spec = SPEC_PALADIN_RETRIBUTION;
+	self.spec = SPEC_PALADIN_RETRIBUTION;
 
 	self.glow:SetAlpha(0);
 	self.rune1:SetAlpha(0);
@@ -55,11 +55,18 @@ end
 
 function PaladinPowerBar:ToggleHolyRune(self, visible)
 	if visible then
-		self.activate:Stop();
 		self.deactivate:Play();
 	else
-		self.deactivate:Stop();
 		self.activate:Play();
+	end
+end
+
+function PaladinPowerBar_OnUpdate(self, elapsed)
+	self.delayedUpdate = self.delayedUpdate - elapsed;
+	if ( self.delayedUpdate <= 0 ) then
+		self.delayedUpdate = nil;
+		self:SetScript("OnUpdate", nil);
+		self:UpdatePower();
 	end
 end
 
@@ -71,9 +78,20 @@ function PaladinPowerBar:UpdatePower()
 	local numHolyPower = UnitPower( self:GetParent().unit, Enum.PowerType.HolyPower );
 	local maxHolyPower = UnitPowerMax( self:GetParent().unit, Enum.PowerType.HolyPower );
 
+	-- a little hacky but we want to signify that the bank is being used to replenish holy power
+	if ( self.lastPower and self.lastPower > HOLY_POWER_FULL and numHolyPower == self.lastPower - HOLY_POWER_FULL ) then
+		for i = 1, HOLY_POWER_FULL do
+			self:ToggleHolyRune(self["rune"..i], true);
+		end
+		self.lastPower = nil;
+		self.delayedUpdate = 0.5;
+		self:SetScript("OnUpdate", PaladinPowerBar_OnUpdate);
+		return;
+	end
+
 	for i=1,maxHolyPower do
 		local holyRune = self["rune"..i];
-		local isShown = not holyRune.deactivate:IsPlaying() and (holyRune:GetAlpha()> 0 or holyRune.activate:IsPlaying());
+		local isShown = holyRune:GetAlpha()> 0 or holyRune.activate:IsPlaying();
 		local shouldShow = i <= numHolyPower;
 		if isShown ~= shouldShow then
 			self:ToggleHolyRune(holyRune, isShown);

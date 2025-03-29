@@ -20,7 +20,7 @@ function HeirloomsJournal_OnShow(self)
 	SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_HEIRLOOM_JOURNAL, true);
 	SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_HEIRLOOM_JOURNAL_TAB, true);
 
-	CollectionsJournal:SetPortraitToAsset("Interface\\Icons\\inv_misc_enggizmos_19");
+	SetPortraitToTexture(CollectionsJournalPortrait, "Interface\\Icons\\inv_misc_enggizmos_19");
 	local classFilter, specFilter = C_Heirloom.GetClassAndSpecFilters();
 	if self.filtersSet == nil then
 		if UnitLevel("player") >= GetMaxPlayerLevel() then
@@ -36,7 +36,7 @@ function HeirloomsJournal_OnShow(self)
 			else
 				specID = NO_SPEC_FILTER;
 			end
-
+			
 			C_Heirloom.SetClassAndSpecFilters(classID, specID);
 		end
 
@@ -96,7 +96,6 @@ do
 	end
 	function HeirloomsJournalCollectedFilterDropDown_OnLoad(self)
 		UIDropDownMenu_Initialize(self, OpenCollectedFilterDropDown, "MENU");
-		HeirloomsJournal:UpdateResetFiltersButtonVisibility();
 	end
 end
 
@@ -143,7 +142,7 @@ function HeirloomsMixin:OnHeirloomsUpdated(itemID, updateReason, ...)
 				self.numKnownHeirlooms = self.numKnownHeirlooms + 1;
 				self:UpdateProgressBar();
 			end
-
+			
 			requiresFullUpdate = wasHidden;
 		elseif updateReason == "UPGRADE" then
 			self.upgradedHeirlooms[itemID] = true;
@@ -237,7 +236,7 @@ function HeirloomsMixin:SortHeirloomsIntoEquipmentBuckets()
 	local equipBuckets = {};
 	for i = 1, C_Heirloom.GetNumDisplayedHeirlooms() do
 		local itemID = C_Heirloom.GetHeirloomItemIDFromDisplayedIndex(i);
-
+		
 		local name, itemEquipLoc, isPvP, itemTexture, upgradeLevel, source, _, effectiveLevel, minLevel, maxLevel = C_Heirloom.GetHeirloomInfo(itemID);
 		local category = GetHeirloomCategoryFromInvType(itemEquipLoc);
 		if category then
@@ -261,18 +260,18 @@ function HeirloomsMixin:SortHeirloomsIntoEquipmentBuckets()
 end
 
 -- Each heirloom button entry dimension
-local BUTTON_WIDTH = 208;
+local BUTTON_WIDTH = 208; 
 local BUTTON_HEIGHT = 50;
 
 -- Padding around each heirloom button
-local BUTTON_PADDING_X = 0;
+local BUTTON_PADDING_X = 0; 
 local BUTTON_PADDING_Y = 16;
 
 -- The total height of a heirloom header
-local HEADER_HEIGHT = 24 + 13;
+local HEADER_HEIGHT = 24 + 13; 
 
 -- Y padding before the first header of a page
-local FIRST_HEADER_Y_PADDING = 0;
+local FIRST_HEADER_Y_PADDING = 0; 
 -- Y padding before additional headers after the first header of a page
 local ADDITIONAL_HEADER_Y_PADDING = 16;
 
@@ -387,7 +386,7 @@ local function ActivatePooledFrames(framePool, numEntriesInUse)
 end
 
 function HeirloomsMixin:LayoutCurrentPage()
-	HelpTip:Hide(self, HEIRLOOMS_JOURNAL_TUTORIAL_UPGRADE);
+	self.UpgradeLevelHelpBox:Hide();
 
 	local pageLayoutData = self.heirloomLayoutData[self.PagingFrame:GetCurrentPage()];
 
@@ -514,7 +513,7 @@ function HeirloomsMixin:RefreshView()
 	end
 
 	self:LayoutCurrentPage();
-
+	
 	self:UpdateProgressBar();
 end
 
@@ -562,7 +561,7 @@ function HeirloomsMixin:UpdateButton(button)
 		button.slotFrameUncollected:Hide();
 		button.slotFrameUncollectedInnerGlow:Hide();
 
-
+		
 		if upgradeLevel == C_Heirloom.GetHeirloomMaxUpgradeLevel(button.itemID) then
 			button.levelBackground:SetAtlas("collections-levelplate-gold", true);
 			button.level:SetFontObject("GameFontBlackSmall");
@@ -590,7 +589,7 @@ function HeirloomsMixin:UpdateButton(button)
 		button.special:SetShadowColor(0, 0, 0, 0.33);
 
 		button.slotFrameCollected:Hide();
-		button.slotFrameUncollected:Show();
+		button.slotFrameUncollected:Show();		
 		button.slotFrameUncollectedInnerGlow:Show();
 
 		button.levelBackground:Hide();
@@ -602,18 +601,10 @@ function HeirloomsMixin:UpdateButton(button)
 end
 
 function HeirloomsMixin:ConsiderShowingUpgradeTutorial(button)
-	if not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_HEIRLOOM_JOURNAL_LEVEL) then
-		local helpTipInfo = {
-			text = HEIRLOOMS_JOURNAL_TUTORIAL_UPGRADE,
-			buttonStyle = HelpTip.ButtonStyle.Close,
-			cvarBitfield = "closedInfoFrames",
-			bitfieldFlag = LE_FRAME_TUTORIAL_HEIRLOOM_JOURNAL_LEVEL,
-			targetPoint = HelpTip.Point.BottomEdgeRight,
-			alignment = HelpTip.Alignment.Left,
-			offsetX = -16,
-			offsetY = 5,
-		};
-		HelpTip:Show(self, helpTipInfo, button.levelBackground);
+	if not self.UpgradeLevelHelpBox:IsShown() and not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_HEIRLOOM_JOURNAL_LEVEL) then
+		self.UpgradeLevelHelpBox:ClearAllPoints();
+		self.UpgradeLevelHelpBox:SetPoint("TOPLEFT", button.levelBackground, "BOTTOM", -37, -17);
+		self.UpgradeLevelHelpBox:Show();
 	end
 end
 
@@ -632,16 +623,6 @@ function HeirloomsMixin:OnPageChanged(userAction)
 	end
 end
 
-function HeirloomsMixin:SetCollectedHeirloomFilter(checked)
-	C_Heirloom.SetCollectedHeirloomFilter(checked);
-	self:FullRefreshIfVisible();
-end
-
-function HeirloomsMixin:SetUncollectedHeirloomFilter(checked)
-	C_Heirloom.SetUncollectedHeirloomFilter(checked);
-	self:FullRefreshIfVisible();
-end
-
 function HeirloomsMixin:SetSourceChecked(source, checked)
 	if self:IsSourceChecked(source) ~= checked then
 		C_Heirloom.SetHeirloomSourceFilter(source, checked);
@@ -655,54 +636,80 @@ function HeirloomsMixin:IsSourceChecked(source)
 end
 
 function HeirloomsMixin:SetAllSourcesChecked(checked)
-	C_HeirloomInfo.SetAllSourceFilters(checked);
+	local numSources = C_PetJournal.GetNumPetSources();
+	for i = 1, numSources do
+		C_Heirloom.SetHeirloomSourceFilter(i, checked);
+	end
 
 	self:FullRefreshIfVisible();
-	UIDropDownMenu_Refresh(self.filterDropDown, UIDROPDOWNMENU_MENU_VALUE, UIDROPDOWNMENU_MENU_LEVEL);
-end
-
-function HeirloomsMixin:ResetFilters()
-	C_HeirloomInfo.SetDefaultFilters();
-	self.FilterButton.ResetButton:Hide();
-
-	self:FullRefreshIfVisible();
-end
-
-function HeirloomsMixin:UpdateResetFiltersButtonVisibility()
-	self.FilterButton.ResetButton:SetShown(not C_HeirloomInfo.IsUsingDefaultFilters());
 end
 
 function HeirloomsMixin:OpenCollectedFilterDropDown(level)
-	local filterSystem = {
-		onUpdate = function() self:UpdateResetFiltersButtonVisibility() end,
-		filters = {
-			{ type = FilterComponent.Checkbox, text = COLLECTED, set = function(value) HeirloomsJournal:SetCollectedHeirloomFilter(value) end, isSet = C_Heirloom.GetCollectedHeirloomFilter },
-			{ type = FilterComponent.Checkbox, text = NOT_COLLECTED, set = function(value) HeirloomsJournal:SetUncollectedHeirloomFilter(value) end, isSet = C_Heirloom.GetUncollectedHeirloomFilter },
-			{ type = FilterComponent.Submenu, text = SOURCES, value = 1, childrenInfo = {
-				filters = {
-					{ type = FilterComponent.TextButton, 
-					  text = CHECK_ALL,
-					  set = function() self:SetAllSourcesChecked(true);	end, 
-					},
-					{ type = FilterComponent.TextButton,
-					  text = UNCHECK_ALL,
-					  set = function() self:SetAllSourcesChecked(false); end, 
-					},
-					{ type = FilterComponent.DynamicFilterSet,
-					  buttonType = FilterComponent.Checkbox, 
-					  set = function(filter, value)	self:SetSourceChecked(filter, value); end,
-					  isSet = function(source) return self:IsSourceChecked(source); end,
-					  numFilters = C_PetJournal.GetNumPetSources,
-					  filterValidation = C_HeirloomInfo.IsHeirloomSourceValid,
-					  globalPrepend = "BATTLE_PET_SOURCE_", 
-					},
-				},
-			},
-		},
-		}
-	};
+	local info = UIDropDownMenu_CreateInfo();
+	info.keepShownOnClick = true;	
 
-	FilterDropDownSystem.Initialize(self, filterSystem, level);
+	if level == 1 then
+		info.text = COLLECTED;
+		info.func = function(_, _, _, value)
+						C_Heirloom.SetCollectedHeirloomFilter(value);
+						self:FullRefreshIfVisible();
+					end;
+		info.checked = C_Heirloom.GetCollectedHeirloomFilter();
+		info.isNotRadio = true;
+		UIDropDownMenu_AddButton(info, level);
+
+		info.text = NOT_COLLECTED;
+		info.func = function(_, _, _, value)
+						C_Heirloom.SetUncollectedHeirloomFilter(value);
+						self:FullRefreshIfVisible();
+					end 
+		info.checked = C_Heirloom.GetUncollectedHeirloomFilter();
+		info.isNotRadio = true;
+		UIDropDownMenu_AddButton(info, level);
+
+		info.checked = nil;
+		info.isNotRadio = nil;
+		info.func = nil;
+		info.hasArrow = true;
+		info.notCheckable = true;
+
+		info.text = SOURCES;
+		info.value = 1;
+		UIDropDownMenu_AddButton(info, level);
+	elseif level == 2 then
+		info.hasArrow = false;
+		info.isNotRadio = true;
+		info.notCheckable = true;
+				
+		
+		info.text = CHECK_ALL;
+		info.func = function()
+						self:SetAllSourcesChecked(true);
+						UIDropDownMenu_Refresh(self.filterDropDown, 1, 2);
+					end;
+		UIDropDownMenu_AddButton(info, level);
+			
+		info.text = UNCHECK_ALL;
+		info.func = function()
+						self:SetAllSourcesChecked(false);
+						UIDropDownMenu_Refresh(self.filterDropDown, 1, 2);
+					end;
+		UIDropDownMenu_AddButton(info, level);
+		
+		info.notCheckable = false;
+
+		local numSources = C_PetJournal.GetNumPetSources();
+		for i = 1, numSources do
+			if C_Heirloom.IsHeirloomSourceValid(i) then
+				info.text = _G["BATTLE_PET_SOURCE_"..i];
+				info.func = function(_, _, _, value)
+							self:SetSourceChecked(i, value);
+						end;
+				info.checked = function() return self:IsSourceChecked(i); end;
+				UIDropDownMenu_AddButton(info, level);
+			end
+		end
+	end
 end
 
 function HeirloomsMixin:GetClassFilter()
@@ -735,17 +742,13 @@ function HeirloomsMixin:UpdateClassFilterDropDownText()
 	if classFilter == NO_CLASS_FILTER then
 		text = ALL_CLASSES;
 	else
-		local classInfo = C_CreatureInfo.GetClassInfo(classFilter);
-		if not classInfo then
-			return;
-		end
-
-		local classColorStr = RAID_CLASS_COLORS[classInfo.classFile].colorStr;
+		local className, classTag = GetClassInfoByID(classFilter);
+		local classColorStr = RAID_CLASS_COLORS[classTag].colorStr;
 		if specFilter == NO_SPEC_FILTER then
-			text = HEIRLOOMS_CLASS_FILTER_FORMAT:format(classColorStr, classInfo.className);
+			text = HEIRLOOMS_CLASS_FILTER_FORMAT:format(classColorStr, className);
 		else
 			local specName = GetSpecializationNameForSpecID(specFilter);
-			text = HEIRLOOMS_CLASS_SPEC_FILTER_FORMAT:format(classColorStr, classInfo.className, specName);
+			text = HEIRLOOMS_CLASS_SPEC_FILTER_FORMAT:format(classColorStr, className, specName);
 		end
 	end
 	UIDropDownMenu_SetText(self.classDropDown, text);
@@ -764,7 +767,7 @@ do
 
 		local info = UIDropDownMenu_CreateInfo();
 
-		if UIDROPDOWNMENU_MENU_VALUE == CLASS_DROPDOWN then
+		if UIDROPDOWNMENU_MENU_VALUE == CLASS_DROPDOWN then 
 			info.text = ALL_CLASSES;
 			info.checked = filterClassID == NO_CLASS_FILTER;
 			info.arg1 = NO_CLASS_FILTER;
@@ -784,23 +787,17 @@ do
 			end
 		end
 
-		if level == 1 then
+		if level == 1 then 
 			info.text = CLASS;
 			info.func =  nil;
 			info.notCheckable = true;
 			info.hasArrow = true;
 			info.value = CLASS_DROPDOWN;
 			UIDropDownMenu_AddButton(info, level)
-
+		
 			local classDisplayName, classTag, classID;
 			if filterClassID ~= NO_CLASS_FILTER then
-				classID = filterClassID;
-
-				local classInfo = C_CreatureInfo.GetClassInfo(filterClassID);
-				if classInfo then
-					classDisplayName = classInfo.className;
-					classTag = classInfo.classFile;
-				end
+				classDisplayName, classTag, classID = GetClassInfoByID(filterClassID);
 			else
 				classDisplayName, classTag, classID = UnitClass("player");
 			end
@@ -811,7 +808,7 @@ do
 			info.func =  nil;
 			info.hasArrow = false;
 			UIDropDownMenu_AddButton(info, level);
-
+		
 			info.notCheckable = nil;
 			local sex = UnitSex("player");
 			for i = 1, GetNumSpecializationsForClassID(classID) do

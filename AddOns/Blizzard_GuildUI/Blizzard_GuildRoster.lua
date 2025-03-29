@@ -73,9 +73,9 @@ function GuildRosterFrame_OnEvent(self, event, ...)
 		end
 	elseif ( event == "GUILD_ROSTER_UPDATE" ) then
 		if ( currentGuildView ~= "tradeskill" ) then
-			local canRequestRosterUpdate = ...;
-			if ( canRequestRosterUpdate ) then
-				C_GuildInfo.GuildRoster();
+			local arg1 = ...;
+			if ( arg1 ) then
+				GuildRoster();
 			end		
 			GuildRoster_Update();
 		end
@@ -198,8 +198,8 @@ function GuildRoster_Update()
 		end
 		
 		-- Update officer note
-		if ( C_GuildInfo.CanViewOfficerNote() ) then
-			if ( C_GuildInfo.CanEditOfficerNote() ) then
+		if ( CanViewOfficerNote() ) then
+			if ( CanEditOfficerNote() ) then
 				if ( (not officernote) or (officernote == "") ) then
 					officernote = GUILD_OFFICERNOTE_EDITLABEL;
 				end
@@ -207,7 +207,7 @@ function GuildRoster_Update()
 			else
 				OfficerNoteText:SetTextColor(0.65, 0.65, 0.65);
 			end
-			GuildMemberOfficerNoteBackground:EnableMouse(C_GuildInfo.CanEditOfficerNote());
+			GuildMemberOfficerNoteBackground:EnableMouse(CanEditOfficerNote());
 			OfficerNoteText:SetText(officernote);
 
 			-- Resize detail frame
@@ -627,7 +627,7 @@ end
 
 function GuildRosterViewDropdown_OnClick(self)
 	GuildRoster_SetView(self.value);
-	C_GuildInfo.GuildRoster();
+	GuildRoster();
 	GuildRoster_Update();
 	SetCVar("guildRosterView", currentGuildView);
 	UIDropDownMenu_SetSelectedValue(GuildRosterViewDropdown, currentGuildView);

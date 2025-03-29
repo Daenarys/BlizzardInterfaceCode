@@ -70,9 +70,8 @@ function OverrideActionBar_OnLoad(self)
 	self["PitchDownDown"] = self.PitchDownButton:GetPushedTexture();
 	self["PitchDownHighlight"] = self.PitchDownButton:GetHighlightTexture();
 	self:RegisterEvent("VEHICLE_ANGLE_UPDATE");
-	self:RegisterUnitEvent("UNIT_ENTERED_VEHICLE", "player");
-	self:RegisterUnitEvent("UNIT_ENTERING_VEHICLE", "player");
-	self:RegisterUnitEvent("UNIT_EXITED_VEHICLE", "player");
+	self:RegisterEvent("UNIT_ENTERED_VEHICLE");
+	self:RegisterEvent("UNIT_ENTERING_VEHICLE");
 end
 
 
@@ -85,38 +84,16 @@ function OverrideActionBar_OnEvent(self, event, ...)
 	elseif ( event == "PLAYER_XP_UPDATE" ) then
 		OverrideActionBar_UpdateXpBar();
 	elseif ( event == "UNIT_ENTERED_VEHICLE" ) then
-		OverrideActionBar_UpdateSkin();
+		OverrideActionBar_CalcSize();
 	elseif ( event == "UNIT_ENTERING_VEHICLE" ) then
-		self.HasExit, self.HasPitch = select(6, ...);
-	elseif ( event == "UNIT_EXITED_VEHICLE") then
-		self.HasExit = nil;
-		self.HasPitch = nil;
-		if GetOverrideBarSkin() then
-			OverrideActionBar_CalcSize();
-		end
+		self.HasExit, self.HasPitch = select(8, ...);
 	end
 end
 
 function OverrideActionBar_OnShow(self)
-	OverrideActionBar_UpdateMicroButtons();
-end
-
-function OverrideActionBar_UpdateMicroButtons()
-	if ActionBarController_GetCurrentActionBarState() == LE_ACTIONBAR_STATE_OVERRIDE then
-		local anchorX, anchorY = OverrideActionBar_GetMicroButtonAnchor();
-		UpdateMicroButtonsParent(OverrideActionBar);
-		MoveMicroButtons("BOTTOMLEFT", OverrideActionBar, "BOTTOMLEFT", anchorX, anchorY, true);
-	end
-end
-
-function OverrideActionBar_UpdateSkin()
-	-- For now, a vehicle has precedence over override bars (hopefully designers make it so these never conflict)
-	if ( HasVehicleActionBar() ) then
-		OverrideActionBar_Setup(UnitVehicleSkin("player"), GetVehicleBarIndex());
-		OverrideActionBar_UpdateMicroButtons();
-	else
-		OverrideActionBar_Setup(GetOverrideBarSkin(), GetOverrideBarIndex());
-	end
+	local anchorX, anchorY = OverrideActionBar_GetMicroButtonAnchor();
+	UpdateMicroButtonsParent(OverrideActionBar);
+	MoveMicroButtons("BOTTOMLEFT", OverrideActionBar, "BOTTOMLEFT", anchorX, anchorY, true);
 end
 
 function OverrideActionBar_SetSkin(skin)
@@ -170,13 +147,13 @@ end
 
 
 function OverrideActionBar_GetMicroButtonAnchor()
-	local x, y = 543, 43;
+	local x, y = 542, 41;
 	if OverrideActionBar.HasExit and OverrideActionBar.HasPitch then
-		x = 626;
+		x = 625;
 	elseif OverrideActionBar.HasPitch then
-		x = 630;
+		x = 629;
 	elseif OverrideActionBar.HasExit then
-		x = 538;
+		x = 537;
 	end
 	return x,y
 end
@@ -218,8 +195,8 @@ function OverrideActionBar_Setup(skin, barIndex)
 	
 	for k=1,MAX_ALT_SPELLBUTTONS do
 		local button = OverrideActionBar["SpellButton"..k];
-		button:UpdateAction();
-		button:Update();
+		ActionButton_UpdateAction(button);
+		ActionButton_Update(button);
 		local _, spellID = GetActionInfo(button.action);
 		if spellID and spellID > 0 then
 			button:SetAttribute("statehidden", false);
@@ -230,26 +207,11 @@ function OverrideActionBar_Setup(skin, barIndex)
 		end
 	end
 	
-	local shouldShowHealthBar;
-	local shouldShowManaBar;
-	--vehicles always show both bars, override bars check their flags
 	if HasVehicleActionBar() then
-		shouldShowHealthBar = true;
-		shouldShowManaBar = true;
-	else
-		shouldShowHealthBar = C_ActionBar.ShouldOverrideBarShowHealthBar();
-		shouldShowManaBar = C_ActionBar.ShouldOverrideBarShowManaBar();
-	end
-
-	if shouldShowHealthBar then
 		OverrideActionBarHealthBar:Show();
-	else
-		OverrideActionBarHealthBar:Hide();
-	end
-
-	if shouldShowManaBar then
 		OverrideActionBarPowerBar:Show();
 	else
+		OverrideActionBarHealthBar:Hide();
 		OverrideActionBarPowerBar:Hide();
 	end
 
@@ -261,7 +223,7 @@ end
 
 function OverrideActionBar_UpdateXpBar(newLevel)
 	local level = newLevel or UnitLevel("player");
-	if ( IsLevelAtEffectiveMaxLevel(level) or IsXPUserDisabled() ) then
+	if ( level == MAX_PLAYER_LEVEL or IsXPUserDisabled() ) then
 		OverrideActionBar.xpBar:Hide();
 	else
 		local currXP = UnitXP("player");

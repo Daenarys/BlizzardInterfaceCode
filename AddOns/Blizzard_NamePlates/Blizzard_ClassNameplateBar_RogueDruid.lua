@@ -20,13 +20,11 @@ function ClassNameplateBarRogueDruid:OnLoad()
 	ClassNameplateBar.OnLoad(self);
 end
 
-function ClassNameplateBarRogueDruid:OnEvent(event, ...)
+function ClassNameplateBarRogueDruid:OnEvent(event, arg1, arg2)
 	if (event == "UNIT_DISPLAYPOWER" or event == "PLAYER_ENTERING_WORLD") then
 		self:SetupDruid();
-	elseif (event == "UNIT_POWER_POINT_CHARGE") then
-		self:UpdateChargedPowerPoints();
 	else
-		ClassNameplateBar.OnEvent(self, event, ...);
+		ClassNameplateBar.OnEvent(self, event, arg1, arg2);
 	end
 end
 
@@ -44,7 +42,6 @@ end
 function ClassNameplateBarRogueDruid:SetupDruid()
 	self:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player");
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
-	self:RegisterUnitEvent("UNIT_POWER_POINT_CHARGE", "player");
 	local powerType, powerToken = UnitPowerType("player");
 	local showBar = false;
 	if (powerType == Enum.PowerType.Energy) then
@@ -128,30 +125,5 @@ function ClassNameplateBarRogueDruid:UpdatePower()
 			end
 		end
 		self.lastPower = comboPoints;
-	end
-
-	self:UpdateChargedPowerPoints();
-end
-
-function ComboPointPowerBar:UpdateChargedPowerPoints()
-	local chargedPowerPoints = GetUnitChargedPowerPoints("player");
-	for i = 1, self.maxUsablePoints do
-		local comboPointFrame = self.ComboPoints[i];
-		local isCharged = chargedPowerPoints and tContains(chargedPowerPoints, i);
-		if comboPointFrame.isCharged ~= isCharged then
-			comboPointFrame.isCharged = isCharged;
-			if isCharged then
-				comboPointFrame.Point:SetAtlas("ClassOverlay-ComboPoint-Kyrian");
-				comboPointFrame.Background:SetAtlas("ClassOverlay-ComboPoint-Off-Kyrian");
-				if comboPointFrame.on then
-					comboPointFrame.on = false;
-					comboPointFrame.Point:SetAlpha(0);
-				end
-				self:TurnOn(comboPointFrame, comboPointFrame.Point, 1);
-			else
-				comboPointFrame.Point:SetAtlas("ClassOverlay-ComboPoint");
-				comboPointFrame.Background:SetAtlas("ClassOverlay-ComboPoint-Off");
-			end
-		end
 	end
 end

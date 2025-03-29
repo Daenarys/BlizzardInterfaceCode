@@ -1,4 +1,5 @@
 NewPlayerExperience = {};
+NewPlayerExperience.CompletionLevel = NPE_TUTORIAL_COMPLETE_LEVEL;
 
 -- ------------------------------------------------------------------------------------------------------------
 function NewPlayerExperience:Initialize()
@@ -12,7 +13,7 @@ function NewPlayerExperience:Begin()
 		return;
 	end
 	-- Completion Criteria
-	if not C_PlayerInfo.IsPlayerEligibleForNPE() then
+	if (UnitLevel("player") >= self.CompletionLevel) then
 		self:RegisterComplete();
 		return;
 	else
@@ -29,7 +30,7 @@ end
 
 -- ------------------------------------------------------------------------------------------------------------
 function NewPlayerExperience:PLAYER_LEVEL_UP(newLevel)
-	if not C_PlayerInfo.IsPlayerEligibleForNPE() then
+	if (newLevel >= self.CompletionLevel) then
 		self:RegisterComplete();
 	end
 end

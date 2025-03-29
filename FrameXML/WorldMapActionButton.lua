@@ -1,24 +1,16 @@
 WorldMapActionButtonMixin = {};
 
-function WorldMapActionButtonMixin:OnLoad()
-	self:GetParent():RegisterCallback("WorldQuestsUpdate", self.OnWorldQuestsUpdate, self);
-end
-
 function WorldMapActionButtonMixin:OnEvent(event, ...)
 	if event == "SPELL_UPDATE_COOLDOWN" then
 		self:UpdateCooldown();
 	elseif event == "CURRENT_SPELL_CAST_CHANGED" then
 		self:UpdateCastingState();
 	elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-		local unitTag, castID, spellID = ...;
+		local unitTag, spellName, rank, lineID, spellID = ...;
 		if spellID == GetWorldMapActionButtonSpellInfo() then
 			PlaySound(SOUNDKIT.UI_ORDERHALL_TALENT_NUKE_FROM_ORBIT);
 		end
 	end
-end
-
-function WorldMapActionButtonMixin:OnWorldQuestsUpdate(numWorldQuests)
-	self:SetHasWorldQuests(numWorldQuests > 0);
 end
 
 function WorldMapActionButtonMixin:SetMapAreaID(mapAreaID)
@@ -35,14 +27,8 @@ function WorldMapActionButtonMixin:SetHasWorldQuests(hasWorldQuests)
 	end
 end
 
-function WorldMapActionButtonMixin:GetDisplayLocation()
-	local mapID = self:GetParent():GetMapID();
-	local displayLocation, lockedQuestID, bountySetID = C_QuestLog.GetBountySetInfoForMapID(mapID);
-	if displayLocation == Enum.MapOverlayDisplayLocation.BottomRight then
-		return Enum.MapOverlayDisplayLocation.BottomLeft;
-	else
-		return Enum.MapOverlayDisplayLocation.BottomRight;
-	end
+function WorldMapActionButtonMixin:GetDisplayLocation(useAlternateLocation)
+	return useAlternateLocation and LE_MAP_OVERLAY_DISPLAY_LOCATION_BOTTOM_LEFT or LE_MAP_OVERLAY_DISPLAY_LOCATION_BOTTOM_RIGHT;
 end
 
 function WorldMapActionButtonMixin:SetOnCastChangedCallback(onCastChangedCallback)
@@ -77,7 +63,7 @@ function WorldMapActionButtonMixin:Clear()
 end
 
 function WorldMapActionButtonMixin:Refresh()
-	if not self.hasWorldQuests then
+	if not self.mapAreaID or not self.hasWorldQuests then
 		self:Clear();
 		return;
 	end
@@ -100,8 +86,6 @@ function WorldMapActionButtonMixin:Refresh()
 
 	self:UpdateCooldown();
 
-	self:GetParent():SetOverlayFrameLocation(self, self:GetDisplayLocation());
-
 	self:Show();
 end
 
@@ -117,10 +101,10 @@ function WorldMapActionButtonMixin:OnClick()
 end
 
 function WorldMapActionButtonMixin:OnEnter()
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, -60);
-	GameTooltip:SetSpellByID(self.spellID);
+	WorldMapTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, -60);
+	WorldMapTooltip:SetSpellByID(self.spellID);
 end
 
 function WorldMapActionButtonMixin:OnLeave()
-	GameTooltip:Hide();
+	WorldMapTooltip:Hide();
 end

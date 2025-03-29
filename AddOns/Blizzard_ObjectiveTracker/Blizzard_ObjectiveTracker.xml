@@ -1,8 +1,8 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
-
+	
 	<Script file="Blizzard_ObjectiveTracker.lua"/>
-
+	
 	<Frame name="ObjectiveTrackerBlockTemplate" hidden="true" virtual="true">
 		<Size x="232" y="10"/>
 		<Layers>
@@ -14,7 +14,7 @@
 					</Anchors>
 					<Color r="0.75" g="0.61" b="0"/>
 				</FontString>
-			</Layer>
+			</Layer>			
 		</Layers>
 		<Frames>
 			<Button name="$parentHeader" parentKey="HeaderButton">
@@ -29,23 +29,10 @@
 					<OnLeave function="ObjectiveTrackerBlockHeader_OnLeave"/>
 				</Scripts>
 			</Button>
-		</Frames>
+		</Frames>	
 	</Frame>
 
-	<Button name="ObjectiveTrackerMinimizeButtonTemplate" mixin="ObjectiveTrackerMinimizeButtonMixin" virtual="true">
-		<KeyValues>
-  			<KeyValue key="buttonType" value="all" type="string"/>
-  		</KeyValues>
-		<Size x="15" y="14"/>
-		<NormalTexture atlas="UI-QuestTrackerButton-Collapse-All" useAtlasSize="true"/>
-		<PushedTexture atlas="UI-QuestTrackerButton-Collapse-All-Pressed" useAtlasSize="true"/>
-		<HighlightTexture atlas="UI-QuestTrackerButton-Highlight" alphaMode="ADD" useAtlasSize="true"/>
-		<Scripts>
-			<OnLoad method="OnLoad"/>
-		</Scripts>
-	</Button>
-
-	<Frame name="ObjectiveTrackerHeaderTemplate" mixin="ObjectiveTrackerHeaderMixin" virtual="true" hidden="true">
+	<Frame name="ObjectiveTrackerHeaderTemplate" virtual="true" hidden="true">
 		<Size x="235" y="25"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -54,11 +41,8 @@
 						<Anchor point="TOPLEFT" x="-29" y="14"/>
 					</Anchors>
 				</Texture>
-				<FontString parentKey="Text" inherits="GameFontNormalMed2" mixin="AutoScalingFontStringMixin" justifyH="LEFT">
-					<KeyValues>
-						<KeyValue key="minLineHeight" value="12" type="number"/>
-					</KeyValues>
-					<Size x="200" y="16"/>
+				<FontString parentKey="Text" inherits="GameFontNormalMed2" justifyH="LEFT">
+					<Size x="170" y="16"/>
 					<Anchors>
 						<Anchor point="LEFT" x="4" y="-1"/>
 					</Anchors>
@@ -107,30 +91,19 @@
 				<Alpha childKey="LineSheen" startDelay="0.15" duration="0.5" order="1" fromAlpha="0" toAlpha="0.75"/>
 				<Alpha childKey="LineSheen" startDelay="0.75" duration="0.5" order="1" fromAlpha="0.75" toAlpha="0"/>
 				<Translation childKey="LineSheen" startDelay="0.15" duration="1.5" order="1" offsetX="250" offsetY="0"/>
-
+				
 				<Scripts>
 					<OnFinished function="ObjectiveTrackerHeader_OnAnimFinished"/>
 				</Scripts>
 			</AnimationGroup>
 		</Animations>
-		<Frames>
-			<Button parentKey="MinimizeButton" inherits="ObjectiveTrackerMinimizeButtonTemplate">
-				<KeyValues>
-		  			<KeyValue key="buttonType" value="module" type="string"/>
-		  		</KeyValues>
-				<Anchors>
-					<Anchor point="RIGHT"/>
-				</Anchors>
-				<Scripts>
-					<OnClick function="ObjectiveTracker_MinimizeModuleButton_OnClick"/>
-				</Scripts>
-			</Button>
-		</Frames>
 		<Scripts>
-			<OnLoad method="OnLoad"/>
+			<OnLoad>
+				self.height = OBJECTIVE_TRACKER_HEADER_HEIGHT;
+			</OnLoad>
 		</Scripts>
 	</Frame>
-
+	
 	<Frame name="ObjectiveTrackerLineTemplate" virtual="true">
 		<Size x="232" y="16"/>
 		<Layers>
@@ -154,11 +127,11 @@
 			</OnLoad>
 		</Scripts>
 	</Frame>
-
+	
 	<Frame name="ObjectiveTrackerCheckLineTemplate" virtual="true">
 		<Size x="232" y="16"/>
 		<Layers>
-			<Layer level="ARTWORK">
+			<Layer level="ARTWORK">	
 				<FontString parentKey="Text" inherits="ObjectiveFont">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="20" y="0"/>
@@ -169,7 +142,7 @@
 					<Anchors>
 						<Anchor point="TOPLEFT" x="1" y="2"/>
 					</Anchors>
-				</Texture>
+				</Texture>				
 				<Texture parentKey="Icon">
 					<Size x="16" y="16"/>
 					<Anchors>
@@ -192,7 +165,7 @@
 							<Alpha startDelay="0.467" fromAlpha="1" toAlpha="0" duration="0.267" order="1"/>
 						</AnimationGroup>
 					</Animations>
-				</Texture>
+				</Texture>				
 			</Layer>
 			<Layer level="OVERLAY">
 				<Texture parentKey="CheckFlash" file="Interface\Scenarios\ScenarioIcon-Check" alphaMode="ADD" alpha="0" hidden="true">
@@ -207,7 +180,7 @@
 							<Alpha fromAlpha="1" toAlpha="0" startDelay="0.167" duration="0.23" order="2"/>
 						</AnimationGroup>
 					</Animations>
-				</Texture>
+				</Texture>			
 				<Texture parentKey="Sheen" file="Interface\Scenarios\Objective-Sheen" alpha="0">
 					<Size x="32" y="0"/>
 					<Anchors>
@@ -222,7 +195,7 @@
 							<Alpha startDelay="0.2" fromAlpha="1" toAlpha="0" duration="0.133" order="1" smoothing="IN"/>
 						</AnimationGroup>
 					</Animations>
-				</Texture>
+				</Texture>				
 			</Layer>
 		</Layers>
 		<Scripts>
@@ -232,7 +205,7 @@
 			<OnHide function="ObjectiveTrackerCheckLine_OnHide"/>
 		</Scripts>
 	</Frame>
-
+	
 	<Frame name="ObjectiveTrackerTimerBarTemplate" virtual="true" hidden="true">
 		<Size x="192" y="20"/>
 		<Anchors>
@@ -243,7 +216,7 @@
 				<FontString parentKey="Label" inherits="GameFontHighlightMedium" justifyH="LEFT">
 					<Anchors>
 						<Anchor point="LEFT"/>
-					</Anchors>
+					</Anchors>				
 				</FontString>
 			</Layer>
 		</Layers>
@@ -275,7 +248,7 @@
 								<Anchor point="TOPLEFT" relativeKey="$parent.BorderLeft" relativePoint="TOPRIGHT"/>
 								<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BorderRight" relativePoint="BOTTOMLEFT"/>
 							</Anchors>
-						</Texture>
+						</Texture>						
 					</Layer>
 					<Layer level="BACKGROUND" textureSubLevel="-1">
 						<Texture>
@@ -291,7 +264,7 @@
 			<OnUpdate function="ObjectiveTrackerTimerBar_OnUpdate"/>
 		</Scripts>
 	</Frame>
-
+	
 	<Frame name="ObjectiveTrackerProgressBarTemplate" virtual="true" hidden="true">
 		<Size x="192" y="25"/>
 		<Anchors>
@@ -359,36 +332,40 @@
 					<Anchor point="BOTTOMRIGHT"/>
 				</Anchors>
 				<Frames>
-					<Frame parentKey="CampaignQuestHeader" inherits="ObjectiveTrackerHeaderTemplate"/>
-					<Frame parentKey="QuestHeader" inherits="ObjectiveTrackerHeaderTemplate" mixin="QuestHeaderMixin">
-						<Scripts>
-							<OnShow method="OnShow"/>
-							<OnHide method="OnHide"/>
-							<OnEvent method="OnEvent"/>
-						</Scripts>
-					</Frame>
+					<Frame parentKey="QuestHeader" inherits="ObjectiveTrackerHeaderTemplate"/>
 					<Frame parentKey="AchievementHeader" inherits="ObjectiveTrackerHeaderTemplate"/>
 					<Frame parentKey="ScenarioHeader" inherits="ObjectiveTrackerHeaderTemplate"/>
-					<Frame parentKey="UIWidgetsHeader" inherits="ObjectiveTrackerHeaderTemplate"/>
 				</Frames>
 			</Frame>
 			<Frame parentKey="HeaderMenu">
-				<Size x="1" y="1"/>
+				<Size x="10" y="10"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT"/>
+				</Anchors>
 				<Frames>
-					<Button parentKey="MinimizeButton" inherits="ObjectiveTrackerMinimizeButtonTemplate">
+					<Button parentKey="MinimizeButton">
+						<Size x="16" y="16"/>
 						<Anchors>
-							<Anchor point="RIGHT" x="0" y="0"/>
+							<Anchor point="TOPRIGHT" x="0" y="-4"/>
 						</Anchors>
 						<Scripts>
 							<OnClick function="ObjectiveTracker_MinimizeButton_OnClick"/>
 						</Scripts>
+						<NormalTexture file="Interface\Buttons\UI-Panel-QuestHideButton">
+							<TexCoords left="0" right="0.5" top="0.5" bottom="1"/>
+						</NormalTexture>
+						<PushedTexture file="Interface\Buttons\UI-Panel-QuestHideButton">
+							<TexCoords left="0.5" right="1" top="0.5" bottom="1"/>
+						</PushedTexture>
+						<HighlightTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Highlight" alphaMode="ADD" />
+						<DisabledTexture file="Interface\Buttons\UI-Panel-QuestHideButton-disabled" />
 					</Button>
 				</Frames>
 				<Layers>
 					<Layer level="ARTWORK">
 						<FontString parentKey="Title" inherits="GameFontNormal" hidden="true" text="OBJECTIVES_TRACKER_LABEL">
 							<Anchors>
-								<Anchor point="RIGHT" relativeKey="$parent.MinimizeButton" relativePoint="LEFT" x="-3" y="0"/>
+								<Anchor point="RIGHT" relativeKey="$parent.MinimizeButton" relativePoint="LEFT" x="-3" y="1"/>
 							</Anchors>
 						</FontString>
 					</Layer>
@@ -403,4 +380,4 @@
 			<OnSizeChanged function="ObjectiveTracker_OnSizeChanged"/>
 		</Scripts>
 	</Frame>
-</Ui>
+</Ui>	

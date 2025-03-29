@@ -34,6 +34,8 @@ function GMChatFrame_OnLoad(self)
 	self.flashTimer = 0;
 	self.lastGM = {};
 
+	GMChatOpenLog:Enable();
+
 	self:SetClampRectInsets(-35, 0, 30, 0);
 
 	self:SetFont(DEFAULT_CHAT_FRAME:GetFont());
@@ -41,7 +43,6 @@ function GMChatFrame_OnLoad(self)
 	self.buttonFrame:SetAlpha(1);
 	self.buttonFrame.minimizeButton:Hide();
 
-	self.editBox:ClearAllPoints();
 	self.editBox:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 8, -2);
 	self.editBox:SetPoint("TOPLEFT", self, "BOTTOMLEFT", -43, -2);
 	self.editBox.isGM = true;
@@ -77,12 +78,14 @@ function GMChatFrame_OnEvent(self, event, ...)
 
 		if ( not GMChatFrame:IsShown() ) then
 			GMChatStatusFrame:Show();
+			GMChatStatusFrame.pulse:Play();
 			table.insert(self.lastGM,arg2);
 			PlaySound(SOUNDKIT.GM_CHAT_WARNING);
 
 			DEFAULT_CHAT_FRAME:AddMessage(pflag.."|HGMChat|h["..GM_CHAT_STATUS_READY_DESCRIPTION.."]|h", info.r, info.g, info.b, info.id);
 			DEFAULT_CHAT_FRAME:SetHyperlinksEnabled(true);
 			DEFAULT_CHAT_FRAME.overrideHyperlinksEnabled = true;
+			SetButtonPulse(GMChatOpenLog, 3600, 1.0);
 		else
 			ChatEdit_SetLastTellTarget(arg2, "WHISPER");
 		end
@@ -134,6 +137,7 @@ end
 
 function GMChatFrame_OnShow(self)
 	GMChatStatusFrame:Hide();
+	GMChatOpenLog:Disable();
 	for _,gmName in ipairs(self.lastGM) do
 		ChatEdit_SetLastTellTarget(gmName, "WHISPER");
 	end
@@ -154,6 +158,7 @@ function GMChatFrame_OnShow(self)
 end
 
 function GMChatFrame_OnHide(self)
+	GMChatOpenLog:Enable();
 	SetCVar("lastTalkedToGM", "");
 	self.editBox:Hide();
 
@@ -177,20 +182,6 @@ end
 
 function GMChatFrame_Close()
 	GMChatFrame:Hide();
-end
-
-function GMChatStatusFrame_OnLoad(self)
-	NineSliceUtil.ApplyUniqueCornersLayout(self.Pulse, "gmglow");
-	for index, region in enumerate_regions(self.Pulse) do
-		region:SetBlendMode("ADD");
-	end
-	self.Pulse.Anim:Play();
-
-	self:SetWidth(math.max(self.TitleText:GetWidth(), self.SubtitleText:GetWidth()) + 50);
-	self:SetHeight(self.TitleText:GetHeight() + self.SubtitleText:GetHeight() + 20);
-
-	local bgR, bgG, bgB = TOOLTIP_DEFAULT_BACKGROUND_COLOR:GetRGB();
-	self.NineSlice:SetCenterColor(bgR, bgG, bgB, 1);
 end
 
 function GMChatStatusFrame_OnClick()

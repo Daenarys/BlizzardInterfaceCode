@@ -279,15 +279,13 @@ function EquipmentManager_GetItemInfoByLocation (location)
 		return;
 	end
 
-	local itemID, name, textureName, count, durability, maxDurability, invType, locked, start, duration, enable, setTooltip, quality, isUpgrade, isBound, _;
+	local id, name, textureName, count, durability, maxDurability, invType, locked, start, duration, enable, setTooltip, quality, isUpgrade, _;
 	if ( voidStorage ) then
-		itemID, textureName, _, _, _, quality = GetVoidItemInfo(tab, voidSlot);
-		isBound = true;
+		id, textureName, _, _, _, quality = GetVoidItemInfo(tab, voidSlot);
 		setTooltip = function () GameTooltip:SetVoidItem(tab, voidSlot) end;
 	elseif ( not bags ) then -- and (player or bank) 
-		itemID = GetInventoryItemID("player", slot);
-		isBound = true;
-		name, _, _, _, _, _, _, _, invType, textureName = GetItemInfo(itemID);
+		id = GetInventoryItemID("player", slot);
+		name, _, _, _, _, _, _, _, invType, textureName = GetItemInfo(id);
 		if ( textureName ) then
 			count = GetInventoryItemCount("player", slot);
 			durability, maxDurability = GetInventoryItemDurability(slot);
@@ -299,9 +297,9 @@ function EquipmentManager_GetItemInfoByLocation (location)
 		
 		setTooltip = function () GameTooltip:SetInventoryItem("player", slot) end;
 	else -- bags
-		itemID = GetContainerItemID(bag, slot);
-		name, _, _, _, _, _, _, _, invType = GetItemInfo(itemID);
-		textureName, count, locked, quality, _, _, _, _, _, _, isBound = GetContainerItemInfo(bag, slot);
+		id = GetContainerItemID(bag, slot);
+		name, _, _, _, _, _, _, _, invType = GetItemInfo(id);
+		textureName, count, locked, quality = GetContainerItemInfo(bag, slot);
 		start, duration, enable = GetContainerItemCooldown(bag, slot);
 		
 		durability, maxDurability = GetContainerItemDurability(bag, slot);
@@ -310,7 +308,7 @@ function EquipmentManager_GetItemInfoByLocation (location)
 		setTooltip = function () GameTooltip:SetBagItem(bag, slot); end;
 	end
 	
-	return itemID, name, textureName, count, durability, maxDurability, invType, locked, start, duration, enable, setTooltip, quality, isUpgrade, isBound;
+	return id, name, textureName, count, durability, maxDurability, invType, locked, start, duration, enable, setTooltip, quality, isUpgrade;
 end
 
 function EquipmentManager_EquipSet (setID)

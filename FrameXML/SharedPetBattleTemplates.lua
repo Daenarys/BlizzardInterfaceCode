@@ -1,10 +1,4 @@
 
-local type = type;
-local setfenv = setfenv;
-local forceinsecure = forceinsecure;
-local securecall = securecall;
-local scrub = scrub;
-
 --[[
 abilityInfo should be defined with the following functions:
 {
@@ -19,7 +13,7 @@ abilityInfo should be defined with the following functions:
 	:GetState(stateID, target) - returns the value of a state associated with a unit. If not associated with a battle, return 0.
 	:GetWeatherState(stateID) - returns the value of the state associated with the weather. If not associated with a battle, return 0.
 	:GetPadState(stateID, target) - returns the value of the state associated with the pad on target's side. If not associated with a battle, return 0.
-	:GetPetOwner(target)	- returns either Enum.BattlePetOwner.Ally, Enum.BattlePetOwner.Enemy, or Enum.BattlePetOwner.Weather while in combat.
+	:GetPetOwner(target)	- returns either LE_BATTLE_PET_ALLY, LE_BATTLE_PET_ENEMY, or LE_BATTLE_PET_WEATHER while in combat.
 	:HasAura(auraID, target) - returns true if the unit has the aura active, false if they don't or we aren't in combat.
 	:GetPetType(target) - returns the pet type ID of the target. May return nil if the target doesn't exist (e.g. when clicking on the link in chat.)
 
@@ -40,7 +34,7 @@ function DEFAULT_PET_BATTLE_ABILITY_INFO:GetSpeedStat(target) return 0 end
 function DEFAULT_PET_BATTLE_ABILITY_INFO:GetState(stateID, target) return 0 end
 function DEFAULT_PET_BATTLE_ABILITY_INFO:GetWeatherState(stateID) return 0 end
 function DEFAULT_PET_BATTLE_ABILITY_INFO:GetPadState(stateID) return 0 end
-function DEFAULT_PET_BATTLE_ABILITY_INFO:GetPetOwner(taget) return Enum.BattlePetOwner.Ally end
+function DEFAULT_PET_BATTLE_ABILITY_INFO:GetPetOwner(taget) return LE_BATTLE_PET_ALLY end
 function DEFAULT_PET_BATTLE_ABILITY_INFO:HasAura(auraID, target) return false end
 function DEFAULT_PET_BATTLE_ABILITY_INFO:GetPetType(target) if ( self:IsInBattle() ) then error("UI: Unimplemented Function"); else return nil end end
 
@@ -51,6 +45,9 @@ function SharedPetBattleAbilityTooltip_GetInfoTable()
 end
 
 function SharedPetBattleAbilityTooltip_OnLoad(self)
+	self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+	self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+
 	self.strongAgainstTextures = { self.StrongAgainstType1 };
 	self.weakAgainstTextures = { self.WeakAgainstType1 };
 end
@@ -289,7 +286,7 @@ do
 					if ( not target ) then
 						target = "default";
 					end
-					return parsedAbilityInfo:GetPetOwner(target) == Enum.BattlePetOwner.Ally;
+					return parsedAbilityInfo:GetPetOwner(target) == LE_BATTLE_PET_ALLY;
 				end,
 		unitHasAura = function(auraID, target)
 					if ( not target ) then
@@ -531,12 +528,9 @@ do
 	
 	--Don't allow designers to accidentally change the environment
 	local safeEnv = {};
-	setmetatable(safeEnv, { __index = parserEnv, __newindex = function() end, __metatable = false });
+	setmetatable(safeEnv, { __index = parserEnv, __newindex = function() end });
 
-	local function SharedPetAbilityTooltip_ParseExpressionInsecure(expression)
-		-- Make sure we're not using loadstring securely.
-		forceinsecure();
-
+	function SharedPetAbilityTooltip_ParseExpression(expression)
 		--Load the expression, chopping off the [] on the side.
 		local expr = loadstring("return ("..string.sub(expression, 2, -2)..")");
 		if ( expr ) then
@@ -560,16 +554,6 @@ do
 		else
 			return "PARSING ERROR";
 		end
-	end
-
-	function SharedPetAbilityTooltip_ParseExpression(expression)
-		local expressionResult = scrub(securecall(SharedPetAbilityTooltip_ParseExpressionInsecure, expression));
-		local expressionResultType = type(expressionResult);
-		if (expressionResultType == "number") or (expressionResultType == "string") or (expressionResultType == "boolean") then
-			return expressionResult;
-		end
-		
-		return "RESULT TYPE ERROR";
 	end
 end
 

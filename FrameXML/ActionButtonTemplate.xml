@@ -38,9 +38,9 @@
 			<Layer level="ARTWORK" textureSubLevel="2">
 				<Texture name="$parentFlyoutArrow" inherits="ActionBarFlyoutButton-ArrowUp" parentKey="FlyoutArrow" hidden="true"/>
 				<FontString name="$parentHotKey" inherits="NumberFontNormalSmallGray" parentKey="HotKey" justifyH="RIGHT">
-					<Size x="32" y="10"/>
+					<Size x="36" y="10"/>
 					<Anchors>
-						<Anchor point="TOPLEFT" x="3" y="-3"/>
+						<Anchor point="TOPLEFT" x="1" y="-3"/>
 					</Anchors>
 				</FontString>
 				<FontString name="$parentCount" inherits="NumberFontNormal" parentKey="Count" justifyH="RIGHT">
@@ -80,11 +80,6 @@
 					<Size x="58" y="58"/>
 					<Anchors>
 						<Anchor point="CENTER" x="0" y="0"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="LevelLinkLockIcon" atlas="QuestSharing-Padlock" useAtlasSize="true" hidden="true">
-					<Anchors>
-						<Anchor point="CENTER"/>
 					</Anchors>
 				</Texture>
 			</Layer>

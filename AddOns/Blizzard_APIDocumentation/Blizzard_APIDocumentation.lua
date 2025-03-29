@@ -7,15 +7,12 @@ function APIDocumentationMixin:OnLoad()
 	self.systems = {};
 	self.fields = {};
 	self.events = {};
-	self.callbacks = {};
 
 	self.Commands = {
 		Default = 1,
 		CopyAPI = 2,
 		OpenDump = 3,
 	};
-
-	DEFAULT_CHAT_FRAME:SetMaxLines(2000);
 end
 
 function APIDocumentationMixin:HandleSlashCommand(command)
@@ -44,7 +41,7 @@ function APIDocumentationMixin:HandleAPILink(link, command)
 	local _, type, name, parentName = (":"):split(link);
 	local apiInfo = self:FindAPIByName(type, name, parentName);
 	if apiInfo then
-		if command == self.Commands.CopyAPI then
+		if command == self.Commands.CopyAPI and CopyToClipboard then -- CopyToClipboard could be implemented as an edit box the user could copy from
 			self:HandleCopyAPI(apiInfo);
 		elseif command == self.Commands.OpenDump then
 			self:HandleOpenDump(apiInfo);
@@ -105,8 +102,6 @@ function APIDocumentationMixin:GetAPITableByTypeName(apiType)
 		return self.fields;
 	elseif apiType == "event" then
 		return self.events;
-	elseif apiType == "callback" then
-		return self.callbacks;
 	end
 	return nil;
 end
@@ -199,7 +194,7 @@ function APIDocumentationMixin:OutputAllAPIMatches(apiToSearchFor)
 
 	local apiMatches = self:FindAllAPIMatches(apiToSearchFor);
 	if apiMatches then
-		local total = #apiMatches.tables + #apiMatches.functions + #apiMatches.events + #apiMatches.systems + #apiMatches.callbacks;
+		local total = #apiMatches.tables + #apiMatches.functions + #apiMatches.events + #apiMatches.systems;
 		assert(total > 0);
 		self:WriteLineF("Found %d API that matches %q", total, apiToSearchFor);
 
@@ -207,7 +202,6 @@ function APIDocumentationMixin:OutputAllAPIMatches(apiToSearchFor)
 		self:OutputAPIMatches(apiMatches.functions, "function(s)");
 		self:OutputAPIMatches(apiMatches.events, "events(s)");
 		self:OutputAPIMatches(apiMatches.tables, "table(s)");
-		self:OutputAPIMatches(apiMatches.callbacks, "callback(s)");
 	else
 		self:WriteLineF("No API found that matches %q", apiToSearchFor);
 	end
@@ -257,14 +251,12 @@ function APIDocumentationMixin:FindAllAPIMatches(apiToSearchFor)
 		functions = {},
 		events = {},
 		systems = {},
-		callbacks = {},
 	};
 
 	self:AddAllMatches(self.tables, matches.tables, apiToSearchFor);
 	self:AddAllMatches(self.functions, matches.functions, apiToSearchFor);
 	self:AddAllMatches(self.systems, matches.systems, apiToSearchFor);
 	self:AddAllMatches(self.events, matches.events, apiToSearchFor);
-	self:AddAllMatches(self.callbacks, matches.callbacks, apiToSearchFor);
 
 	-- Only return something if we matched anything
 	for name, subTable in pairs(matches) do

@@ -10,9 +10,7 @@ function MerchantFrame_OnLoad(self)
 	self:RegisterEvent("MERCHANT_SHOW");
 	self:RegisterEvent("GUILDBANK_UPDATE_MONEY");
 	self:RegisterEvent("HEIRLOOMS_UPDATED");
-	self:RegisterEvent("BAG_UPDATE");
 	self:RegisterEvent("MERCHANT_CONFIRM_TRADE_TIMER_REMOVAL");
-	self:RegisterUnitEvent("UNIT_INVENTORY_CHANGED", "player");
 	self:RegisterForDrag("LeftButton");
 	self.page = 1;
 	-- Tab Handling code
@@ -44,9 +42,8 @@ function MerchantFrame_OnEvent(self, event, ...)
 	elseif ( event == "PLAYER_MONEY" or event == "GUILDBANK_UPDATE_MONEY" or event == "GUILDBANK_UPDATE_WITHDRAWMONEY" ) then
 		MerchantFrame_UpdateCanRepairAll();
 		MerchantFrame_UpdateRepairButtons();
-	elseif ( event == "CURRENCY_DISPLAY_UPDATE" or event == "BAG_UPDATE") then
+	elseif ( event == "CURRENCY_DISPLAY_UPDATE" ) then
 		MerchantFrame_UpdateCurrencyAmounts();
-		MerchantFrame_Update();
 	elseif ( event == "HEIRLOOMS_UPDATED" ) then
 		local itemID, updateReason = ...;
 		if itemID and updateReason == "NEW" then
@@ -57,8 +54,6 @@ function MerchantFrame_OnEvent(self, event, ...)
 		StaticPopup_Show("CONFIRM_MERCHANT_TRADE_TIMER_REMOVAL", item);
 	elseif ( event == "GET_ITEM_INFO_RECEIVED" ) then
 		MerchantFrame_UpdateItemQualityBorders(self);
-	elseif ( event == "UNIT_INVENTORY_CHANGED" ) then
-		MerchantFrame_Update();
 	end
 end
 
@@ -90,8 +85,8 @@ function MerchantFrame_OnUpdate(self, dt)
 end
 
 function MerchantFrame_OnShow(self)
-	local forceUpdate = true;
-	OpenAllBags(self, forceUpdate);
+	OpenAllBags(self);
+	ContainerFrame_UpdateAll();
 	
 	-- Update repair all button status
 	MerchantFrame_UpdateCanRepairAll();
@@ -105,14 +100,10 @@ end
 
 function MerchantFrame_OnHide(self)
 	CloseMerchant();
-	
-	local forceUpdate = true;
-	CloseAllBags(self, forceUpdate);
-
+	CloseAllBags(self);
 	ResetCursor();
 	
 	StaticPopup_Hide("CONFIRM_PURCHASE_TOKEN_ITEM");
-	StaticPopup_Hide("CONFIRM_PURCHASE_ITEM_DELAYED");
 	StaticPopup_Hide("CONFIRM_REFUND_TOKEN_ITEM");
 	StaticPopup_Hide("CONFIRM_REFUND_MAX_HONOR");
 	StaticPopup_Hide("CONFIRM_REFUND_MAX_ARENA_POINTS");
@@ -145,7 +136,7 @@ function MerchantFrame_Update()
 	
 end
 
-function MerchantFrameItem_UpdateQuality(self, link, isBound)
+function MerchantFrameItem_UpdateQuality(self, link)
 	local quality = link and select(3, GetItemInfo(link)) or nil;
 	if ( quality ) then
 		self.Name:SetTextColor(ITEM_QUALITY_COLORS[quality].r, ITEM_QUALITY_COLORS[quality].g, ITEM_QUALITY_COLORS[quality].b);
@@ -154,8 +145,7 @@ function MerchantFrameItem_UpdateQuality(self, link, isBound)
 		MerchantFrame_RegisterForQualityUpdates();
 	end
 	
-	local doNotSuppressOverlays = false;
-	SetItemButtonQuality(self.ItemButton, quality, link, doNotSuppressOverlays, isBound);
+	SetItemButtonQuality(self.ItemButton, quality, link);
 end
 
 function MerchantFrame_RegisterForQualityUpdates()
@@ -203,7 +193,7 @@ function MerchantFrame_UpdateMerchantInfo()
 	
 	MerchantPageText:SetFormattedText(MERCHANT_PAGE_NUMBER, MerchantFrame.page, math.ceil(numMerchantItems / MERCHANT_ITEMS_PER_PAGE));
 
-	local name, texture, price, stackCount, numAvailable, isPurchasable, isUsable, extendedCost, currencyID, spellID;
+	local name, texture, price, stackCount, numAvailable, isPurchasable, isUsable, extendedCost;
 	for i=1, MERCHANT_ITEMS_PER_PAGE do
 		local index = (((MerchantFrame.page - 1) * MERCHANT_ITEMS_PER_PAGE) + i);
 		local itemButton = _G["MerchantItem"..i.."ItemButton"];
@@ -211,12 +201,7 @@ function MerchantFrame_UpdateMerchantInfo()
 		local merchantMoney = _G["MerchantItem"..i.."MoneyFrame"];
 		local merchantAltCurrency = _G["MerchantItem"..i.."AltCurrencyFrame"];
 		if ( index <= numMerchantItems ) then
-			name, texture, price, stackCount, numAvailable, isPurchasable, isUsable, extendedCost, currencyID, spellID = GetMerchantItemInfo(index);
-
-			if(currencyID) then
-				name, texture, numAvailable = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyID, numAvailable, name, texture, nil); 
-			end
-	
+			name, texture, price, stackCount, numAvailable, isPurchasable, isUsable, extendedCost = GetMerchantItemInfo(index);
 			local canAfford = CanAffordMerchantItem(index);
 			_G["MerchantItem"..i.."Name"]:SetText(name);
 			SetItemButtonCount(itemButton, stackCount);
@@ -276,7 +261,7 @@ function MerchantFrame_UpdateMerchantInfo()
 			local isHeirloom = merchantItemID and C_Heirloom.IsItemHeirloom(merchantItemID);
 			local isKnownHeirloom = isHeirloom and C_Heirloom.PlayerHasHeirloom(merchantItemID);
 
-			itemButton.showNonrefundablePrompt = not C_MerchantFrame.IsMerchantItemRefundable(index);
+			itemButton.showNonrefundablePrompt = isHeirloom;
 
 			itemButton.hasItem = true;
 			itemButton:SetID(index);
@@ -329,13 +314,13 @@ function MerchantFrame_UpdateMerchantInfo()
 
 	-- Handle vendor buy back item
 	local numBuybackItems = GetNumBuybackItems();
-	local buybackName, buybackTexture, buybackPrice, buybackQuantity, buybackNumAvailable, buybackIsUsable, buybackIsBound = GetBuybackItemInfo(numBuybackItems);
+	local buybackName, buybackTexture, buybackPrice, buybackQuantity, buybackNumAvailable, buybackIsUsable = GetBuybackItemInfo(numBuybackItems);
 	if ( buybackName ) then
 		MerchantBuyBackItemName:SetText(buybackName);
 		SetItemButtonCount(MerchantBuyBackItemItemButton, buybackQuantity);
 		SetItemButtonStock(MerchantBuyBackItemItemButton, buybackNumAvailable);
 		SetItemButtonTexture(MerchantBuyBackItemItemButton, buybackTexture);
-		MerchantFrameItem_UpdateQuality(MerchantBuyBackItem, GetBuybackItemLink(numBuybackItems), buybackIsBound);
+		MerchantFrameItem_UpdateQuality(MerchantBuyBackItem, GetBuybackItemLink(numBuybackItems));
 		MerchantBuyBackItemMoneyFrame:Show();
 		MoneyFrame_Update("MerchantBuyBackItemMoneyFrame", buybackPrice);
 		MerchantBuyBackItem:Show();
@@ -443,14 +428,14 @@ function MerchantFrame_UpdateBuybackInfo()
 	
 	local numBuybackItems = GetNumBuybackItems();
 	local itemButton, buybackButton;
-	local buybackName, buybackTexture, buybackPrice, buybackQuantity, buybackNumAvailable, buybackIsUsable, buybackIsBound;
+	local buybackName, buybackTexture, buybackPrice, buybackQuantity, buybackNumAvailable, buybackIsUsable;
 	local buybackItemLink;
 	for i=1, BUYBACK_ITEMS_PER_PAGE do
 		itemButton = _G["MerchantItem"..i.."ItemButton"];
 		buybackButton = _G["MerchantItem"..i];
 		_G["MerchantItem"..i.."AltCurrencyFrame"]:Hide();
 		if ( i <= numBuybackItems ) then
-			buybackName, buybackTexture, buybackPrice, buybackQuantity, buybackNumAvailable, buybackIsUsable, buybackIsBound = GetBuybackItemInfo(i);
+			buybackName, buybackTexture, buybackPrice, buybackQuantity, buybackNumAvailable, buybackIsUsable = GetBuybackItemInfo(i);
 			_G["MerchantItem"..i.."Name"]:SetText(buybackName);
 			SetItemButtonCount(itemButton, buybackQuantity);
 			SetItemButtonStock(itemButton, buybackNumAvailable);
@@ -458,7 +443,7 @@ function MerchantFrame_UpdateBuybackInfo()
 			_G["MerchantItem"..i.."MoneyFrame"]:Show();
 			MoneyFrame_Update("MerchantItem"..i.."MoneyFrame", buybackPrice);
 			buybackItemLink = GetBuybackItemLink(i);
-			MerchantFrameItem_UpdateQuality(buybackButton, buybackItemLink, buybackIsBound);
+			MerchantFrameItem_UpdateQuality(buybackButton, buybackItemLink);
 			itemButton:SetID(i);
 			itemButton:Show();
 			if ( not buybackIsUsable ) then
@@ -513,7 +498,7 @@ function MerchantFrame_CloseStackSplitFrame()
 		local numButtons = max(MERCHANT_ITEMS_PER_PAGE, BUYBACK_ITEMS_PER_PAGE);
 		for i = 1, numButtons do
 			if ( StackSplitFrame.owner == _G["MerchantItem"..i.."ItemButton"] ) then
-				StackSplitCancelButton_OnClick();
+				StackSplitFrameCancel_Click();
 				return;
 			end
 		end
@@ -620,7 +605,7 @@ function MerchantItemButton_OnModifiedClick(self, button)
 
 			if ( maxStack > 1 ) then
 				local maxPurchasable = min(maxStack, canAfford);
-				StackSplitFrame:OpenStackSplitFrame(maxPurchasable, self, "BOTTOMLEFT", "TOPLEFT", stackCount);
+				OpenStackSplitFrame(maxPurchasable, self, "BOTTOMLEFT", "TOPLEFT", stackCount);
 			end
 			return;
 		end
@@ -678,16 +663,7 @@ function MerchantFrame_ConfirmExtendedItemCost(itemButton, numToPurchase)
 				itemsString = " |T"..itemTexture..":0:0:0:-1|t "..format(CURRENCY_QUANTITY_TEMPLATE, costItemCount, currencyName);
 			end
 		elseif ( itemLink ) then
-			local itemName, itemLink, itemQuality = GetItemInfo(itemLink);
-
-			if ( i == 1 and GetMerchantItemCostInfo(index) == 1 ) then
-				local limitedCurrencyItemInfo = MerchantFrame_GetLimitedCurrencyItemInfo(itemLink);
-				if ( limitedCurrencyItemInfo ) then
-					MerchantFrame_ConfirmLimitedCurrencyPurchase(itemButton, limitedCurrencyItemInfo, numToPurchase, costItemCount);
-					return;
-				end
-			end
-
+			local _, _, itemQuality = GetItemInfo(itemLink);
 			maxQuality = math.max(itemQuality, maxQuality);
 			if ( itemsString ) then
 				itemsString = itemsString .. LIST_DELIMITER .. format(ITEM_QUANTITY_TEMPLATE, costItemCount, itemLink);
@@ -700,27 +676,40 @@ function MerchantFrame_ConfirmExtendedItemCost(itemButton, numToPurchase)
 		if ( itemsString ) then
 			itemsString = itemsString .. LIST_DELIMITER .. GetMoneyString(itemButton.price);
 		else
-			if itemButton.price < MERCHANT_HIGH_PRICE_COST then
-				BuyMerchantItem( itemButton:GetID(), numToPurchase );
-				return;
-			end
 			itemsString = GetMoneyString(itemButton.price);
 		end
 	end
 	
-	if ( not usingCurrency and maxQuality <= Enum.ItemQuality.Uncommon and not itemButton.showNonrefundablePrompt) or (not itemsString and not itemButton.price) then
+	if ( not usingCurrency and maxQuality <= LE_ITEM_QUALITY_UNCOMMON and not itemButton.showNonrefundablePrompt) then
 		BuyMerchantItem( itemButton:GetID(), numToPurchase );
 		return;
 	end
 	
-	local popupData, specs = MerchantFrame_GetProductInfo(itemButton);
-	popupData.count = numToPurchase;
+	
+	local itemName;
+	local itemQuality = 1;
+	local _;
+	local r, g, b = 1, 1, 1;
+	local specs = {};
+	if(itemButton.link) then
+		itemName, _, itemQuality = GetItemInfo(itemButton.link);
+	end
 
+	if ( itemName ) then
+		--It's an item
+		r, g, b = GetItemQualityColor(itemQuality); 
+		specs = GetItemSpecInfo(itemButton.link, specs);
+	else
+		--Not an item. Could be currency or something. Just use what's on the button.
+		itemName = itemButton.name;
+		r, g, b = GetItemQualityColor(1); 
+	end
 	local specText;
 	if (specs and #specs > 0) then
+		local specName, specIcon;
 		specText = "\n\n";
 		for i=1, #specs do
-			local specID, specName, specDesc, specIcon = GetSpecializationInfoByID(specs[i], UnitSex("player"));
+			_, specName, _, specIcon = GetSpecializationInfoByID(specs[i], UnitSex("player"));
 			specText = specText.." |T"..specIcon..":0:0:0:-1|t "..NORMAL_FONT_COLOR_CODE..specName..FONT_COLOR_CODE_CLOSE;
 			if (i < #specs) then
 				specText = specText..PLAYER_LIST_DELIMITER
@@ -731,40 +720,14 @@ function MerchantFrame_ConfirmExtendedItemCost(itemButton, numToPurchase)
 	end
 	
 	if (itemButton.showNonrefundablePrompt) then
-		StaticPopup_Show("CONFIRM_PURCHASE_NONREFUNDABLE_ITEM", itemsString, specText, popupData );
+		StaticPopup_Show("CONFIRM_PURCHASE_NONREFUNDABLE_ITEM", itemsString, specText, 
+							{["texture"] = itemButton.texture, ["name"] = itemName, ["color"] = {r, g, b, 1}, 
+							["link"] = itemButton.link, ["index"] = index, ["count"] = numToPurchase});
 	else
-		StaticPopup_Show("CONFIRM_PURCHASE_TOKEN_ITEM", itemsString, specText, popupData );
+		StaticPopup_Show("CONFIRM_PURCHASE_TOKEN_ITEM", itemsString, specText, 
+							{["texture"] = itemButton.texture, ["name"] = itemName, ["color"] = {r, g, b, 1}, 
+							["link"] = itemButton.link, ["index"] = index, ["count"] = numToPurchase});
 	end
-end
-
-function MerchantFrame_GetProductInfo(itemButton)
-	local itemName, itemHyperlink;
-	local itemQuality = 1;
-	local r, g, b = 1, 1, 1;
-	if(itemButton.link) then
-		itemName, itemHyperlink, itemQuality = GetItemInfo(itemButton.link);
-	end
-
-	local specs = {};
-	if ( itemName ) then
-		--It's an item
-		r, g, b = GetItemQualityColor(itemQuality); 
-		specs = GetItemSpecInfo(itemButton.link, specs);
-	else
-		--Not an item. Could be currency or something. Just use what's on the button.
-		itemName = itemButton.name;
-		r, g, b = GetItemQualityColor(1); 
-	end
-
-	local productInfo = {
-		texture = itemButton.texture,
-		name = itemName,
-		color = {r, g, b, 1},
-		link = itemButton.link,
-		index = itemButton:GetID(),
-	};
-
-	return productInfo, specs;
 end
 
 function MerchantFrame_ResetRefundItem()
@@ -785,35 +748,6 @@ function MerchantFrame_ConfirmHighCostItem(itemButton, quantity)
 	MerchantFrame.count = quantity;
 	MerchantFrame.price = itemButton.price;
 	StaticPopup_Show("CONFIRM_HIGH_COST_ITEM", itemButton.link);
-end
-
-function MerchantFrame_GetLimitedCurrencyItemInfo(itemLink)
-	local itemName, iconFileID, quantity, maxQuantity, totalEarned = C_Item.GetLimitedCurrencyItemInfo(itemLink);
-	if not itemName then
-		return nil;
-	end
-
-	return { ["name"] = itemName, ["iconFileID"] = iconFileID, ["quantity"] = quantity, ["maxQuantity"] = maxQuantity, ["totalEarned"] = totalEarned, };
-end
-
-function MerchantFrame_ConfirmLimitedCurrencyPurchase(itemButton, currencyInfo, numToPurchase, totalCurrencyCost)
-	local currencyIcon = CreateTextureMarkup(currencyInfo.iconFileID, 64, 64, 16, 16, 0, 1, 0, 1, 0, 0);
-	local costString = currencyIcon .. totalCurrencyCost .. " " .. currencyInfo.name;
-
-	local alreadySpent = currencyInfo.totalEarned - currencyInfo.quantity;
-	-- The amount of this limited currency that the player currently has + the amount that they can still earn
-	local unusedAmount = currencyInfo.maxQuantity - alreadySpent;
-	local isFinalPurchase = (unusedAmount - totalCurrencyCost <= 0);
-
-	local popupData = MerchantFrame_GetProductInfo(itemButton);
-	popupData.count = numToPurchase;
-	if isFinalPurchase then
-		popupData.confirmationText = LIMITED_CURRENCY_PURCHASE_FINAL:format(currencyInfo.name, currencyInfo.name, costString);
-	else
-		popupData.confirmationText = LIMITED_CURRENCY_PURCHASE:format(costString, unusedAmount - totalCurrencyCost, currencyInfo.name, costString)
-	end
-
-	StaticPopup_Show("CONFIRM_PURCHASE_ITEM_DELAYED", nil, nil, popupData);
 end
 
 function MerchantFrame_UpdateCanRepairAll()
@@ -892,14 +826,14 @@ function MerchantFrame_UpdateCurrencies()
 		MerchantFrame:RegisterEvent("CURRENCY_DISPLAY_UPDATE");
 		MerchantExtraCurrencyInset:Show();
 		MerchantExtraCurrencyBg:Show();
-		MerchantFrame.numCurrencies = #currencies;
-		if ( MerchantFrame.numCurrencies > 3 ) then
+		local numCurrencies = #currencies;
+		if ( numCurrencies > 3 ) then
 			MerchantMoneyFrame:Hide();
 		else
 			MerchantMoneyFrame:SetPoint("BOTTOMRIGHT", -169, 8);
 			MerchantMoneyFrame:Show();
 		end
-		for index = 1, MerchantFrame.numCurrencies do
+		for index = 1, numCurrencies do
 			local tokenButton = _G["MerchantToken"..index];
 			-- if this button doesn't exist yet, create it and anchor it
 			if ( not tokenButton ) then
@@ -915,15 +849,16 @@ function MerchantFrame_UpdateCurrencies()
 				tokenButton:SetScript("OnEnter", MerchantFrame_ShowCurrencyTooltip);
 			end
 
-			local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(currencies[index]);
-			local name = currencyInfo.name;
-			local count = currencyInfo.quantity;
-			local icon = currencyInfo.iconFileID;
+			local name, count, icon = GetCurrencyInfo(currencies[index]);
 			if ( name and name ~= "" ) then
+				if ( count <= 99999 ) then
+					tokenButton.count:SetText(count);
+				else
+					tokenButton.count:SetText("*");
+				end
 				tokenButton.icon:SetTexture(icon);
 				tokenButton.currencyID = currencies[index];
 				tokenButton:Show();
-				MerchantFrame_UpdateCurrencyButton(tokenButton);
 			else
 				tokenButton.currencyID = nil;
 				tokenButton:Hide();
@@ -951,29 +886,20 @@ function MerchantFrame_UpdateCurrencyAmounts()
 	for i = 1, MAX_MERCHANT_CURRENCIES do
 		local tokenButton = _G["MerchantToken"..i];
 		if ( tokenButton ) then
-			MerchantFrame_UpdateCurrencyButton(tokenButton);
+			if ( tokenButton.currencyID ) then
+				local name, count = GetCurrencyInfo(tokenButton.currencyID);
+				if ( count <= 99999 ) then
+					tokenButton.count:SetText(count);
+				else
+					tokenButton.count:SetText("*");
+				end
+			end
 		else
 			return;
 		end
 	end
 end
 
-function MerchantFrame_UpdateCurrencyButton(tokenButton)
-	if ( tokenButton.currencyID ) then
-		local count = C_CurrencyInfo.GetCurrencyInfo(tokenButton.currencyID).quantity;
-		local displayCount = count;
-		local displayWidth = 50;
-		if ( count > 99999 ) then
-			if MerchantFrame.numCurrencies == 1 then
-				displayWidth = 100;
-			else
-				displayCount = "*"
-			end
-		end
-		tokenButton.count:SetText(displayCount);
-		tokenButton:SetWidth(displayWidth);
-	end
-end
 
 function MerchantFrame_SetFilter(self, classIndex)
 	SetMerchantFilter(classIndex);

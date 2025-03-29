@@ -1,6 +1,7 @@
+## Interface: 70300
 ## Title: Blizzard NamePlates
+## Secure: 1
 ## LoadOnDemand: 0
-## RequiredDep: Blizzard_UIWidgets
 
 Blizzard_NamePlates.xml
 Blizzard_ClassNameplateBar.xml
@@ -10,3 +11,5 @@ Blizzard_ClassNameplateBar_RogueDruid.xml
 Blizzard_ClassNameplateBar_Mage.xml
 Blizzard_ClassNameplateBar_Monk.xml
 Blizzard_ClassNameplateBar_Warlock.xml
+
+Blizzard_NamePlatesCommentatorDisplay.xml

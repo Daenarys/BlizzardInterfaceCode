@@ -88,14 +88,14 @@
 							<Anchors>
 								<Anchor point="LEFT" x="0" y="0"/>
 							</Anchors>
-							<TexCoords left="0.17578125" right="0.47265625" top="0.29687500" bottom="0.54687500"/>
+							<TexCoords left="0.17578125" right="0.47265625" top="0.29687500" bottom="0.54687500"/>	
 						</Texture>
 						<Texture name="$parentRight" file="Interface\Buttons\CollapsibleHeader" parentKey="rightEdge">
 							<Size x="76" y="16"/>
 							<Anchors>
 								<Anchor point="LEFT" relativeTo="$parentLeft" relativePoint="RIGHT" x="147" y="0"/>
 							</Anchors>
-							<TexCoords left="0.17578125" right="0.47265625" top="0.01562500" bottom="0.26562500"/>
+							<TexCoords left="0.17578125" right="0.47265625" top="0.01562500" bottom="0.26562500"/>	
 						</Texture>
 					</Layer>
 					<Layer level="BACKGROUND">
@@ -105,7 +105,7 @@
 								<Anchor point="LEFT" relativeTo="$parentLeft" relativePoint="RIGHT" x="-20" y="0"/>
 								<Anchor point="RIGHT" relativeTo="$parentRight" relativePoint="LEFT" x="20" y="0"/>
 							</Anchors>
-							<TexCoords left="0.48046875" right="0.98046875" top="0.01562500" bottom="0.26562500"/>
+							<TexCoords left="0.48046875" right="0.98046875" top="0.01562500" bottom="0.26562500"/>	
 						</Texture>
 					</Layer>
 					<Layer level="ARTWORK">
@@ -124,7 +124,7 @@
 							<Anchors>
 								<Anchor point="LEFT" relativeTo="$parentLeft" x="26" y="0"/>
 							</Anchors>
-							<TexCoords left="0.08" right="0.92" top="0.08" bottom="0.92"/>
+							<TexCoords left="0.08" right="0.92" top="0.08" bottom="0.92"/>							
 						</Texture>
 						<FontString name="$parentName" inherits="GameFontNormalSmall" parentKey="name">
 							<Anchors>
@@ -175,6 +175,14 @@
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 			</OnLoad>
 			<OnClick function="GuildRosterButton_OnClick"/>
+			<OnEnter>
+				if ( self.online ) then
+					GameTooltip_AddNewbieTip(self, GUILD_MEMBER_OPTIONS, 1.0, 1.0, 1.0, NEWBIE_TOOLTIP_GUILD_MEMBER_OPTIONS, 1);
+				end
+			</OnEnter>
+			<OnLeave>
+				GameTooltip:Hide();
+			</OnLeave>
 		</Scripts>
 		<HighlightTexture file="Interface\FriendsFrame\UI-FriendsFrame-HighlightBar" alphaMode="ADD" setAllPoints="true"/>
 	</Button>
@@ -395,7 +403,7 @@
 	Side panel
 *******************************************************************************
 -->
-	<Frame name="GuildMemberDetailFrame" toplevel="true" enableMouse="true" hidden="true" parent="GuildFrame" inherits="BackdropTemplate">
+	<Frame name="GuildMemberDetailFrame" toplevel="true" enableMouse="true" hidden="true" parent="GuildFrame">
 		<Size>
 			<AbsDimension x="212" y="270"/>
 		</Size>
@@ -406,9 +414,17 @@
 				</Offset>
 			</Anchor>
 		</Anchors>
-		<KeyValues>
-			<KeyValue key="backdropInfo" value="BACKDROP_DIALOG_32_32" type="global"/>
-		</KeyValues>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+			<BackgroundInsets>
+				<AbsInset left="11" right="12" top="12" bottom="11"/>
+			</BackgroundInsets>
+			<TileSize>
+				<AbsValue val="32"/>
+			</TileSize>
+			<EdgeSize>
+				<AbsValue val="32"/>
+			</EdgeSize>
+		</Backdrop>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString name="GuildMemberDetailName" justifyH="LEFT" inherits="GameFontNormal">
@@ -562,6 +578,10 @@
 					<OnClick>
 						StaticPopup_Show("REMOVE_GUILDMEMBER");
 					</OnClick>
+					<OnEnter>
+						GameTooltip_AddNewbieTip(self, REMOVE, 1.0, 1.0, 1.0, NEWBIE_TOOLTIP_GUILDREMOVE, 1);
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide"/>
 				</Scripts>
 				<NormalFont style="GameFontNormalSmall"/>
 				<HighlightFont style="GameFontHighlightSmall"/>
@@ -580,8 +600,12 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						C_PartyInfo.InviteUnit(GuildFrame.selectedName);
+						InviteToGroup(GuildFrame.selectedName);
 					</OnClick>
+					<OnEnter>
+						GameTooltip_AddNewbieTip(self, GROUP_INVITE, 1.0, 1.0, 1.0, NEWBIE_TOOLTIP_GROUPINVITE, 1);
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide"/>
 				</Scripts>
 				<NormalFont style="GameFontNormalSmall"/>
 				<HighlightFont style="GameFontHighlightSmall"/>
@@ -599,7 +623,7 @@
 					<OnLoad function="GuildMemberRankDropdown_OnLoad"/>
 				</Scripts>
 			</Frame>
-			<Frame name="GuildMemberNoteBackground" enableMouse="true" inherits="TooltipBackdropTemplate">
+			<Frame name="GuildMemberNoteBackground" enableMouse="true">
 				<Size>
 					<AbsDimension x="181" y="40"/>
 				</Size>
@@ -626,17 +650,28 @@
 						</FontString>
 					</Layer>
 				</Layers>
-				<KeyValues>
-					<KeyValue key="backdropColorAlpha" value="0.25" type="number"/>
-					<KeyValue key="backdropBorderColorAlpha" value="0.5" type="number"/>
-				</KeyValues>
+				<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+					<EdgeSize>
+						<AbsValue val="16"/>
+					</EdgeSize>
+					<TileSize>
+						<AbsValue val="16"/>
+					</TileSize>
+					<BackgroundInsets>
+						<AbsInset left="5" right="5" top="5" bottom="5"/>
+					</BackgroundInsets>
+				</Backdrop>
 				<Scripts>
+					<OnLoad>
+						self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b, 0.5);
+						self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b, 0.25);
+					</OnLoad>
 					<OnMouseUp>
 						StaticPopup_Show("SET_GUILDPLAYERNOTE");
-					</OnMouseUp>
+					</OnMouseUp> 
 				</Scripts>
 			</Frame>
-			<Frame name="GuildMemberOfficerNoteBackground" inherits="TooltipBackdropTemplate">
+			<Frame name="GuildMemberOfficerNoteBackground">
 				<Size>
 					<AbsDimension x="181" y="40"/>
 				</Size>
@@ -663,11 +698,22 @@
 						</FontString>
 					</Layer>
 				</Layers>
-				<KeyValues>
-					<KeyValue key="backdropColorAlpha" value="0.25" type="number"/>
-					<KeyValue key="backdropBorderColorAlpha" value="0.5" type="number"/>
-				</KeyValues>
+				<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+					<EdgeSize>
+						<AbsValue val="16"/>
+					</EdgeSize>
+					<TileSize>
+						<AbsValue val="16"/>
+					</TileSize>
+					<BackgroundInsets>
+						<AbsInset left="5" right="5" top="5" bottom="5"/>
+					</BackgroundInsets>
+				</Backdrop>
 				<Scripts>
+					<OnLoad>
+						self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b, 0.5);
+						self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b, 0.25);
+					</OnLoad>
 					<OnMouseUp>
 						StaticPopup_Show("SET_GUILDOFFICERNOTE");
 					</OnMouseUp>
@@ -675,7 +721,9 @@
 			</Frame>
 		</Frames>
 		<Scripts>
-			<OnLoad inherit="prepend" function="GuildFrame_RegisterPopup"/>
+			<OnLoad>
+				GuildFrame_RegisterPopup(self);
+			</OnLoad>
 		</Scripts>
 	</Frame>
 </Ui>

@@ -32,14 +32,6 @@ function ClassNameplateBar:OnEvent(event, ...)
 	return false;
 end
 
-function ClassNameplateBar:OnShow()
-	self:OnSizeChanged();
-end
-
-function ClassNameplateBar:OnSizeChanged()
-	-- override if needed
-end
-
 function ClassNameplateBar:MatchesClass()
 	local _, myclass = UnitClass("player");
 	return myclass == self.class;
@@ -129,7 +121,7 @@ local NameplatePowerBarColor = {
 function ClassNameplateManaBar:OnLoad()
 	ClassNameplateBar.OnLoad(self);
 
-	self.Border:SetVertexColor(0, 0, 0, 1);
+	self.Border:SetVertexColor(0, 0, 0, .8);
 end
 
 function ClassNameplateManaBar:OnEvent(event, ...)
@@ -150,7 +142,7 @@ function ClassNameplateBar:UpdatePredictedPowerCost(queryCurrentCastingInfo)
 	local cost = 0;
 
 	if queryCurrentCastingInfo then
-		local spellID = select(9, UnitCastingInfo("player"));
+		local spellID = select(10, UnitCastingInfo("player"));
 
 		if spellID then
 			local costTable = GetSpellPowerCost(spellID);
@@ -175,11 +167,12 @@ function ClassNameplateManaBar:Setup()
 	self:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "player");
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 
-	local statusBarTexture = self:GetStatusBarTexture();
+	local tex = self:GetStatusBarTexture();
+	local bar = self.ManaCostPredictionBar;
 
-	self.ManaCostPredictionBar:ClearAllPoints();
-	self.ManaCostPredictionBar:SetPoint("TOPLEFT", statusBarTexture, "TOPRIGHT", 0, 0);
-	self.ManaCostPredictionBar:SetPoint("BOTTOMLEFT", statusBarTexture, "BOTTOMRIGHT", 0, 0);
+	bar:ClearAllPoints();
+	bar:SetPoint("TOPLEFT", tex, "TOPRIGHT", 0, 0);
+	bar:SetPoint("BOTTOMLEFT", tex, "BOTTOMRIGHT", 0, 0);
 
 	self:Show();
 	NamePlateDriverFrame:SetClassNameplateManaBar(self);
@@ -245,12 +238,9 @@ function ClassNameplateManaBar:UpdatePower()
 end
 
 function ClassNameplateManaBar:OnOptionsUpdated()
-	self:OnSizeChanged();
-end
-
-function ClassNameplateManaBar:OnSizeChanged() -- override
-	PixelUtil.SetHeight(self, DefaultCompactNamePlatePlayerFrameSetUpOptions.healthBarHeight);
-	self.Border:UpdateSizes();
+	local width, height = C_NamePlate.GetNamePlateSelfSize();
+	self:SetWidth(width - 24);
+	self:SetHeight(DefaultCompactNamePlatePlayerFrameSetUpOptions.healthBarHeight);
 end
 
 function ClassNameplateManaBar:GetUnit()

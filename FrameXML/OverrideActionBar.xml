@@ -4,7 +4,8 @@
 	<CheckButton name="OverrideActionBarButtonTemplate" inherits="ActionBarButtonTemplate" virtual="true">
 		<Size x="52" y="52"/>
 		<Scripts>
-			<OnLoad inherit="append">
+			<OnLoad>
+				ActionButton_OnLoad(self);
 				self:SetFrameLevel(self:GetFrameLevel() + 2);
 				local cooldown = _G[self:GetName().."Cooldown"];
 				cooldown:SetFrameLevel(cooldown:GetFrameLevel() + 2);
@@ -12,7 +13,7 @@
 		</Scripts>
 	</CheckButton>
 
-	<Frame name="OverrideActionBar" frameStrata="MEDIUM" parent="UIParent" enableMouse="true" toplevel="true" hidden="true">
+	<Frame name="OverrideActionBar" frameStrata="HIGH" parent="UIParent" enableMouse="true" toplevel="true" hidden="true">
 		<Animations>
 			<AnimationGroup parentKey="slideOut">
 				<Translation offsetX="0" offsetY="-180" duration="0.4" order="1"/>
@@ -182,9 +183,7 @@
 							<OnMouseDown function="VehicleAimUpStart"/>
 							<OnMouseUp function="VehicleAimUpStop"/>
 							<OnEnter>
-								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-								GameTooltip_SetTitle(GameTooltip, AIM_UP);
-								GameTooltip:Show();
+								GameTooltip_AddNewbieTip(self, AIM_UP, 1.0, 1.0, 1.0, nil);
 							</OnEnter>
 							<OnLeave function="GameTooltip_Hide"/>
 						</Scripts>
@@ -207,9 +206,7 @@
 							<OnMouseDown function="VehicleAimDownStart"/>
 							<OnMouseUp function="VehicleAimDownStop"/>
 							<OnEnter>
-								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-								GameTooltip_SetTitle(GameTooltip, AIM_DOWN);
-								GameTooltip:Show();
+								GameTooltip_AddNewbieTip(self, AIM_DOWN, 1.0, 1.0, 1.0, nil);
 							</OnEnter>
 							<OnLeave function="GameTooltip_Hide"/>
 						</Scripts>
@@ -272,9 +269,7 @@
 						<Scripts>
 							<OnClick function="OverrideActionBar_Leave"/>
 							<OnEnter>
-								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-								GameTooltip_SetTitle(GameTooltip, LEAVE_VEHICLE);
-								GameTooltip:Show();
+								GameTooltip_AddNewbieTip(self, LEAVE_VEHICLE, 1.0, 1.0, 1.0, nil);
 							</OnEnter>
 							<OnLeave function="GameTooltip_Hide"/>
 						</Scripts>
@@ -371,7 +366,7 @@
 						if ( event == "CVAR_UPDATE" ) then
 							TextStatusBar_OnEvent(self, event, ...);
 						else
-							StatusTrackingBarManager:UpdateBarsShown();
+							ExpBar_Update();
 						end
 					</OnEvent>
 					<OnShow>
@@ -391,6 +386,9 @@
 								label = label.." "..RED_FONT_COLOR_CODE..CAP_REACHED_TRIAL.."|r";
 							end
 						end
+						
+						GameTooltip_AddNewbieTip(self, label, 1.0, 1.0, 1.0, NEWBIE_TOOLTIP_XPBAR, 1);
+						GameTooltip.canAddRestStateLine = 1;
 					</OnEnter>
 					<OnLeave>
 						HideTextStatusBarText(self);

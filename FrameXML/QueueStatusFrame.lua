@@ -22,14 +22,10 @@ function QueueStatusMinimapButton_OnClick(self, button)
 		QueueStatusDropDown_Show(self.DropDown, self:GetName());
 	else
 		local inBattlefield, showScoreboard = QueueStatus_InActiveBattlefield();
-		if IsInLFDBattlefield() then
-			inBattlefield = true;
-			showScoreboard = true;
-		end
-		local lfgListActiveEntry = C_LFGList.HasActiveEntryInfo();
+		local lfgListActiveEntry = C_LFGList.GetActiveEntryInfo();
 		if ( inBattlefield ) then
 			if ( showScoreboard ) then
-				TogglePVPScoreboardOrResults();
+				ToggleWorldStateScoreFrame();
 			end
 		elseif ( lfgListActiveEntry ) then
 			LFGListUtil_OpenBestWindow(true);
@@ -125,6 +121,9 @@ function QueueStatusFrame_OnLoad(self)
 	self:RegisterEvent("LFG_LIST_SEARCH_RESULT_UPDATED");
 	self:RegisterEvent("LFG_LIST_APPLICANT_UPDATED");
 
+	--For PvP Role Checks
+	self:RegisterEvent("PVP_ROLE_CHECK_UPDATED");
+
 	--For PvP
 	self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS");
 	self:RegisterEvent("PVP_BRAWL_INFO_UPDATED");
@@ -132,6 +131,13 @@ function QueueStatusFrame_OnLoad(self)
 	--For World PvP stuff
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA");
 	self:RegisterEvent("ZONE_CHANGED");
+	self:RegisterEvent("BATTLEFIELD_MGR_QUEUE_REQUEST_RESPONSE");
+	self:RegisterEvent("BATTLEFIELD_MGR_QUEUE_STATUS_UPDATE");
+	self:RegisterEvent("BATTLEFIELD_MGR_EJECT_PENDING");
+	self:RegisterEvent("BATTLEFIELD_MGR_EJECTED");
+	self:RegisterEvent("BATTLEFIELD_MGR_QUEUE_INVITE");
+	self:RegisterEvent("BATTLEFIELD_MGR_ENTRY_INVITE");
+	self:RegisterEvent("BATTLEFIELD_MGR_ENTERED");
 
 	--For Pet Battles
 	self:RegisterEvent("PET_BATTLE_QUEUE_STATUS");
@@ -182,7 +188,7 @@ do
     local function QueueStatusEntryResetter(pool, frame)
 	    frame:Hide();
 	    frame:ClearAllPoints();
-
+    
 	    frame.EntrySeparator:Show();
 	    frame.active = nil;
 	    frame.orderIndex = nil;
@@ -219,7 +225,7 @@ function QueueStatusFrame_Update(self)
 	end
 
 	--Try LFGList entries
-	local isActive = C_LFGList.HasActiveEntryInfo();
+	local isActive = C_LFGList.GetActiveEntryInfo();
 	if ( isActive ) then
 		local entry = QueueStatusFrame_GetEntry(self, nextEntry);
 		QueueStatusEntry_SetUpLFGListActiveEntry(entry);
@@ -372,26 +378,9 @@ end
 
 local function GetDisplayNameFromCategory(category)
 	if (category == LE_LFG_CATEGORY_BATTLEFIELD) then
-		local brawlInfo;
-		if (C_PvP.IsInBrawl()) then
-			brawlInfo = C_PvP.GetActiveBrawlInfo();
-		else
-			brawlInfo = C_PvP.GetAvailableBrawlInfo();
-		end
-		if (brawlInfo and brawlInfo.canQueue and brawlInfo.name) then
+		local brawlInfo = C_PvP.GetBrawlInfo();
+		if (brawlInfo and brawlInfo.active and brawlInfo.name) then
 			return brawlInfo.name;
-		end
-	end
-
-	if (category == LE_LFG_CATEGORY_SCENARIO) then
-		local scenarioIDs = C_LFGInfo.GetAllEntriesForCategory(category)
-		for i, scenID in ipairs(scenarioIDs) do
-			if (not C_LFGInfo.HideNameFromUI(scenID)) then
-				local instanceName = GetLFGDungeonInfo(scenID);
-				if(instanceName) then
-					return instanceName;
-				end
-			end
 		end
 	end
 
@@ -405,7 +394,7 @@ function QueueStatusEntry_SetUpLFG(entry, category)
 
 	QueueStatus_GetAllRelevantLFG(category, queuedList);
 
-
+	
 	local activeID = select(18, GetLFGQueueStats(category));
 	for queueID in pairs(queuedList) do
 		local mode, submode = GetLFGMode(category, queueID);
@@ -425,7 +414,7 @@ function QueueStatusEntry_SetUpLFG(entry, category)
 	if ( not activeID ) then
 		GMError(format("Thought we had an active queue, but we don't.: activeIdx - %d", activeID));
 	end
-
+	
 	local mode, submode = GetLFGMode(category, activeID);
 
 	local subTitle;
@@ -435,7 +424,7 @@ function QueueStatusEntry_SetUpLFG(entry, category)
 		--We're queued for more than one thing
 		subTitle = table.remove(allNames, activeIndex);
 		extraText = string.format(ALSO_QUEUED_FOR, table.concat(allNames, PLAYER_LIST_DELIMITER));
-	elseif ( mode == "suspended" ) then
+	elseif ( mode == "suspended" ) then 
 		local suspendedPlayers = GetLFGSuspendedPlayers(category);
 		if ( #suspendedPlayers > 0 ) then
 			extraText = "";
@@ -458,7 +447,7 @@ function QueueStatusEntry_SetUpLFG(entry, category)
 			tank, healer, dps = nil, nil, nil;
 			totalTanks, totalHealers, totalDPS, tankNeeds, healerNeeds, dpsNeeds = nil, nil, nil, nil, nil, nil;
 		end
-
+		
 		if ( category == LE_LFG_CATEGORY_WORLDPVP ) then
 			QueueStatusEntry_SetMinimalDisplay(entry, GetDisplayNameFromCategory(category), QUEUED_STATUS_IN_PROGRESS, subTitle, extraText);
 		else
@@ -475,13 +464,13 @@ function QueueStatusEntry_SetUpLFG(entry, category)
 	elseif ( mode == "lfgparty" or mode == "abandonedInDungeon" ) then
 		local title;
 		if (C_PvP.IsInBrawl()) then
-			local brawlInfo = C_PvP.GetActiveBrawlInfo();
-			if (brawlInfo and brawlInfo.canQueue and brawlInfo.longDescription) then
+			local brawlInfo = C_PvP.GetBrawlInfo();
+			if (brawlInfo and brawlInfo.active and brawlInfo.longDescription) then
 				title = brawlInfo.name;
-				if (subTitle) then
-					subTitle = QUEUED_STATUS_BRAWL_RULES_SUBTITLE:format(brawlInfo.longDescription, subTitle);
+				if (subtitle) then
+					subtitle = QUEUED_STATUS_BRAWL_RULES_SUBTITLE:format(brawlInfo.longDescription, subtitle);
 				else
-					subTitle = brawlInfo.longDescription;
+					subtitle = brawlInfo.longDescription;
 				end
 			end
 		else
@@ -494,15 +483,15 @@ function QueueStatusEntry_SetUpLFG(entry, category)
 end
 
 function QueueStatusEntry_SetUpLFGListActiveEntry(entry)
-	local activeEntryInfo = C_LFGList.GetActiveEntryInfo();
+	local _, _, _, _, name = C_LFGList.GetActiveEntryInfo();
 	local numApplicants, numActiveApplicants = C_LFGList.GetNumApplicants();
-	QueueStatusEntry_SetMinimalDisplay(entry, activeEntryInfo.name, QUEUED_STATUS_LISTED, string.format(LFG_LIST_PENDING_APPLICANTS, numActiveApplicants));
+	QueueStatusEntry_SetMinimalDisplay(entry, name, QUEUED_STATUS_LISTED, string.format(LFG_LIST_PENDING_APPLICANTS, numActiveApplicants));
 end
 
 function QueueStatusEntry_SetUpLFGListApplication(entry, resultID)
-	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
-	local activityName = C_LFGList.GetActivityFullName(searchResultInfo.activityID, nil, searchResultInfo.isWarMode);
-	QueueStatusEntry_SetMinimalDisplay(entry, searchResultInfo.name, QUEUED_STATUS_SIGNED_UP, activityName);
+	local _, activityID, name = C_LFGList.GetSearchResultInfo(resultID);
+	local activityName = C_LFGList.GetActivityInfo(activityID);
+	QueueStatusEntry_SetMinimalDisplay(entry, name, QUEUED_STATUS_SIGNED_UP, activityName);
 end
 
 function QueueStatusEntry_SetUpBattlefield(entry, idx)
@@ -625,7 +614,7 @@ end
 
 function QueueStatusEntry_SetFullDisplay(entry, title, queuedTime, myWait, isTank, isHealer, isDPS, totalTanks, totalHealers, totalDPS, tankNeeds, healerNeeds, dpsNeeds, subTitle, extraText)
 	local height = 14;
-
+	
 	entry.Title:SetText(title);
 	height = height + entry.Title:GetHeight();
 
@@ -752,38 +741,40 @@ local function wrapFunc(func) --Lets us directly set .func = on dropdown entries
 end
 
 function QueueStatusDropDown_Update()
+	local info = UIDropDownMenu_CreateInfo();
+
 	--All LFG types
 	for i=1, NUM_LE_LFG_CATEGORYS do
 		local mode, submode = GetLFGMode(i);
 		if ( mode and submode ~= "noteleport" ) then
-			QueueStatusDropDown_AddLFGButtons(i);
+			QueueStatusDropDown_AddLFGButtons(info, i);
 		end
 	end
 
 	--LFGList
-	local isActive = C_LFGList.HasActiveEntryInfo();
+	local isActive = C_LFGList.GetActiveEntryInfo();
 	if ( isActive ) then
-		QueueStatusDropDown_AddLFGListButtons();
+		QueueStatusDropDown_AddLFGListButtons(info);
 	end
 
 	local apps = C_LFGList.GetApplications();
 	for i=1, #apps do
 		local _, appStatus = C_LFGList.GetApplicationInfo(apps[i]);
 		if ( appStatus == "applied" ) then
-			QueueStatusDropDown_AddLFGListApplicationButtons(apps[i]);
+			QueueStatusDropDown_AddLFGListApplicationButtons(info, apps[i]);
 		end
 	end
 
 	--PvP
 	local inProgress, _, _, _, _, isBattleground = GetLFGRoleUpdate();
 	if ( inProgress and isBattleground ) then
-		QueueStatusDropDown_AddPVPRoleCheckButtons();
+		QueueStatusDropDown_AddPVPRoleCheckButtons(info);
 	end
 
 	for i=1, GetMaxBattlefieldID() do
 		local status, mapName, teamSize, registeredMatch = GetBattlefieldStatus(i);
 		if ( status and status ~= "none" ) then
-			QueueStatusDropDown_AddBattlefieldButtons(i);
+			QueueStatusDropDown_AddBattlefieldButtons(info, i);
 		end
 	end
 
@@ -791,12 +782,12 @@ function QueueStatusDropDown_Update()
 	for i=1, MAX_WORLD_PVP_QUEUES do
 		local status, mapName, queueID = GetWorldPVPQueueStatus(i);
 		if ( status and status ~= "none" ) then
-			QueueStatusDropDown_AddWorldPvPButtons(i);
+			QueueStatusDropDown_AddWorldPvPButtons(info, i);
 		end
 	end
 
 	if ( CanHearthAndResurrectFromArea() ) then
-		local info = UIDropDownMenu_CreateInfo();
+		wipe(info);
 		local name = GetRealZoneText();
 		info.text = "|cff19ff19"..name.."|r";
 		info.isTitle = 1;
@@ -812,12 +803,12 @@ function QueueStatusDropDown_Update()
 
 	--Pet Battles
 	if ( C_PetBattles.GetPVPMatchmakingInfo() ) then
-		QueueStatusDropDown_AddPetBattleButtons();
+		QueueStatusDropDown_AddPetBattleButtons(info);
 	end
 end
 
-function QueueStatusDropDown_AddWorldPvPButtons(idx)
-	local info = UIDropDownMenu_CreateInfo();
+function QueueStatusDropDown_AddWorldPvPButtons(info, idx)
+	wipe(info);
 	local status, mapName, queueID = GetWorldPVPQueueStatus(idx);
 
 	local name = mapName;
@@ -837,7 +828,7 @@ function QueueStatusDropDown_AddWorldPvPButtons(idx)
 		info.arg1 = queueID;
 		UIDropDownMenu_AddButton(info);
 	elseif ( status == "confirm" ) then
-		info.text = ENTER_LFG;
+		info.text = ENTER_BATTLE;
 		info.func = wrapFunc(BattlefieldMgrEntryInviteResponse);
 		info.arg1 = queueID;
 		info.arg2 = 1;
@@ -851,10 +842,10 @@ function QueueStatusDropDown_AddWorldPvPButtons(idx)
 	end
 end
 
-function QueueStatusDropDown_AddPVPRoleCheckButtons()
-	local info = UIDropDownMenu_CreateInfo();
+function QueueStatusDropDown_AddPVPRoleCheckButtons(info)
+	wipe(info);
 	local inProgress, _, _, _, _, isBattleground = GetLFGRoleUpdate();
-
+	
 	if ( inProgress and isBattleground ) then
 		local name = GetLFGRoleUpdateBattlegroundInfo();
 		info.text = name;
@@ -871,22 +862,12 @@ function QueueStatusDropDown_AddPVPRoleCheckButtons()
 	end
 end
 
-local function LeaveQueueWithMatchReadyCheck(idx)
-	local status, mapName, teamSize, registeredMatch, suspendedQueue, queueType = GetBattlefieldStatus(idx);
-	if status == "confirm" and (queueType == "ARENA" or queueType == "ARENASKIRMISH" or (queueType == "BATTLEGROUND" and registeredMatch)) then
-		UIErrorsFrame:AddExternalErrorMessage(PVP_MATCH_READY_ERROR);
-	else
-		local acceptPort = false;
-		AcceptBattlefieldPort(idx, acceptPort);
-	end
-end
-
-function QueueStatusDropDown_AddBattlefieldButtons(idx)
-	local info = UIDropDownMenu_CreateInfo();
+function QueueStatusDropDown_AddBattlefieldButtons(info, idx)
+	wipe(info);
 	local status, mapName, teamSize, registeredMatch,_,_,_,_, asGroup = GetBattlefieldStatus(idx);
 
 	local name = mapName;
-	if ( name and status == "active" ) then
+	if ( status == "active" ) then
 		name = "|cff19ff19"..name.."|r";
 	end
 	info.text = name;
@@ -900,9 +881,9 @@ function QueueStatusDropDown_AddBattlefieldButtons(idx)
 
 	if ( status == "queued" ) then
 		info.text = LEAVE_QUEUE;
-		info.func = wrapFunc(LeaveQueueWithMatchReadyCheck);
+		info.func = wrapFunc(AcceptBattlefieldPort);
 		info.arg1 = idx;
-		info.arg2 = nil;
+		info.arg2 = false;
 		info.disabled = IsInGroup() and not UnitIsGroupLeader("player");
 		UIDropDownMenu_AddButton(info);
 	elseif ( status == "locked" ) then
@@ -910,7 +891,7 @@ function QueueStatusDropDown_AddBattlefieldButtons(idx)
 		info.disabled = true;
 		UIDropDownMenu_AddButton(info);
 	elseif ( status == "confirm" ) then
-		info.text = ENTER_LFG;
+		info.text = ENTER_BATTLE;
 		info.func = wrapFunc(AcceptBattlefieldPort);
 		info.arg1 = idx;
 		info.arg2 = 1;
@@ -918,9 +899,9 @@ function QueueStatusDropDown_AddBattlefieldButtons(idx)
 
 		if ( teamSize == 0 ) then
 			info.text = LEAVE_QUEUE;
-			info.func = wrapFunc(LeaveQueueWithMatchReadyCheck);
+			info.func = wrapFunc(AcceptBattlefieldPort);
 			info.arg1 = idx;
-			info.arg2 = nil;
+			info.arg2 = false;
 			UIDropDownMenu_AddButton(info);
 		end
 	elseif ( status == "active" ) then
@@ -928,15 +909,15 @@ function QueueStatusDropDown_AddBattlefieldButtons(idx)
 
 		if ( not inArena or GetBattlefieldWinner() or C_Commentator.GetMode() > 0 or C_PvP.IsInBrawl() ) then
 			info.text = TOGGLE_SCOREBOARD;
-			info.func = wrapFunc(TogglePVPScoreboardOrResults);
+			info.func = wrapFunc(ToggleWorldStateScoreFrame);
 			info.arg1 = nil;
 			info.arg2 = nil;
 			UIDropDownMenu_AddButton(info);
 		end
-
+		
 		if ( not inArena ) then
 			info.text = TOGGLE_BATTLEFIELD_MAP;
-			info.func = wrapFunc(ToggleBattlefieldMap);
+			info.func = wrapFunc(ToggleBattlefieldMinimap);
 			info.arg1 = nil;
 			info.arg2 = nil;
 			UIDropDownMenu_AddButton(info);
@@ -947,23 +928,16 @@ function QueueStatusDropDown_AddBattlefieldButtons(idx)
 			info.func = wrapFunc(ConfirmSurrenderArena);
 			info.arg1 = nil;
 			info.arg2 = nil;
-			if (not CanSurrenderArena() or C_PvP.IsSoloShuffle() ) then
+			if (not CanSurrenderArena()) then
 				info.disabled = true;
 			end
 			UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
 			info.disabled = false;
 			info.text = LEAVE_ARENA;
 		else
-			if ( C_PvP.IsSoloShuffle() ) then
-				info.disabled = true;
-			end
-			if ( C_PvP.IsInBrawl() ) then
-				info.text = LEAVE_LFD_BATTLEFIELD;
-			else
-				info.text = LEAVE_BATTLEGROUND;
-			end
+			info.text = LEAVE_BATTLEGROUND;
 		end
-
+		
 		info.func = wrapFunc(ConfirmOrLeaveBattlefield);
 		info.arg1 = nil;
 		info.arg2 = nil;
@@ -971,8 +945,8 @@ function QueueStatusDropDown_AddBattlefieldButtons(idx)
 	end
 end
 
-function QueueStatusDropDown_AddLFGButtons(category)
-	local info = UIDropDownMenu_CreateInfo();
+function QueueStatusDropDown_AddLFGButtons(info, category)
+	wipe(info);
 
 	QueueStatus_GetAllRelevantLFG(category, queuedList);
 	local statuses = {};
@@ -1004,18 +978,12 @@ function QueueStatusDropDown_AddLFGButtons(category)
 			if ( IsInLFDBattlefield() ) then
 				local _, instanceType = IsInInstance();
 				if ( instanceType ~= "arena" and instanceType ~= "pvp" ) then
-					info.text = ENTER_LFG;
+					info.text = ENTER_DUNGEON;
 					info.func = wrapFunc(LFGTeleport);
 					info.arg1 = false;
 					info.disabled = false;
 					UIDropDownMenu_AddButton(info);
 					addExitOption = false;
-				else
-					info.text = TOGGLE_SCOREBOARD;
-					info.func = wrapFunc(TogglePVPScoreboardOrResults);
-					info.arg1 = nil;
-					info.arg2 = nil;
-					UIDropDownMenu_AddButton(info);
 				end
 			elseif ( IsInLFGDungeon() ) then
 				info.text = TELEPORT_OUT_OF_DUNGEON;
@@ -1073,7 +1041,7 @@ function QueueStatusDropDown_AddLFGButtons(category)
 			info.disabled = true;
 			UIDropDownMenu_AddButton(info);
 		elseif ( statuses["proposal.unaccepted"] ) then
-			info.text = ENTER_LFG;
+			info.text = ENTER_DUNGEON;
 			info.func = wrapFunc(AcceptProposal);
 			info.arg1 = nil;
 			info.disabled = false;
@@ -1088,10 +1056,10 @@ function QueueStatusDropDown_AddLFGButtons(category)
 	end
 end
 
-function QueueStatusDropDown_AddLFGListButtons()
-	local info = UIDropDownMenu_CreateInfo();
-	local activeEntryInfo = C_LFGList.GetActiveEntryInfo();
-	info.text = activeEntryInfo.name;
+function QueueStatusDropDown_AddLFGListButtons(info)
+	wipe(info);
+	local _, _, _, _, name = C_LFGList.GetActiveEntryInfo();
+	info.text = name;
 	info.isTitle = 1;
 	info.notCheckable = 1;
 	UIDropDownMenu_AddButton(info);
@@ -1111,10 +1079,10 @@ function QueueStatusDropDown_AddLFGListButtons()
 	UIDropDownMenu_AddButton(info);
 end
 
-function QueueStatusDropDown_AddLFGListApplicationButtons(resultID)
-	local info = UIDropDownMenu_CreateInfo();
-	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
-	info.text = searchResultInfo.name;
+function QueueStatusDropDown_AddLFGListApplicationButtons(info, resultID)
+	wipe(info);
+	local _, _, name = C_LFGList.GetSearchResultInfo(resultID);
+	info.text = name;
 	info.isTitle = 1;
 	info.notCheckable = 1;
 	UIDropDownMenu_AddButton(info);
@@ -1138,8 +1106,8 @@ function QueueStatusDropDown_AcceptQueuedPVPMatch()
 	end
 end
 
-function QueueStatusDropDown_AddPetBattleButtons()
-	local info = UIDropDownMenu_CreateInfo();
+function QueueStatusDropDown_AddPetBattleButtons(info)
+	wipe(info);
 
 	local status = C_PetBattles.GetPVPMatchmakingInfo();
 
@@ -1180,7 +1148,8 @@ function QueueStatus_InActiveBattlefield()
 		local status, mapName, teamSize, registeredMatch = GetBattlefieldStatus(i);
 		if ( status == "active" ) then
 			local canShowScoreboard = false;
-			if not IsActiveBattlefieldArena() or GetBattlefieldWinner() or C_PvP.IsInBrawl() or C_PvP.IsSoloShuffle() then
+			local inArena = IsActiveBattlefieldArena();
+			if not inArena or GetBattlefieldWinner() or C_PvP.IsInBrawl() then
 				canShowScoreboard = true;
 			end
 			return true, canShowScoreboard;
@@ -1188,25 +1157,3 @@ function QueueStatus_InActiveBattlefield()
 	end
 end
 
-function TogglePVPScoreboardOrResults()
-	if IsAddOnLoaded("Blizzard_PVPMatch") then
-		local matchState = C_PvP.GetActiveMatchState();
-		local isComplete = matchState == Enum.PvPMatchState.Complete;
-		if isComplete then
-			if PVPMatchResults:IsShown() then
-				HideUIPanel(PVPMatchResults);
-			else
-				PVPMatchResults:BeginShow();
-			end
-		else
-			if PVPMatchScoreboard:IsShown() then
-				HideUIPanel(PVPMatchScoreboard);
-			else
-				local isActive = matchState == Enum.PvPMatchState.Active;
-				if isActive and (not C_PvP.IsMatchConsideredArena() or C_PvP.IsSoloShuffle()) then
-					PVPMatchScoreboard:BeginShow();
-				end
-			end
-		end
-	end
-end

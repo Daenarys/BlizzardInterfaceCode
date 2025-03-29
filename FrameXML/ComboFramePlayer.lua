@@ -8,71 +8,62 @@ function ComboPointPowerBar:OnLoad()
 
 	self.class = "ROGUE";
 	self:SetPowerTokens("COMBO_POINTS");
-	self:SetTooltip(COMBO_POINTS_POWER, COMBO_POINTS_ROGUE_TOOLTIP);
 
 	for i = 1, #self.ComboPoints do
 		self.ComboPoints[i].on = false;
 	end
 	self.maxUsablePoints = 5;
 
+	self:SetFrameLevel(self:GetParent():GetFrameLevel() + 2);
 	ClassPowerBar.OnLoad(self);
 end
 
 function ComboPointPowerBar:OnEvent(event, arg1, arg2)
 	if (event == "UNIT_DISPLAYPOWER" or event == "PLAYER_ENTERING_WORLD" ) then
-		self:Setup();
+		self:SetupDruid();
 	elseif (event == "UNIT_MAXPOWER") then
 		self:UpdateMaxPower();
-	elseif (event == "UNIT_POWER_POINT_CHARGE") then
-		self:UpdateChargedPowerPoints();
 	else
 		ClassPowerBar.OnEvent(self, event, arg1, arg2);
 	end
 end
 
 function ComboPointPowerBar:Setup()
-	local showBar = false;
-	local frameLevel = 0;
-	local xOffset = 43;
-	if UnitInVehicle("player") then
-		showBar = PlayerVehicleHasComboPoints();
+	local showBar = ClassPowerBar.Setup(self);
+	if (showBar) then
+		self:RegisterUnitEvent("UNIT_MAXPOWER", "player");
+		self:SetPoint("TOP", self:GetParent(), "BOTTOM", 50, 38);
+		self:UpdateMaxPower();
 	else
-		showBar = ClassPowerBar.Setup(self) or self:SetupDruid();
-		if showBar then
-			frameLevel = self:GetParent():GetFrameLevel() + 2;
-			xOffset = 50;
-		end
+		self:SetupDruid();
 	end
+end
 
-	if showBar then
-		local unit = self:GetParent().unit;
-		self:RegisterUnitEvent("UNIT_POWER_FREQUENT", unit);
-		self:RegisterUnitEvent("UNIT_MAXPOWER", unit);
-		self:RegisterUnitEvent("UNIT_POWER_POINT_CHARGE", unit);
-		self:SetPoint("TOP", self:GetParent(), "BOTTOM", xOffset, 38);
-		self:SetFrameLevel(frameLevel);
+function ComboPointPowerBar:SetupDruid()
+	local _, myclass = UnitClass("player");
+	if (myclass ~= "DRUID") then
+		return;
+	end
+	self:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player");
+	self:RegisterEvent("PLAYER_ENTERING_WORLD");
+	local powerType, powerToken = UnitPowerType("player");
+	local showBar = false;
+	if (powerType == Enum.PowerType.Energy) then
+		showBar = true;
+		self:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player");
+		self:RegisterUnitEvent("UNIT_MAXPOWER", "player");
+	else
+		self:UnregisterEvent("UNIT_POWER_FREQUENT");
+		self:UnregisterEvent("UNIT_MAXPOWER");
+	end
+	if (showBar) then
+		self:SetPoint("TOP", self:GetParent(), "BOTTOM", 50, 38);
 		self:Show();
 		self:UpdateMaxPower();
 		self:UpdatePower();
 	else
 		self:Hide();
-		self:UnregisterEvent("UNIT_POWER_FREQUENT");
-		self:UnregisterEvent("UNIT_MAXPOWER");
-		self:UnregisterEvent("UNIT_POWER_POINT_CHARGE");
 	end
-end
-
-function ComboPointPowerBar:SetupDruid()
-	local showBar = false;
-	local _, myclass = UnitClass("player");
-	if myclass == "DRUID" then
-		local powerType, powerToken = UnitPowerType("player");
-		showBar = (powerType == Enum.PowerType.Energy);
-		self:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player");
-		self:RegisterEvent("PLAYER_ENTERING_WORLD");
-		self:SetTooltip(COMBO_POINTS_POWER, COMBO_POINTS_DRUID_TOOLTIP);
-	end
-	return showBar;
 end
 
 -- Data driven layout tweaks for differing numbers of combo point frames.
@@ -123,8 +114,7 @@ local function DetermineComboBonusVisibility(comboBonusIndex, max)
 end
 
 function ComboPointPowerBar:UpdateMaxPower()
-	local unit = self:GetParent().unit;
-	local maxComboPoints = UnitPowerMax(unit, Enum.PowerType.ComboPoints);
+	local maxComboPoints = UnitPowerMax("player", Enum.PowerType.ComboPoints);
 
 	self.ComboPoints[6]:SetShown(maxComboPoints == 6);
 	for i = 1, #self.ComboBonus do
@@ -172,9 +162,8 @@ function ComboPointPowerBar:UpdatePower()
 		return;
 	end
 
-	local unit = self:GetParent().unit;
-	local comboPoints = UnitPower(unit, Enum.PowerType.ComboPoints);
-	local maxComboPoints = UnitPowerMax(unit, Enum.PowerType.ComboPoints);
+	local comboPoints = UnitPower("player", Enum.PowerType.ComboPoints);
+	local maxComboPoints = UnitPowerMax("player", Enum.PowerType.ComboPoints);
 
 	-- If we had more than self.maxUsablePoints and then used a finishing move, fade out
 	-- the top row of points and then move the remaining points from the bottom up to the top
@@ -210,30 +199,5 @@ function ComboPointPowerBar:UpdatePower()
 		end
 
 		self.lastPower = comboPoints;
-	end
-
-	self:UpdateChargedPowerPoints();
-end
-
-function ComboPointPowerBar:UpdateChargedPowerPoints()
-	local chargedPowerPoints = GetUnitChargedPowerPoints(self:GetParent().unit);
-	for i = 1, self.maxUsablePoints do
-		local comboPointFrame = self.ComboPoints[i];
-		local isCharged = chargedPowerPoints and tContains(chargedPowerPoints, i);
-		if comboPointFrame.isCharged ~= isCharged then
-			comboPointFrame.isCharged = isCharged;
-			if isCharged then
-				comboPointFrame.Point:SetAtlas("ComboPoints-ComboPoint-Kyrian");
-				comboPointFrame.PointOff:SetAtlas("ComboPoints-PointBg-Kyrian");
-				if comboPointFrame.on then
-					comboPointFrame.on = false;
-					comboPointFrame.AnimIn:Stop();
-				end
-				self:AnimIn(comboPointFrame);
-			else
-				comboPointFrame.Point:SetAtlas("ComboPoints-ComboPoint");
-				comboPointFrame.PointOff:SetAtlas("ComboPoints-PointBg");
-			end
-		end
 	end
 end

@@ -8,7 +8,7 @@
         <Size x="208" y="46"/>
         <Layers>
             <Layer level="BACKGROUND">
-                <Texture parentKey="background" atlas="PetList-ButtonBackground"/>
+                <Texture atlas="PetList-ButtonBackground"/>
             </Layer>
             <Layer level="BORDER">
                 <Texture name="$parentIcon" parentKey="icon">
@@ -63,7 +63,7 @@
 						<Anchor point="RIGHT" x="-15" y="0"/>
 					</Anchors>
 					<Shadow>
-						<Color color="NEW_FEATURE_SHADOW_COLOR"/>
+						<Color r="0.32" g="0.5" b="1.0"/>
 					</Shadow>
 				</FontString>
 
@@ -120,8 +120,6 @@
                     <OnHide>
                         self:UnregisterEvent("SPELL_UPDATE_COOLDOWN");
                     </OnHide>
-                    <OnEnter function="PetJournalDragButton_OnEnter"/>
-                    <OnLeave function="GameTooltip_Hide"/>
                     <OnEvent function="PetJournalDragButton_OnEvent"/>
                     <OnDragStart function="PetJournalDragButton_OnDragStart"/>
                 </Scripts>
@@ -612,8 +610,6 @@
 				<HighlightTexture name="$parentHighlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD"/>
 				<Scripts>
 					<OnClick function="PetJournalPetLoadoutDragButton_OnClick"/>
-					<OnEnter function="PetJournalDragButton_OnEnter"/>
-                    <OnLeave function="GameTooltip_Hide"/>
 					<OnLoad>
 						self:RegisterForDrag("LeftButton");
 						self:RegisterForClicks("RightButtonUp");
@@ -967,19 +963,28 @@
 					<OnTextChanged function="PetJournal_OnSearchTextChanged"/>
 				</Scripts>
 			</EditBox>
-			<DropDownToggleButton name="$parentFilterButton" inherits="UIResettableDropdownButtonTemplate" text="FILTER">
-				<KeyValues>
-					<KeyValue key="resetFunction" value="PetJournalFilterDropDown_ResetFilters" type="global"/>
-				</KeyValues>
+			<Button name="$parentFilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
+				<Size x="93" y="22"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" relativeTo="$parentLeftInset" x="-5" y="-9"/>
 				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="Icon" file="Interface\ChatFrame\ChatFrameExpandArrow">
+							<Size x="10" y="12"/>
+							<Anchors>
+								<Anchor point="RIGHT" relativeKey="$parent.Right" relativePoint="RIGHT" x="-5"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
 				<Scripts>
-					<OnMouseDown inherit="prepend">
+					<OnClick>
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 						ToggleDropDownMenu(1, nil, PetJournalFilterDropDown, "PetJournalFilterButton", 74, 15);
-					</OnMouseDown>
+					</OnClick>
 				</Scripts>
-			</DropDownToggleButton>
+			</Button>
 			<Frame name="$parentFilterDropDown" inherits="UIDropDownMenuTemplate">
 				<Scripts>
 					<OnLoad function="PetJournalFilterDropDown_OnLoad"/>
@@ -1266,7 +1271,7 @@
 										<Anchor point="BOTTOMLEFT" relativeKey="$parent.name" relativePoint="BOTTOMLEFT" x="8" y="0"/>
 									</Anchors>
 									<Shadow>
-										<Color color="NEW_FEATURE_SHADOW_COLOR"/>
+										<Color r="0.32" g="0.5" b="1.0"/>
 									</Shadow>
 								</FontString>
 
@@ -1640,18 +1645,33 @@
 							</OnLeave>
 						</Scripts>
 					</StatusBar>
-					<ModelScene parentKey="modelScene" useParentLevel="true" inherits="WrappedAndUnwrappedModelScene">
+					<ModelScene parentKey="modelScene" useParentLevel="true" inherits="ModelSceneMixinTemplate" mixin="CollectionsWrappedModelSceneMixin">
+						<KeyValues>
+							<KeyValue key="normalIntensity" value="0.75" type="number"/>
+							<KeyValue key="highlightIntensity" value="1.2" type="number"/>
+						</KeyValues>
+
 						<Size x="173" y="135"/>
 						<Anchors>
 							<Anchor point="TOPLEFT" x="45" y="-21"/>
 						</Anchors>
+
 						<Scripts>
 							<OnMouseUp inherit="append">
 								if PetJournalPetCard.petID then
 									PetJournal_UnwrapPet(PetJournalPetCard.petID);
 								end
 							</OnMouseUp>
+							<OnEnter method="OnMouseEnter" />
+							<OnLeave method="OnMouseLeave" />
+							<OnShow method="OnShow" />
 						</Scripts>
+						<Animations>
+							<AnimationGroup parentKey="UnwrapAnim" setToFinalAlpha="true">
+								<Alpha parentKey="WrappedAnim" startDelay="1.2" fromAlpha="1" toAlpha="0" duration=".3" order="1"/>
+								<Alpha parentKey="UnwrappedAnim" startDelay="1.2" fromAlpha="0" toAlpha="1" duration=".3" order="1"/>
+							</AnimationGroup>
+						</Animations>
 					</ModelScene>
 				</Frames>
 			</Frame> <!-- PetCard -->
@@ -1687,7 +1707,7 @@
 					</OnLeave>
 				</Scripts>
 			</Button>
-			<Button name="$parentSummonButton" motionScriptsWhileDisabled="true" inherits="MagicButtonTemplate" parentKey="SummonButton" text="BATTLE_PET_SUMMON">
+			<Button name="$parentSummonButton" inherits="MagicButtonTemplate" parentKey="SummonButton" text="BATTLE_PET_SUMMON">
 				<Size x="160" y="22"/>
 				<Anchors>
 					<Anchor point="BOTTOMLEFT"/>
@@ -1755,6 +1775,7 @@
 								<Anchor point="RIGHT" relativePoint="LEFT" relativeTo="$parentIcon" x="-4" y="4"/>
 							</Anchors>
 							<Size x="0" y="0"/>
+							<TexCoords left="0.75683594" right="0.98632813" top="0.00097656" bottom="0.04882813"/>
 						</FontString>
 					</Layer>
 				</Layers>
@@ -1814,6 +1835,9 @@
 					</CheckButton>
  				</Frames>
 				<Scripts>
+					<OnShow>
+						self:SetFrameLevel(self:GetFrameLevel() + 5);
+					</OnShow>
 					<OnHide>
 						PetJournalPrimaryAbilityTooltip:Hide();
 						PetJournalSecondaryAbilityTooltip:Hide();

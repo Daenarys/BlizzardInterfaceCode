@@ -33,14 +33,6 @@
 					</Anchors>
 				</Texture>
 			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="1">
-				<Texture parentKey="IconOverlay" hidden="true">
-					<Size x="36" y="36"/>
-					<Anchors>
-						<Anchor point="CENTER" relativeKey="$parent.Icon"/>
-					</Anchors>
-				</Texture>
-			</Layer>
 		</Layers>
 		<Scripts>
 			<OnEnter function="GarrisonLandingPageReportMissionReward_OnEnter"/>
@@ -93,11 +85,6 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="EncounterIcon" inherits="CovenantLandingPageEncounterIconTemplate" hidden="true">
-				<Anchors>
-					<Anchor point="TOPLEFT" x="10" y="-8"/>
-				</Anchors>
-			</Frame>
 			<Frame parentArray="Rewards" parentKey="Reward1" inherits="GarrisonLandingPageReportMissionRewardTemplate" hidden="true">
 				<Anchors>
 					<Anchor point="RIGHT" x="-6" y="-2"/>
@@ -277,7 +264,7 @@
 						<Anchor point="TOP" relativeKey="$parent.$parent.HeaderBar" relativePoint="BOTTOM" x="0" y="8"/>
 					</Anchors>
 				</Texture>
-				<Texture parentKey="FollowerScrollFrame" atlas="GarrLanding-FollowerScrollFrame" useAtlasSize="true">
+				<Texture parentKey="FollowerHeaderBar" atlas="GarrLanding-FollowerScrollFrame" useAtlasSize="true">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="0" y="0"/>
 					</Anchors>
@@ -321,14 +308,6 @@
 			<OnEvent method="OnEvent"/>
 		</Scripts>
 	</Frame>
-
-	<Button name="GarrisonFollowerUpgradeClickTargetTemplate" virtual="true">
-		<Scripts>
-			<OnLoad function="GarrisionFollowerPageUpgradeTarget_OnLoad"/>
-			<OnEvent function="GarrisionFollowerPageUpgradeTarget_OnEvent"/>
-			<OnClick function="GarrisionFollowerPageUpgradeTarget_OnClick"/>
-		</Scripts>
-	</Button>
 
 	<Frame name="GarrisonLandingPage" parent="UIParent" enableMouse="true" toplevel="true" hidden="true" mixin="GarrisonLandingPageMixin">
 		<Size x="830" y="538"/>
@@ -487,23 +466,15 @@
 								<Anchor point="LEFT" relativeKey="$parent.$parent.HeaderBar" x="26"/>
 							</Anchors>
 						</FontString>
-						<Texture parentKey="Background" alpha="0.8">
+						<Texture parentKey="Background">
 							<Anchors>
 								<Anchor point="BOTTOM" relativePoint="BOTTOMLEFT" x="205" y="40"/>
 							</Anchors>
+							<Color r="1" g="1" b="1" a=".8"/>
 						</Texture>
 					</Layer>
 				</Layers>
 				<Frames>
-					<Frame parentKey="Sections" inherits="VerticalLayoutFrame">
-						<KeyValues>
-							<KeyValue key="spacing" value="20" type="number"/>
-						</KeyValues>
-						<Anchors>
-							<Anchor point="TOPLEFT" relativeKey="$parent.Title" relativePoint="BOTTOMLEFT" x="-44" y="-10"/>
-							<Anchor point="BOTTOMLEFT" x="300"/>
-						</Anchors>
-					</Frame>
 					<Frame parentKey="List" name="$parentList">
 						<Size x="433" y="420"/>
 						<Anchors>
@@ -629,7 +600,7 @@
 				</KeyValues>
 				<Layers>
 					<Layer level="BORDER">
-						<FontString parentKey="LandingPageHeader" inherits="QuestFont_Enormous" text="GARRISON_FOLLOWERS">
+						<FontString inherits="QuestFont_Enormous" text="GARRISON_FOLLOWERS">
 							<Anchors>
 								<Anchor point="LEFT" relativeKey="$parent.$parent.HeaderBar" x="26"/>
 							</Anchors>
@@ -640,7 +611,6 @@
 					<Anchor point="TOPLEFT" x="45" y="-120"/>
 				</Anchors>
 			</Frame>
-
 			<Frame parentKey="FollowerTab" mixin="GarrisonFollowerTabMixin">
 				<Size x="470" y="565"/>
 				<Anchors>
@@ -649,7 +619,6 @@
 				</Anchors>
 				<KeyValues>
 					<KeyValue key="isLandingPage" value="true" type="boolean"/>
-					<KeyValue key="autoCombatStatsTemplate" value="CovenantStatLineLandingPageTemplate" type="string"/>
 				</KeyValues>
 				<Layers>
 					<Layer level="ARTWORK">
@@ -694,20 +663,24 @@
 								<Anchor point="RIGHT" relativeKey="$parent.XPText" relativePoint="LEFT" x="-8" y="0"/>
 							</Anchors>
 						</FontString>
-						<FontString parentKey="ClassSpec" inherits="GameFontHighlight" justifyH="LEFT" maxLines="2">
+						<FontString parentKey="ClassSpec" inherits="GameFontHighlight" justifyH="LEFT">
 							<Anchors>
-								<Anchor point="LEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" y="-10"/>
-								<Anchor point="RIGHT" relativeKey="$parent.XPLabel" relativePoint="LEFT" x="-8" y="0"/>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" y="-4"/>
 							</Anchors>
 						</FontString>
 					</Layer>
 				</Layers>
 				<Frames>
-					<Button parentKey="UpgradeClickTarget" inherits="GarrisonFollowerUpgradeClickTargetTemplate" hidden=" true">
+					<Button parentKey="UpgradeClickTarget" hidden="true">
 						<Anchors>
 							<Anchor point="TOPLEFT"/>
 							<Anchor point="BOTTOMRIGHT"/>
 						</Anchors>
+						<Scripts>
+							<OnLoad function="GarrisionFollowerPageUpgradeTarget_OnLoad"/>
+							<OnEvent function="GarrisionFollowerPageUpgradeTarget_OnEvent"/>
+							<OnClick function="GarrisionFollowerPageUpgradeTarget_OnClick"/>
+						</Scripts>
 					</Button>
 					<Frame parentKey="QualityFrame">
 						<Size x="10" y="10"/>
@@ -725,11 +698,6 @@
 						</Layers>
 					</Frame>
 					<Frame parentKey="PortraitFrame" inherits="GarrisonFollowerPortraitTemplate">
-						<Anchors>
-							<Anchor point="TOPLEFT" x="23" y="-10"/>
-						</Anchors>
-					</Frame>
-					<Frame parentKey="CovenantFollowerPortraitFrame" inherits="CovenantPortraitTemplate" hidden="true">
 						<Anchors>
 							<Anchor point="TOPLEFT" x="23" y="-10"/>
 						</Anchors>
@@ -766,13 +734,6 @@
 						</KeyValues>
 						<Layers>
 							<Layer level="ARTWORK">
-								<FontString parentKey="StatsLabel" inherits="GameFontNormalLarge2" justifyH="LEFT" text="COVENANT_MISSIONS_STATS">
-									<KeyValues>
-										<KeyValue key="layoutIndex" value="51" type="number"/>
-										<KeyValue key="topPadding" value="10" type="number"/>
-										<KeyValue key="bottomPadding" value="5" type="number"/>
-									</KeyValues>
-								</FontString>
 								<FontString parentKey="SpecializationLabel" inherits="GameFontNormalLarge2" justifyH="LEFT" text="SPECIALIZATION">
 									<KeyValues>
 										<KeyValue key="layoutIndex" value="100" type="number"/>
@@ -1024,6 +985,8 @@
 								self:SetTargetDistance(0);
 								GarrisonMission_SetFollowerModelItems(self);
 							</OnShow>
+							<OnMouseDown function="Model_OnMouseDown"/>
+							<OnMouseUp function="Model_OnMouseUp"/>
 						</Scripts>
 					</CinematicModel>
 					<Button parentKey="Trait1" parentArray="Traits" inherits="GarrisonShipTraitTemplate">
@@ -1145,7 +1108,7 @@
 							<Anchor point="TOPLEFT" x="340" y="30"/>
 						</Anchors>
 						<Scripts>
-							<OnLoad>GarrisonThreatCountersFrame_OnLoad(self, Enum.GarrisonFollowerType.FollowerType_6_2, GARRISON_SHIPYARD_THREAT_COUNTER_TOOLTIP);</OnLoad>
+							<OnLoad>GarrisonThreatCountersFrame_OnLoad(self, LE_FOLLOWER_TYPE_SHIPYARD_6_2, GARRISON_SHIPYARD_THREAT_COUNTER_TOOLTIP);</OnLoad>
 						</Scripts>
 					</Frame>
 				</Frames>

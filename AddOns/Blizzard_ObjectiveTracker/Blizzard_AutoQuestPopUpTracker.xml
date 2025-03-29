@@ -43,11 +43,15 @@
 		<Size x="42" y="42"/>
 		<TexCoords left="0.21679688" right="0.29882813" top="0.01562500" bottom="0.67187500"/>
 	</Texture>
+	<Texture name="QuestIcon-Large" file="Interface\QuestFrame\AutoQuest-Parts" virtual="true">
+		<Size x="60" y="60"/>
+		<TexCoords left="0.30273438" right="0.41992188" top="0.01562500" bottom="0.95312500"/>
+	</Texture>
 
 	<ScrollFrame name="AutoQuestPopUpBlockTemplate" enableMouse="true" virtual="true" hidden="true">
 		<Size x="232" y="68"/>
 		<Scripts>
-			<OnMouseUp function="AutoQuestPopUpTracker_OnMouseUp"/>
+			<OnMouseUp function="AutoQuestPopUpTracker_OnMouseDown"/>
 		</Scripts>
 		<ScrollChild>
 			<Frame parentKey="ScrollChild">
@@ -117,12 +121,10 @@
 						</Texture>
 					</Layer>
 					<Layer level="ARTWORK">
-						<Texture parentKey="QuestIconBg" file="Interface\QuestFrame\AutoQuest-Parts">
-							<Size x="60" y="60"/>
+						<Texture parentKey="QuestIconBg" inherits="QuestIcon-Large">
 							<Anchors>
 								<Anchor point="CENTER" relativePoint="LEFT" x="36" y="0"/>
 							</Anchors>
-							<TexCoords left="0.30273438" right="0.41992188" top="0.01562500" bottom="0.95312500"/>
 						</Texture>
 					</Layer>
 					<Layer level="ARTWORK" textureSubLevel="1">
@@ -250,7 +252,7 @@
 					</Frame>
 				</Frames>
 			</Frame>
-		</ScrollChild>
+		</ScrollChild>		
 	</ScrollFrame>
-
+	
 </Ui>

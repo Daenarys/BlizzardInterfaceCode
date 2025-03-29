@@ -26,14 +26,14 @@ function ArtifactLevelUpToastMixin:EvaluateTrigger()
 		self.showArtifact = showArtifact;
 
 		if self.showArtifact then
-			self.currentArtifactPurchasableTraits = ArtifactBarGetNumArtifactTraitsPurchasableFromXP(pointsSpent, xp, artifactTier);
+			self.currentArtifactPurchasableTraits = MainMenuBar_GetNumArtifactTraitsPurchasableFromXP(pointsSpent, xp, artifactTier);
 			self.currentItemID = itemID;
 		else
 			self.currentArtifactPurchasableTraits = nil;
 			self.currentItemID = nil;
 		end
 	elseif self.showArtifact then
-		local artifactPurchasableTraits = ArtifactBarGetNumArtifactTraitsPurchasableFromXP(pointsSpent, xp, artifactTier);
+		local artifactPurchasableTraits = MainMenuBar_GetNumArtifactTraitsPurchasableFromXP(pointsSpent, xp, artifactTier);
 		if self.currentItemID == itemID then
 			if self.currentArtifactPurchasableTraits < artifactPurchasableTraits then
 				local artifactArtInfo = C_ArtifactUI.GetEquippedArtifactArtInfo();

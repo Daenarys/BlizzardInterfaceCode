@@ -1,16 +1,13 @@
-local function ShouldShowRegulationOverlay()
-	return SHOW_KOREAN_RATINGS or (SHOW_CHINA_AGE_APPROPRIATENESS_WARNING and not C_Login.WasEverLauncherLogin());
-end
-
-AccountLoginEditBoxBehaviorMixin = {}
-
-function AccountLoginEditBoxBehaviorMixin:OnKeyDown(key)
-	EventRegistry:TriggerEvent("AccountLogin.OnKeyDown", key);
-end
-
 function AccountLogin_OnLoad(self)
 	local versionType, buildType, version, internalVersion, date = GetBuildInfo();
 	self.UI.ClientVersion:SetFormattedText(VERSION_TEMPLATE, versionType, version, internalVersion, buildType, date);
+
+	-- Color edit box backdrops
+	local backdropColor = DEFAULT_TOOLTIP_COLOR;
+	self.UI.AccountEditBox:SetBackdropBorderColor(backdropColor[1], backdropColor[2], backdropColor[3]);
+	self.UI.AccountEditBox:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
+	self.UI.PasswordEditBox:SetBackdropBorderColor(backdropColor[1], backdropColor[2], backdropColor[3]);
+	self.UI.PasswordEditBox:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
 
 	SetLoginScreenModel(LoginBackgroundModel);
 	AccountLogin_UpdateSavedData(self);
@@ -18,12 +15,9 @@ function AccountLogin_OnLoad(self)
 	self:RegisterEvent("SCREEN_FIRST_DISPLAYED");
 	self:RegisterEvent("LOGIN_STATE_CHANGED");
 	self:RegisterEvent("LAUNCHER_LOGIN_STATUS_CHANGED");
-	self:RegisterEvent("SHOULD_RECONNECT_TO_REALM_LIST");
+	self:RegisterEvent("FATAL_AUTHENTICATION_FAILURE");
 
 	AccountLogin_CheckLoginState(self);
-
-	local year = date:sub(#date - 3, #date);
-	self.UI.BlizzDisclaimer:SetText(BLIZZ_DISCLAIMER_FORMAT:format(year));
 end
 
 function AccountLogin_OnEvent(self, event, ...)
@@ -32,11 +26,15 @@ function AccountLogin_OnEvent(self, event, ...)
 		AccountLogin_CheckAutoLogin();
 	elseif ( event == "LOGIN_STATE_CHANGED" ) then
 		AccountLogin_CheckLoginState(self);
-		AccountLogin_Update();
 	elseif ( event == "LAUNCHER_LOGIN_STATUS_CHANGED" ) then
 		AccountLogin_Update();
-	elseif ( event == "SHOULD_RECONNECT_TO_REALM_LIST" ) then
-		C_LoginUI.ReconnectToRealmList();
+	elseif ( event == "FATAL_AUTHENTICATION_FAILURE" ) then
+		local errorCode, isHtml = ...;
+		if ( isHtml ) then
+			GlueDialog_Show("OKAY_HTML_MUST_ACCEPT", _G[errorCode]);
+		else
+			GlueDialog_Show("OKAY_MUST_ACCEPT", _G[errorCode]);
+		end
 	end
 end
 
@@ -77,58 +75,33 @@ end
 function AccountLogin_Update()
 	local showButtonsAndStuff = true;
     local shouldCheckSystemReqs = true;
-	if ( ShouldShowRegulationOverlay() ) then
+	if ( SHOW_KOREAN_RATINGS ) then
+		KoreanRatings:Show();
 		showButtonsAndStuff = false;
-		if ( SHOW_KOREAN_RATINGS ) then
-			KoreanRatings:Show();
-		elseif ( SHOW_CHINA_AGE_APPROPRIATENESS_WARNING ) then
-			ChinaAgeAppropriatenessWarning:Show();
-		end
 	else
 		KoreanRatings:Hide();
-		ChinaAgeAppropriatenessWarning:Hide();
 	end
 
-	local isLauncherLogin = C_Login.IsLauncherLogin();
-	if ( isLauncherLogin ) then
+	if ( C_Login.IsLauncherLogin() ) then
+		ServerAlert_Disable(ServerAlertFrame);
 		showButtonsAndStuff = false;
         shouldCheckSystemReqs = false;
-	end
-
-	if (isLauncherLogin or ShouldShowRegulationOverlay()) then
-		ServerAlert_Disable(ServerAlertFrame);
 	else
 		ServerAlert_Enable(ServerAlertFrame);
-		ServerAlert_Enable(GlueChangelogFrame);
 	end
 
-	EventRegistry:TriggerEvent("AccountLogin.Update", showButtonsAndStuff);
+	--Cached login
+	CachedLoginFrameContainer_Update(AccountLogin.UI.CachedLoginFrameContainer);
 
-	local isReconnectMode = C_Login.IsReconnectLoginPossible();
 	for _, region in pairs(AccountLogin.UI.NormalLoginRegions) do
 		region:SetShown(showButtonsAndStuff);
 	end
-	for _, region in pairs(AccountLogin.UI.ManualLoginRegions) do
-		region:SetShown(showButtonsAndStuff and not isReconnectMode);
-	end
-	for _, region in pairs(AccountLogin.UI.ReconnectLoginRegions) do
-		region:SetShown(showButtonsAndStuff and isReconnectMode);
-	end
-
 	if (HIDE_SAVE_ACCOUNT_NAME_CHECKBUTTON) then
 		AccountLogin.UI.SaveAccountNameCheckButton:Hide();
 	end
-
-	if ( GetSavedAccountName() ~= "" and GetSavedAccountList() ~= "" and not isReconnectMode) then
-		AccountLogin.UI.PasswordEditBox:SetPoint("BOTTOM", -2, 255);
-		AccountLogin.UI.LoginButton:SetPoint("BOTTOM", 0, 160);
+	if ( AccountLogin.UI.AccountsDropDown.active ) then
 		AccountLogin.UI.AccountsDropDown:SetShown(showButtonsAndStuff);
-	else
-		AccountLogin.UI.PasswordEditBox:SetPoint("BOTTOM", -2, 275);
-		AccountLogin.UI.LoginButton:SetPoint("BOTTOM", 0, 180);
-		AccountLogin.UI.AccountsDropDown:Hide();
 	end
-
 end
 
 function AccountLogin_UpdateSavedData(self)
@@ -139,31 +112,77 @@ function AccountLogin_UpdateSavedData(self)
 		self.UI.AccountEditBox:SetText(accountName);
 		AccountLogin_FocusPassword();
 	end
-
+	if ( GetSavedAccountName() ~= "" and GetSavedAccountList() ~= "" ) then
+		AccountLogin.UI.PasswordEditBox:SetPoint("BOTTOM", 0, 255);
+		AccountLogin.UI.LoginButton:SetPoint("BOTTOM", 0, 150);
+		AccountLogin.UI.AccountsDropDown:Show();
+		AccountLogin.UI.AccountsDropDown.active = true;
+	else
+		AccountLogin.UI.PasswordEditBox:SetPoint("BOTTOM", 0, 275);
+		AccountLogin.UI.LoginButton:SetPoint("BOTTOM", 0, 170);
+		AccountLogin.UI.AccountsDropDown:Hide();
+		AccountLogin.UI.AccountsDropDown.active = false;
+	end
 	AccountLoginDropDown_SetupList();
 end
 
-function AccountLogin_OnKeyDown(self, key)
-	-- Reconnect button isn't an edit box, so can't respond to these on its own.
-	if key == "ENTER" then
-		local reconnectButton = self.UI.ReconnectLoginButton;
-		if reconnectButton:IsShown() and reconnectButton:IsEnabled() and C_Login.IsLoginReady() then
-			AccountLogin_ReconnectLogin();
+function CachedLoginFrameContainer_Update(self)
+	local cachedLogins = C_Login.GetCachedCredentials();
+	if ( cachedLogins ) then
+		if ( not self.Frames ) then
+			self.Frames = {};
 		end
-	elseif ( key == "ESCAPE" ) then
-		AccountLogin_OnEscapePressed();
-	elseif key == "TAB" then
-		local switchButton = self.UI.ReconnectSwitchButton;
-		if switchButton:IsShown() and switchButton:IsEnabled() then
-			AccountLogin_ClearReconnectLogin();
+		local frames = self.Frames;
+		for i=1, #cachedLogins do
+			local frame = frames[i];
+			if ( not frame ) then
+				frame = CreateFrame("FRAME", nil, self, "CachedLoginFrameTemplate");
+				if ( i == 1 ) then
+					frame:SetPoint("TOPRIGHT", self, "TOPRIGHT", -5, -25);
+				else
+					frame:SetPoint("TOP", frames[i-1], "BOTTOM", 0, 5);
+				end
+			end
+
+			frame.account = cachedLogins[i];
+			frame.LoginButton:SetText(frame.account);
+			frame:Show();
+		end
+
+		for i=#cachedLogins + 1, #frames do
+			frames[i]:Hide();
+		end
+	elseif ( self.Frames ) then
+		for i=1, #self.Frames do
+			self.Frames[i]:Hide();
 		end
 	end
+end
 
-	EventRegistry:TriggerEvent("AccountLogin.OnKeyDown", key);
+function CachedLoginButton_OnClick(self)
+	PlaySound(SOUNDKIT.GS_LOGIN);
+
+	local account = self:GetParent().account;
+	C_Login.CachedLogin(account);
+	if ( AccountLoginDropDown:IsShown() ) then
+		C_Login.SelectGameAccount(GlueDropDownMenu_GetSelectedValue(AccountLoginDropDown));
+	end
+
+	AccountLogin.UI.PasswordEditBox:SetText("");
+	if ( AccountLogin.UI.SaveAccountNameCheckButton:GetChecked() ) then
+		SetSavedAccountName(account);
+	else
+		SetUsesToken(false);
+	end
+end
+
+function CachedLoginDeleteButton_OnClick(self)
+	local account = self:GetParent().account;
+	C_Login.DeleteCachedCredentials(account);
+	CachedLoginFrameContainer_Update(AccountLogin.UI.CachedLoginFrameContainer);
 end
 
 function AccountLogin_Login()
-	C_Login.ClearLastError();
 	PlaySound(SOUNDKIT.GS_LOGIN);
 
 	if ( AccountLogin.UI.AccountEditBox:GetText() == "" ) then
@@ -174,7 +193,7 @@ function AccountLogin_Login()
 		local username = AccountLogin.UI.AccountEditBox:GetText();
 		C_Login.Login(string.gsub(username, "||", "|"), AccountLogin.UI.PasswordEditBox);
 		if ( AccountLoginDropDown:IsShown() ) then
-			C_Login.SelectGameAccount(UIDropDownMenu_GetSelectedValue(AccountLoginDropDown));
+			C_Login.SelectGameAccount(GlueDropDownMenu_GetSelectedValue(AccountLoginDropDown));
 		end
 	end
 
@@ -184,25 +203,6 @@ function AccountLogin_Login()
 	else
 		SetSavedAccountName("");
 		SetUsesToken(false);
-	end
-end
-
-function AccountLogin_ReconnectLogin()
-	C_Login.ClearLastError();
-	PlaySound(SOUNDKIT.GS_LOGIN);
-	C_Login.ReconnectLogin();
-end
-
-function AccountLogin_ClearReconnectLogin()
-	C_Login.ClearReconnectLogin();
-	AccountLogin_Update();
-end
-
-function AccountLogin_OnEscapePressed()
-	if GlueParent_IsSecondaryScreenOpen("options") then
-		GlueParent_CloseSecondaryScreen();
-	else
-		AccountLogin_Exit();
 	end
 end
 
@@ -288,8 +288,8 @@ function WoWAccountSelect_Update()
 	end
 
 	self.Background:SetSize(275, 265);
-	self.Background.AcceptButton:SetPoint("BOTTOMLEFT", 15, 12);
-	self.Background.CancelButton:SetPoint("BOTTOMRIGHT", -15, 12);
+	self.Background.AcceptButton:SetPoint("BOTTOMLEFT", 8, 6);
+	self.Background.CancelButton:SetPoint("BOTTOMRIGHT", -8, 6);
 	self.Background.Container:SetPoint("BOTTOMRIGHT", -16, 36);
 
 	GlueScrollFrame_Update(self.Background.Container.ScrollFrame, #self.gameAccounts, MAX_ACCOUNTNAME_DISPLAYED, ACCOUNTNAME_BUTTON_HEIGHT);
@@ -325,23 +325,23 @@ end
 -- =============================================================
 
 function AccountLoginDropDown_OnLoad(self)
-	UIDropDownMenu_SetWidth(self, 174);
-	UIDropDownMenu_SetSelectedValue(self, 1);
-	AccountLoginDropDownText:SetJustifyH("LEFT");
+	GlueDropDownMenu_SetWidth(self, 174);
+	GlueDropDownMenu_SetSelectedValue(self, 1);
+	AccountLoginDropDownText:SetJustifyH("LEFT");	
 	AccountLoginDropDown_SetupList();
-	UIDropDownMenu_Initialize(self, AccountLoginDropDown_Initialize);
+	GlueDropDownMenu_Initialize(self, AccountLoginDropDown_Initialize);
 end
 
 function AccountLoginDropDown_OnClick(self)
-	UIDropDownMenu_SetSelectedValue(AccountLoginDropDown, self.value);
+	GlueDropDownMenu_SetSelectedValue(AccountLoginDropDown, self.value);
 end
 
 function AccountLoginDropDown_Initialize()
-	local selectedValue = UIDropDownMenu_GetSelectedValue(AccountLoginDropDown);
+	local selectedValue = GlueDropDownMenu_GetSelectedValue(AccountLoginDropDown);
 	local list = AccountLoginDropDown.list;
 	for i = 1, #list do
 		list[i].checked = (list[i].text == selectedValue);
-		UIDropDownMenu_AddButton(list[i]);
+		GlueDropDownMenu_AddButton(list[i]);
 	end
 end
 
@@ -353,8 +353,8 @@ function AccountLoginDropDown_SetupList()
 		if ( strsub(str, 1, 1) == "!" ) then
 			selected = true;
 			str = strsub(str, 2, #str);
-			UIDropDownMenu_SetSelectedValue(AccountLoginDropDown, str);
-			UIDropDownMenu_SetText(AccountLoginDropDown, str);
+			GlueDropDownMenu_SetSelectedValue(AccountLoginDropDown, str);
+			GlueDropDownMenu_SetText(AccountLoginDropDown, str);
 		end
 		AccountLoginDropDown.list[i] = { ["text"] = str, ["value"] = str, ["selected"] = selected, func = AccountLoginDropDown_OnClick };
 		i = i + 1;
@@ -364,6 +364,12 @@ end
 -- =============================================================
 -- Token entry
 -- =============================================================
+
+function TokenEntry_OnLoad(self)
+	local backdropColor = DEFAULT_TOOLTIP_COLOR;
+	self.Background.EditBox:SetBackdropBorderColor(backdropColor[1], backdropColor[2], backdropColor[3]);
+	self.Background.EditBox:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
+end
 
 function TokenEntry_OnShow(self)
 	self.Background.EditBox:SetText("");
@@ -396,6 +402,12 @@ end
 -- =============================================================
 -- Captcha entry
 -- =============================================================
+
+function CaptchaEntry_OnLoad(self)
+	local backdropColor = DEFAULT_TOOLTIP_COLOR;
+	self.Background.EditBox:SetBackdropBorderColor(backdropColor[1], backdropColor[2], backdropColor[3]);
+	self.Background.EditBox:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
+end
 
 function CaptchaEntry_OnShow(self)
 	self.Background.EditBox:SetText("");
@@ -449,7 +461,7 @@ function AccountLogin_OnTimerFinished()
 end
 
 function AccountLogin_CanAutoLogin()
-	return not ShouldShowRegulationOverlay() and ((C_Login.IsLauncherLogin() and not C_Login.AttemptedLauncherLogin()) or GetKioskLoginInfo()) and AccountLogin:IsVisible();
+	return not SHOW_KOREAN_RATINGS and ((C_Login.IsLauncherLogin() and not C_Login.AttemptedLauncherLogin()) or GetKioskLoginInfo()) and AccountLogin:IsVisible();
 end
 
 function AccountLogin_CheckAutoLogin()
@@ -526,11 +538,5 @@ function KoreanRatings_OnUpdate(self, elapsed)
 		SHOW_KOREAN_RATINGS = false;
 		AccountLogin_Update();
 		AccountLogin_CheckAutoLogin();
-	end
-end
-
-function ChinaAgeAppropriatenessWarning_Close()
-	SHOW_CHINA_AGE_APPROPRIATENESS_WARNING = false;
-	AccountLogin_Update();
-	AccountLogin_CheckAutoLogin();
+	end	
 end

@@ -1,13 +1,10 @@
 ---------------------------------------------------------------
 -- PVE FRAME
 ---------------------------------------------------------------
-
-PVE_FRAME_BASE_WIDTH = 563;
-
 local panels = {
 	{ name = "GroupFinderFrame", addon = nil },
 	{ name = "PVPUIFrame", addon = "Blizzard_PVPUI" },
-	{ name = "ChallengesFrame", addon = "Blizzard_ChallengesUI", check = function() return UnitLevel("player") >= GetMaxLevelForPlayerExpansion(); end, },
+	{ name = "ChallengesFrame", addon = "Blizzard_ChallengesUI", check = function() return UnitLevel("player") >= 110 end, },
 }
 
 function PVEFrame_OnLoad(self)
@@ -19,7 +16,7 @@ function PVEFrame_OnLoad(self)
 	self:RegisterEvent("AJ_PVP_LFG_ACTION");
 	self:RegisterEvent("AJ_PVP_RBG_ACTION");
 	self:RegisterEvent("AJ_PVE_LFG_ACTION");
-
+	
 	self.maxTabWidth = (self:GetWidth() - 19) / #panels;
 end
 
@@ -29,11 +26,6 @@ function PVEFrame_OnShow(self)
 			PanelTemplates_HideTab(self, index);
 		else
 			PanelTemplates_ShowTab(self, index);
-			if (panel.name == "ChallengesFrame" and not C_MythicPlus.IsMythicPlusActive()) then
-				PanelTemplates_DisableTab(self, index);
-			else
-				PanelTemplates_EnableTab(self, index);
-			end
 		end
 	end
 end
@@ -47,7 +39,7 @@ function PVEFrame_OnEvent(self, event, ...)
 	elseif ( event == "AJ_PVP_SKIRMISH_ACTION" ) then
 		PVEFrame_ShowFrame("PVPUIFrame", "HonorFrame");
 		HonorFrame_SetType("bonus");
-
+		
 		HonorFrameBonusFrame_SelectButton(HonorFrame.BonusFrame.Arena1Button);
 	elseif ( event == "AJ_PVE_LFG_ACTION" ) then
 		PVEFrame_ShowFrame("GroupFinderFrame", "LFGListPVEStub");
@@ -56,14 +48,13 @@ function PVEFrame_OnEvent(self, event, ...)
 	elseif ( event == "AJ_PVP_RBG_ACTION" ) then
 		PVEFrame_ShowFrame("PVPUIFrame", "HonorFrame");
 		HonorFrame_SetType("bonus");
-
+		
 		HonorFrameBonusFrame_SelectButton(HonorFrame.BonusFrame.RandomBGButton);
 	end
 end
 
 function PVEFrame_ToggleFrame(sidePanelName, selection)
-	local canUse, failureReason = C_LFGInfo.CanPlayerUseGroupFinder();
-	if ( not canUse or Kiosk.IsEnabled() ) then
+	if ( UnitLevel("player") < math.min(SHOW_LFD_LEVEL,SHOW_PVP_LEVEL) or IsKioskModeEnabled() ) then
 		return;
 	end
 	local self = PVEFrame;
@@ -107,7 +98,7 @@ function PVEFrame_ShowFrame(sidePanelName, selection)
 			-- no current panel, go to the first panel
 			tabIndex = 1;
 		end
-	end
+	end	
 	if ( not tabIndex ) then
 		return;
 	end
@@ -128,10 +119,8 @@ function PVEFrame_ShowFrame(sidePanelName, selection)
 
 	-- show it
 	ShowUIPanel(self);
-	self.activeTabIndex = tabIndex;
+	self.activeTabIndex = tabIndex;	
 	PanelTemplates_SetTab(self, tabIndex);
-	self:SetWidth(PVE_FRAME_BASE_WIDTH);
-	UpdateUIPanelPositions(PVEFrame);
 	for index, data in pairs(panels) do
 		local panel = _G[data.name];
 		if ( index == tabIndex ) then
@@ -149,13 +138,13 @@ end
 function PVEFrame_UpdateTabs(self)
 	self = self or PVEFrame;
 	for i = 1, self.numTabs do
-		local state = "normal";
+		local state = "normal";	
 		local tab = self["tab"..i];
 		if ( tab.panel.GetState ) then
 			state = tab.panel:GetState();
 		end
 		-- do something with state
-	end
+	end	
 end
 
 function PVEFrame_TabOnClick(self)
@@ -199,60 +188,87 @@ end
 -- GROUP FINDER
 ---------------------------------------------------------------
 
-local groupFrames = { "LFDParentFrame", "RaidFinderFrame", "LFGListPVEStub" }
+SCENARIOS_SHOW_LEVEL = 85;
+SCENARIOS_HIDE_ABOVE_LEVEL = 90;
+RAID_FINDER_SHOW_LEVEL = 85;
+
+local groupFrames = { "LFDParentFrame", "ScenarioFinderFrame", "RaidFinderFrame", "LFGListPVEStub" }
 
 function GroupFinderFrame_OnLoad(self)
 	SetPortraitToTexture(self.groupButton1.icon, "Interface\\Icons\\INV_Helmet_08");
 	self.groupButton1.name:SetText(LOOKING_FOR_DUNGEON_PVEFRAME);
-	SetPortraitToTexture(self.groupButton2.icon, "Interface\\LFGFrame\\UI-LFR-PORTRAIT");
-	self.groupButton2.name:SetText(RAID_FINDER_PVEFRAME);
-	SetPortraitToTexture(self.groupButton3.icon, "Interface\\Icons\\Achievement_General_StayClassy");
-	self.groupButton3.name:SetText(LFGLIST_NAME);
+	SetPortraitToTexture(self.groupButton2.icon, "Interface\\Icons\\Icon_Scenarios");
+	self.groupButton2.name:SetText(SCENARIOS_PVEFRAME);
+	SetPortraitToTexture(self.groupButton3.icon, "Interface\\LFGFrame\\UI-LFR-PORTRAIT");
+	self.groupButton3.name:SetText(RAID_FINDER_PVEFRAME);
+	SetPortraitToTexture(self.groupButton4.icon, "Interface\\Icons\\Achievement_General_StayClassy");
+	self.groupButton4.name:SetText(LFGLIST_NAME);
+	
+	GroupFinderFrame_EvaluateButtonVisibility(self, UnitLevel("player"));
+	
+	self:RegisterEvent("PLAYER_LEVEL_UP");
 
-	GroupFinderFrame_EvaluateButtonVisibility(self);
-
-	self:RegisterEvent("LFG_UPDATE_RANDOM_INFO");
-	self:RegisterEvent("PLAYER_LEVEL_CHANGED");
+	GroupFinderFrameButton_SetEnabled(self.groupButton4, true);
 
 	-- set up accessors
 	self.getSelection = GroupFinderFrame_GetSelection;
 	self.update = GroupFinderFrame_Update;
 end
 
-function GroupFinderFrame_EvaluateButtonVisibility(self)
-	local canUse, failureReason = C_LFGInfo.CanPlayerUseLFD();
-	if not canUse then
+function GroupFinderFrame_EvaluateButtonVisibility(self, level)
+	if ( level > SCENARIOS_HIDE_ABOVE_LEVEL ) then
+		self.groupButton2:Hide()
+		
+		if ( GroupFinderFrame_GetSelectedIndex(self) == self.groupButton2:GetID() ) then
+			-- Deselect this now hidden tab if it happened to be selected
+			self.selection = nil
+			GroupFinderFrame_ShowGroupFrame(nil)
+		end
+	else
+		if ( level < SCENARIOS_SHOW_LEVEL ) then
+			GroupFinderFrameButton_SetEnabled(self.groupButton2, false);
+			self.groupButton2.tooltip = self.groupButton2.tooltip or format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SCENARIOS_SHOW_LEVEL);
+		else
+			GroupFinderFrameButton_SetEnabled(self.groupButton2, true);
+			self.groupButton2.tooltip = nil
+		end
+		
+		self.groupButton2:Show()
+	end
+
+	if ( level < SHOW_LFD_LEVEL ) then
 		GroupFinderFrameButton_SetEnabled(self.groupButton1, false);
-		self.groupButton1.tooltip = failureReason;
+		self.groupButton1.tooltip = self.groupButton1.tooltip or format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SHOW_LFD_LEVEL);
 	else
 		self.groupButton1.tooltip = nil;
 		GroupFinderFrameButton_SetEnabled(self.groupButton1, true);
 	end
-
-	canUse, failureReason = C_LFGInfo.CanPlayerUseLFR();
-	if not canUse then
-		GroupFinderFrameButton_SetEnabled(self.groupButton2, false);
-		self.groupButton2.tooltip = failureReason;
-	else
-		self.groupButton2.tooltip = nil;
-		GroupFinderFrameButton_SetEnabled(self.groupButton2, true);
-	end
-
-	canUse, failureReason = C_LFGInfo.CanPlayerUsePremadeGroup();
-	if not canUse then
+	
+	if ( level < RAID_FINDER_SHOW_LEVEL ) then
 		GroupFinderFrameButton_SetEnabled(self.groupButton3, false);
-		self.groupButton3.tooltip = failureReason;
+		self.groupButton3.tooltip = self.groupButton3.tooltip or format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, RAID_FINDER_SHOW_LEVEL);
 	else
 		self.groupButton3.tooltip = nil;
 		GroupFinderFrameButton_SetEnabled(self.groupButton3, true);
 	end
+	
+	GroupFinderFrame_UpdateButtonAnchors(self);
+end
+
+function GroupFinderFrame_UpdateButtonAnchors(self)
+	local moveDown = not self.groupButton2:IsShown();
+	local spacing =  moveDown and -30 or -23
+	local button3RelativeTo = moveDown and self.groupButton1 or self.groupButton2
+	self.groupButton3:SetPoint("TOP", button3RelativeTo, "BOTTOM", 0, spacing);
+	self.groupButton4:SetPoint("TOP", self.groupButton3, "BOTTOM", 0, spacing);
+	self.groupButton1:SetPoint("TOPLEFT", self, "TOPLEFT", 10, moveDown and -101 or -70);
 end
 
 function GroupFinderFrameButton_SetEnabled(button, enabled)
 	if ( button:IsEnabled() == enabled ) then
 		return
 	end
-
+	
 	if ( enabled ) then
 		button.bg:SetTexCoord(0.00390625, 0.87890625, 0.75195313, 0.83007813);
 		button.name:SetFontObject("GameFontNormalLarge");
@@ -266,7 +282,8 @@ function GroupFinderFrameButton_SetEnabled(button, enabled)
 end
 
 function GroupFinderFrame_OnEvent(self, event, ...)
-	GroupFinderFrame_EvaluateButtonVisibility(self);
+	local level = ...;
+	GroupFinderFrame_EvaluateButtonVisibility(self, level);
 end
 
 function GroupFinderFrame_GetSelection(self)
@@ -281,28 +298,13 @@ function GroupFinderFrame_Update(self, frame)
 	GroupFinderFrame_ShowGroupFrame(frame);
 end
 
-function GroupFinderFrame_EvaluateHelpTips(self)
-	if not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_LFG_LIST) and C_LFGInfo.CanPlayerUsePremadeGroup() then
-		local helpTipInfo = {
-			text = LFG_LIST_TUTORIAL_ALERT,
-			buttonStyle = HelpTip.ButtonStyle.Close,
-			cvarBitfield = "closedInfoFrames",
-			bitfieldFlag = LE_FRAME_TUTORIAL_LFG_LIST,
-			targetPoint = HelpTip.Point.TopEdgeCenter,
-		};
-		HelpTip:Show(self, helpTipInfo, GroupFinderFrameGroupButton3);
-	end
-end
-
 function GroupFinderFrame_OnShow(self)
-	PVEFrame:SetPortraitToAsset("Interface\\LFGFrame\\UI-LFG-PORTRAIT");
+	SetPortraitToTexture(PVEFrame.portrait, "Interface\\LFGFrame\\UI-LFG-PORTRAIT");
 	PVEFrame.TitleText:SetText(GROUP_FINDER);
-	GroupFinderFrame_EvaluateButtonVisibility(self);
-	GroupFinderFrame_EvaluateHelpTips(self);
 end
 
 function GroupFinderFrame_ShowGroupFrame(frame)
-	frame = frame or GroupFinderFrame.selection or (C_LFGInfo.CanPlayerUseLFD() and LFDParentFrame or LFGListPVEStub);
+	frame = frame or GroupFinderFrame.selection or (UnitLevel("player") >= SHOW_LFD_LEVEL and LFDParentFrame or LFGListPVEStub);
 	-- hide the other frames and select the right button
 	for index, frameName in pairs(groupFrames) do
 		local groupFrame = _G[frameName];
@@ -313,7 +315,7 @@ function GroupFinderFrame_ShowGroupFrame(frame)
 		end
 	end
 	frame:Show();
-	GroupFinderFrame.selection = frame;
+	GroupFinderFrame.selection = frame;	
 end
 
 function GroupFinderFrame_SelectGroupButton(index)
@@ -326,19 +328,11 @@ function GroupFinderFrame_SelectGroupButton(index)
 			button.bg:SetTexCoord(0.00390625, 0.87890625, 0.75195313, 0.83007813);
 		end
 	end
-
+	
 	GroupFinderFrame.selectionIndex = index
 end
 
 function GroupFinderFrameGroupButton_OnClick(self)
 	local frameName = groupFrames[self:GetID()];
 	GroupFinderFrame_ShowGroupFrame(_G[frameName]);
-end
-
-function GroupFinderFrameGroupButton_OnEnter(self)
-	if self.tooltip then
-		GameTooltip:SetOwner(self, "ANCHOR_TOP");
-		GameTooltip_AddNormalLine(GameTooltip, self.tooltip);
-		GameTooltip:Show();
-	end
 end

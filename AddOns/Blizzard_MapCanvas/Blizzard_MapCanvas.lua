@@ -1,11 +1,7 @@
-MapCanvasMixin = CreateFromMixins(CallbackRegistryMixin);
-
-MapCanvasMixin.MouseAction = { Up = 1, Down = 2, Click = 3 };
+MapCanvasMixin = CreateFromMixins(CallbackRegistryBaseMixin);
 
 function MapCanvasMixin:OnLoad()
-	CallbackRegistryMixin.OnLoad(self);
-	self:SetUndefinedEventsAllowed(true);
-
+	CallbackRegistryBaseMixin.OnLoad(self);
 	self.detailLayerPool = CreateFramePool("FRAME", self:GetCanvas(), "MapCanvasDetailLayerTemplate");
 	self.dataProviders = {};
 	self.dataProviderEventsCount = {};
@@ -14,11 +10,6 @@ function MapCanvasMixin:OnLoad()
 	self.activeAreaTriggers = {};
 	self.lockReasons = {};
 	self.pinsToNudge = {};
-	self.pinFrameLevelsManager = CreateFromMixins(MapCanvasPinFrameLevelsManagerMixin);
-	self.pinFrameLevelsManager:Initialize();
-	self.mouseClickHandlers = {};
-	self.globalPinMouseActionHandlers = {};
-	self.cursorHandlers = {};
 
 	self:EvaluateLockReasons();
 
@@ -26,50 +17,24 @@ function MapCanvasMixin:OnLoad()
 end
 
 function MapCanvasMixin:OnUpdate()
-	ClearCachedQuestsForPlayer();
 	self:UpdatePinNudging();
-	self:ProcessCursorHandlers();
 end
 
 function MapCanvasMixin:SetMapID(mapID)
-	if Kiosk.IsEnabled() and KioskFrame:HasWhitelistedMaps() then
-		local mapIDs = KioskFrame:GetWhitelistedMapIDs();
-		if not tContains(mapIDs, mapID) then
-			if not self.mapID then
-				-- Initialize to an allowed map and assert. Using whitelisted maps is only
-				-- suitable if we know exactly the maps the player should be in.
-				assert(false, "Map ID "..mapID.." is not amongst the whitelisted maps.");
-				mapID = mapIDs[1];
-			else
-				-- Not in our list, so don't change the map.
-				return;
-			end;
-		end
-	end
-
-	local mapArtID = C_Map.GetMapArtID(mapID) -- phased map art may be different for the same mapID
-	if self.mapID ~= mapID or self.mapArtID ~= mapArtID then
+	if self.mapID ~= mapID then
 		self.areDetailLayersDirty = true;
-		self.mapID = mapID;
-		self.mapArtID = mapArtID;
+		self.mapID = mapID; 
 		self.expandedMapInsetsByMapID = {};
 		self.ScrollContainer:SetMapID(mapID);
-		if self:IsShown() then
-			self:RefreshDetailLayers();
-		end
-		self:OnMapChanged();
-	end
-end
 
-function MapCanvasMixin:OnFrameSizeChanged()
-	self.ScrollContainer:OnCanvasSizeChanged();
+		for dataProvider in pairs(self.dataProviders) do
+			dataProvider:OnMapChanged();
+		end
+	end
 end
 
 function MapCanvasMixin:GetMapID()
-	-- normally the mapID is set in OnShow, however if the player has never opened the quest log or the map, and then
-	-- hides the UI, and while the UI is hidden opens the quest log, mapID will be nil and we get a lua error.
-	-- under these very rare circumstances, dig out the diplayable mapID.
-	return self.mapID or MapUtil.GetDisplayableMapForPlayer();
+	return self.mapID;
 end
 
 function MapCanvasMixin:SetMapInsetPool(mapInsetPool)
@@ -81,32 +46,25 @@ function MapCanvasMixin:GetMapInsetPool()
 end
 
 function MapCanvasMixin:OnShow()
-	ClearCachedQuestsForPlayer();
-
 	local FROM_ON_SHOW = true;
 	self:RefreshAll(FROM_ON_SHOW);
 
-	local function MapCanvasOnDataProviderShow(dataProvider, included)
+	for dataProvider in pairs(self.dataProviders) do
 		dataProvider:OnShow();
 	end
-
-	secureexecuterange(self.dataProviders, MapCanvasOnDataProviderShow);
 end
 
 function MapCanvasMixin:OnHide()
-	local function MapCanvasOnDataProviderHide(dataProvider, included)
+	for dataProvider in pairs(self.dataProviders) do
 		dataProvider:OnHide();
 	end
-
-	secureexecuterange(self.dataProviders, MapCanvasOnDataProviderHide);
 end
 
 function MapCanvasMixin:OnEvent(event, ...)
-	local function MapCanvasOnDataProviderEvent(dataProvider, included, ...)
+	-- Data provider event
+	for dataProvider in pairs(self.dataProviders) do
 		dataProvider:SignalEvent(event, ...);
 	end
-
-	secureexecuterange(self.dataProviders, MapCanvasOnDataProviderEvent, ...);
 end
 
 function MapCanvasMixin:AddDataProvider(dataProvider)
@@ -135,10 +93,6 @@ function MapCanvasMixin:RemoveDataProviderEvent(event)
 	end
 end
 
-function MapCanvasMixin:SetPinNudgingDirty(dirty)
-	self.pinNudgingDirty = dirty;
-end
-
 do
 	local function OnPinReleased(pinPool, pin)
 		FramePool_HideAndClearAnchors(pinPool, pin);
@@ -149,7 +103,6 @@ do
 	end
 
 	local function OnPinMouseUp(pin, button, upInside)
-		pin:OnMouseUp(button);
 		if upInside then
 			pin:OnClick(button);
 		end
@@ -163,27 +116,13 @@ do
 
 		local pin, newPin = self.pinPools[pinTemplate]:Acquire();
 
-		if newPin then
-			local isMouseClickEnabled = pin:IsMouseClickEnabled();
-			local isMouseMotionEnabled = pin:IsMouseMotionEnabled();
+		if pin:IsMouseClickEnabled() then
+			pin:SetScript("OnMouseUp", OnPinMouseUp);
+		end
 
-			if isMouseClickEnabled then
-				pin:SetScript("OnMouseUp", OnPinMouseUp);
-				pin:SetScript("OnMouseDown", pin.OnMouseDown);
-			end
-
-			if isMouseMotionEnabled then
-				if newPin then
-					-- These will never be called, just define a OnMouseEnter and OnMouseLeave on the pin mixin and it'll be called when appropriate
-					assert(pin:GetScript("OnEnter") == nil);
-					assert(pin:GetScript("OnLeave") == nil);
-				end
-				pin:SetScript("OnEnter", pin.OnMouseEnter);
-				pin:SetScript("OnLeave", pin.OnMouseLeave);
-			end
-
-			pin:SetMouseClickEnabled(isMouseClickEnabled);
-			pin:SetMouseMotionEnabled(isMouseMotionEnabled);
+		if pin:IsMouseMotionEnabled() then
+			pin:SetScript("OnEnter", pin.OnMouseEnter);
+			pin:SetScript("OnLeave", pin.OnMouseLeave);
 		end
 
 		pin.pinTemplate = pinTemplate;
@@ -196,7 +135,7 @@ do
 		self.ScrollContainer:MarkCanvasDirty();
 		pin:Show();
 		pin:OnAcquired(...);
-
+		
 		return pin;
 	end
 end
@@ -216,7 +155,7 @@ function MapCanvasMixin:RemovePin(pin)
 	if pin:GetNudgeSourceRadius() > 0 then
 		self.pinNudgingDirty = true;
 	end
-
+	
 	self.pinPools[pin.pinTemplate]:Release(pin);
 	self.ScrollContainer:MarkCanvasDirty();
 end
@@ -235,14 +174,24 @@ function MapCanvasMixin:GetNumActivePinsByTemplate(pinTemplate)
 	return 0;
 end
 
-function MapCanvasMixin:ExecuteOnAllPins(callback, ...)
-	local function MapCanvasExecuteOnPinPools(poolKey, pool, ...)
-		for activePin in pool:EnumerateActive() do
-			callback(activePin, ...);
+function MapCanvasMixin:EnumerateAllPins()
+	local currentPoolKey, currentPool = next(self.pinPools, nil);
+	local currentPin = nil;
+	return function()
+		if currentPool then
+			currentPin = currentPool:GetNextActive(currentPin);
+			while not currentPin do
+				currentPoolKey, currentPool = next(self.pinPools, currentPoolKey);
+				if currentPool then
+					currentPin = currentPool:GetNextActive();
+				else
+					break;
+				end
+			end
 		end
-	end
 
-	secureexecuterange(self.pinPools, MapCanvasExecuteOnPinPools, ...);
+		return currentPin;
+	end, nil;
 end
 
 function MapCanvasMixin:AcquireAreaTrigger(namespace)
@@ -317,49 +266,35 @@ end
 function SquaredDistanceBetweenPoints(firstX, firstY, secondX, secondY)
 	local xDiff = firstX - secondX;
 	local yDiff = firstY - secondY;
-
+	
 	return xDiff * xDiff + yDiff * yDiff;
 end
 
 function MapCanvasMixin:CalculatePinNudging(targetPin)
-	local normalizedX, normalizedY = targetPin:GetPosition();
-	if not normalizedX then
-		return;
-	end
-
 	targetPin:SetNudgeVector(nil, nil, nil, nil);
 	if not targetPin:IgnoresNudging() and targetPin:GetNudgeTargetFactor() > 0 then
-
-		local hasBeenNudged = false;
-		local function MapCanvasNudgePin(sourcePin)
-			-- This is a bit of a hack, but the underlying API doesn't allow exiting early since we want to avoid AddOns controlling
-			-- the flow of execution. In this particular case, it's ok if an AddOn pin nudges a pin instead of a secure one.
-			if hasBeenNudged then
-				return;
-			end
-
+		local normalizedX, normalizedY = targetPin:GetPosition();
+		for sourcePin in self:EnumerateAllPins() do
 			if targetPin ~= sourcePin and not sourcePin:IgnoresNudging() and sourcePin:GetNudgeSourceRadius() > 0 then
 				local otherNormalizedX, otherNormalizedY = sourcePin:GetPosition();
 				local distanceSquared = SquaredDistanceBetweenPoints(normalizedX, normalizedY, otherNormalizedX, otherNormalizedY);
-
+				
 				local nudgeFactor = targetPin:GetNudgeTargetFactor() * sourcePin:GetNudgeSourceRadius();
 				if distanceSquared < nudgeFactor * nudgeFactor then
 					local distance = math.sqrt(distanceSquared);
-
+					
 					-- Avoid divide by zero: just push it right.
 					if distanceSquared == 0 then
 						targetPin:SetNudgeVector(sourcePin:GetNudgeSourceZoomedOutMagnitude(), sourcePin:GetNudgeSourceZoomedInMagnitude(), 1, 0);
 					else
 						targetPin:SetNudgeVector(sourcePin:GetNudgeSourceZoomedOutMagnitude(), sourcePin:GetNudgeSourceZoomedInMagnitude(), (normalizedX - otherNormalizedX) / distance, (normalizedY - otherNormalizedY) / distance);
 					end
-
+					
 					targetPin:SetNudgeFactor(1 - (distance / nudgeFactor));
-					hasBeenNudged = true; -- This is non-exact: each target pin only gets pushed by one source pin.
+					break; -- This is non-exact: each target pin only gets pushed by one source pin.
 				end
 			end
 		end
-
-		self:ExecuteOnAllPins(MapCanvasNudgePin);
 	end
 end
 
@@ -367,22 +302,17 @@ function MapCanvasMixin:UpdatePinNudging()
 	if not self.pinNudgingDirty and #self.pinsToNudge == 0 then
 		return;
 	end
-
+	
 	if self.pinNudgingDirty then
-		local function MapCanvasCalculatePinNudgingCallback(targetPin)
+		for targetPin in self:EnumerateAllPins() do
 			self:CalculatePinNudging(targetPin);
 		end
-
-		self:ExecuteOnAllPins(MapCanvasCalculatePinNudgingCallback);
 	else
 		for _, targetPin in ipairs(self.pinsToNudge) do
-			-- It's possible this pin was unattached before this update had a chance to run.
-			if targetPin:GetMap() == self then
-				self:CalculatePinNudging(targetPin);
-			end
+			self:CalculatePinNudging(targetPin);
 		end
 	end
-
+	
 	self.pinNudgingDirty = false;
 	self.pinsToNudge = {};
 end
@@ -400,7 +330,7 @@ function MapCanvasMixin:RefreshDebugAreaTriggers()
 		self.debugAreaTriggerPool = CreateTexturePool(self:GetCanvas(), "OVERLAY", 7, "MapCanvasDebugTriggerAreaTemplate");
 		self.debugAreaTriggerColors = {};
 	end
-
+	
 	self.debugAreaTriggerPool:ReleaseAll();
 
 	local canvas = self:GetCanvas();
@@ -424,21 +354,20 @@ function MapCanvasMixin:SetDebugAreaTriggersEnabled(enabled)
 	self.ScrollContainer:MarkAreaTriggersDirty();
 end
 
-function MapCanvasMixin:ForceRefreshDetailLayers()
-	self.areDetailLayersDirty = true;
-	self:RefreshDetailLayers();
-end
-
 function MapCanvasMixin:RefreshDetailLayers()
 	if not self.areDetailLayersDirty then return end;
 	self.detailLayerPool:ReleaseAll();
 
-	local layers = C_Map.GetMapArtLayers(self.mapID);
-	for layerIndex, layerInfo in ipairs(layers) do
+	for layerIndex = 1, C_MapCanvas.GetNumDetailLayers(self.mapID) do
+		if layerIndex == 1 then
+			-- Layer 1 is our base layer, set the canvas to that size
+			local numDetailTilesCols, numDetailTilesRows = C_MapCanvas.GetNumDetailTiles(self.mapID, layerIndex);
+			self.ScrollContainer:SetCanvasSize(MapCanvasDetailLayer_CalculateTotalLayerSize(numDetailTilesCols, numDetailTilesRows));
+		end
+
 		local detailLayer = self.detailLayerPool:Acquire();
 		detailLayer:SetAllPoints(self:GetCanvas());
-		detailLayer:SetMapAndLayer(self.mapID, layerIndex, self);
-		detailLayer:SetGlobalAlpha(self:GetGlobalAlpha());
+		detailLayer:SetMapAndLayer(self.mapID, layerIndex);
 		detailLayer:Show();
 	end
 
@@ -447,25 +376,24 @@ function MapCanvasMixin:RefreshDetailLayers()
 	self.areDetailLayersDirty = false;
 end
 
-function MapCanvasMixin:AreDetailLayersLoaded()
-	for detailLayer in self.detailLayerPool:EnumerateActive() do
-		if not detailLayer:IsFullyLoaded() then
-			return false;
+function MapCanvasMixin:AdjustDetailLayerAlpha()
+	-- For right now we're supporting just two layers, one zoomed out and one fully zoomed in
+	local zoomPercent = self:GetCanvasZoomPercent();
+
+	for layer in self.detailLayerPool:EnumerateActive() do
+		local layerIndex = layer:GetLayerIndex();
+		if layerIndex == 1 then
+			layer:SetAlpha(1);
+		else
+			layer:SetAlpha(zoomPercent);
 		end
 	end
-	return true;
-end
-
-function MapCanvasMixin:AdjustDetailLayerAlpha()
-	self.ScrollContainer:AdjustDetailLayerAlpha(self.detailLayerPool);
 end
 
 function MapCanvasMixin:RefreshAllDataProviders(fromOnShow)
-	local function MapCanvasRefreshAllDataProvidersCallback(dataProvider, included)
+	for dataProvider in pairs(self.dataProviders) do
 		dataProvider:RefreshAllData(fromOnShow);
 	end
-
-	secureexecuterange(self.dataProviders, MapCanvasRefreshAllDataProvidersCallback);
 end
 
 function MapCanvasMixin:ResetInsets()
@@ -511,25 +439,23 @@ function MapCanvasMixin:ApplyPinPosition(pin, normalizedX, normalizedY, insetInd
 	if insetIndex then
 		if self.mapInsetsByIndex and self.mapInsetsByIndex[insetIndex] then
 			self.mapInsetsByIndex[insetIndex]:SetLocalPinPosition(pin, normalizedX, normalizedY);
-			pin:ApplyFrameLevel();
 		end
 	else
 		pin:ClearAllPoints();
 		if normalizedX and normalizedY then
 			local x = normalizedX;
 			local y = normalizedY;
-
+			
 			local nudgeVectorX, nudgeVectorY = pin:GetNudgeVector();
 			if nudgeVectorX and nudgeVectorY then
 				local finalNudgeFactor = pin:GetNudgeFactor() * pin:GetNudgeTargetFactor() * pin:GetNudgeZoomFactor();
 				x = normalizedX + nudgeVectorX * finalNudgeFactor;
 				y = normalizedY + nudgeVectorY * finalNudgeFactor;
 			end
-
+			
 			local canvas = self:GetCanvas();
 			local scale = pin:GetScale();
 			pin:SetParent(canvas);
-			pin:ApplyFrameLevel();
 			pin:SetPoint("CENTER", canvas, "TOPLEFT", (canvas:GetWidth() * x) / scale, -(canvas:GetHeight() * y) / scale);
 		end
 	end
@@ -546,22 +472,14 @@ function MapCanvasMixin:GetCanvas()
 	return self.ScrollContainer.Child;
 end
 
-function MapCanvasMixin:GetCanvasContainer()
-	return self.ScrollContainer;
-end
-
 function MapCanvasMixin:CallMethodOnPinsAndDataProviders(methodName, ...)
-	local function MapCanvasCallMethodOnDataProvidersCallback(dataProvider, included, ...)
+	for dataProvider in pairs(self.dataProviders) do
 		dataProvider[methodName](dataProvider, ...);
 	end
 
-	secureexecuterange(self.dataProviders, MapCanvasCallMethodOnDataProvidersCallback, ...);
-
-	local function MapCanvasCallMethodOnPinsCallback(pin, ...)
+	for pin in self:EnumerateAllPins() do
 		pin[methodName](pin, ...);
 	end
-
-	self:ExecuteOnAllPins(MapCanvasCallMethodOnPinsCallback);
 end
 
 function MapCanvasMixin:OnMapInsetSizeChanged(mapID, mapInsetIndex, expanded)
@@ -575,16 +493,6 @@ end
 
 function MapCanvasMixin:OnMapInsetMouseLeave(mapInsetIndex)
 	self:CallMethodOnPinsAndDataProviders("OnMapInsetMouseLeave", mapInsetIndex);
-end
-
-function MapCanvasMixin:OnMapChanged()
-	ClearCachedQuestsForPlayer();
-
-	local function MapCanvasOnMapChangedCallback(dataProvider, included)
-		dataProvider:OnMapChanged();
-	end
-
-	secureexecuterange(self.dataProviders, MapCanvasOnMapChangedCallback);
 end
 
 function MapCanvasMixin:OnCanvasScaleChanged()
@@ -601,10 +509,6 @@ end
 
 function MapCanvasMixin:OnCanvasPanChanged()
 	self:CallMethodOnPinsAndDataProviders("OnCanvasPanChanged");
-end
-
-function MapCanvasMixin:OnCanvasSizeChanged()
-	self:CallMethodOnPinsAndDataProviders("OnCanvasSizeChanged");
 end
 
 function MapCanvasMixin:GetCanvasScale()
@@ -631,20 +535,12 @@ function MapCanvasMixin:ZoomOut()
 	self.ScrollContainer:ZoomOut();
 end
 
-function MapCanvasMixin:ResetZoom()
-	self.ScrollContainer:ResetZoom();
+function MapCanvasMixin:IsZoomedIn()
+	return self.ScrollContainer:IsZoomedIn();
 end
 
-function MapCanvasMixin:InstantPanAndZoom(scale, x, y, ignoreScaleRatio)
-	self.ScrollContainer:InstantPanAndZoom(scale, x, y, ignoreScaleRatio);
-end
-
-function MapCanvasMixin:IsAtMaxZoom()
-	return self.ScrollContainer:IsAtMaxZoom();
-end
-
-function MapCanvasMixin:IsAtMinZoom()
-	return self.ScrollContainer:IsAtMinZoom();
+function MapCanvasMixin:IsZoomedOut()
+	return self.ScrollContainer:IsZoomedOut();
 end
 
 function MapCanvasMixin:PanTo(normalizedX, normalizedY)
@@ -656,24 +552,12 @@ function MapCanvasMixin:PanAndZoomTo(normalizedX, normalizedY)
 	self.ScrollContainer:ZoomIn();
 end
 
-function MapCanvasMixin:SetMouseWheelZoomMode(zoomMode)
-	self.ScrollContainer:SetMouseWheelZoomMode(zoomMode);
-end
-
 function MapCanvasMixin:SetShouldZoomInOnClick(shouldZoomInOnClick)
 	self.ScrollContainer:SetShouldZoomInOnClick(shouldZoomInOnClick);
 end
 
 function MapCanvasMixin:ShouldZoomInOnClick()
 	return self.ScrollContainer:ShouldZoomInOnClick();
-end
-
-function MapCanvasMixin:SetShouldNavigateOnClick(shouldNavigateOnClick)
-	self.ScrollContainer:SetShouldNavigateOnClick(shouldNavigateOnClick);
-end
-
-function MapCanvasMixin:ShouldNavigateOnClick()
-	return self.ScrollContainer:ShouldNavigateOnClick();
 end
 
 function MapCanvasMixin:SetShouldPanOnClick(shouldPanOnClick)
@@ -684,12 +568,38 @@ function MapCanvasMixin:ShouldPanOnClick()
 	return self.ScrollContainer:ShouldPanOnClick();
 end
 
-function MapCanvasMixin:SetShouldZoomInstantly(shouldZoomInstantly)
-	self.ScrollContainer:SetShouldZoomInstantly(shouldZoomInstantly);
+function MapCanvasMixin:SetDefaultMaxZoom()
+	self.ScrollContainer:SetMaxZoom(self.ScrollContainer.defaultMaxScale);
 end
 
-function MapCanvasMixin:ShouldZoomInstantly()
-	return self.ScrollContainer:ShouldZoomInstantly();
+function MapCanvasMixin:SetDefaultMinZoom()
+	self.ScrollContainer:SetMinZoom(self.ScrollContainer.defaultMinScale);
+end
+
+function MapCanvasMixin:SetMaxZoom(scale)
+	self.ScrollContainer:SetMaxZoom(scale);
+end
+
+function MapCanvasMixin:SetMinZoom(scale)
+	self.ScrollContainer:SetMinZoom(scale);
+end
+
+function MapCanvasMixin:GetMaxZoomMultiplier(scale)
+	return self.maxScaleMultiplier or 1.0;
+end
+
+function MapCanvasMixin:GetMinZoomMultiplier(scale)
+	return self.minScaleMultiplier or 1.0;
+end
+
+function MapCanvasMixin:SetMaxZoomMultiplier(scale)
+	self.maxScaleMultiplier = scale;
+	self.ScrollContainer:RefreshCanvasScale();
+end
+
+function MapCanvasMixin:SetMinZoomMultiplier(scale)
+	self.minScaleMultiplier = scale;
+	self.ScrollContainer:RefreshCanvasScale();
 end
 
 function MapCanvasMixin:GetViewRect()
@@ -754,233 +664,559 @@ function MapCanvasMixin:EvaluateLockReasons()
 	if next(self.lockReasons) then
 		self.BorderFrame:EnableMouse(true);
 		self.BorderFrame:EnableMouseWheel(true);
-		if self.BorderFrame.Underlay then
-			self.BorderFrame.Underlay:Show();
-		end
+		
+		self.BorderFrame.Underlay:Show();
 	else
 		self.BorderFrame:EnableMouse(false);
 		self.BorderFrame:EnableMouseWheel(false);
-		if self.BorderFrame.Underlay then
-			self.BorderFrame.Underlay:Hide();
-		end
+
+		self.BorderFrame.Underlay:Hide();
 	end
 end
 
-function MapCanvasMixin:GetPinFrameLevelsManager()
-	return self.pinFrameLevelsManager;
+function MapCanvasMixin:SetShouldShowSubzones(value)
+	self.shouldShowSubzones = value;
 end
 
-function MapCanvasMixin:ReapplyPinFrameLevels(pinFrameLevelType)
-	local function MapCanvasReapplyPinFrameLevelsCallback(pin)
-		if pin:GetFrameLevelType() == pinFrameLevelType then
-			pin:ApplyFrameLevel();
-		end
-	end
-
-	self:ExecuteOnAllPins(MapCanvasReapplyPinFrameLevelsCallback);
+function MapCanvasMixin:ShouldShowSubzones()
+	return self.shouldShowSubzones;
 end
 
-function MapCanvasMixin:NavigateToParentMap()
-	local mapInfo = C_Map.GetMapInfo(self:GetMapID());
-	if mapInfo.parentMapID > 0 then
-		self:SetMapID(mapInfo.parentMapID);
-	end
-end
-
-function MapCanvasMixin:NavigateToCursor()
-	local normalizedCursorX, normalizedCursorY = self:GetNormalizedCursorPosition();
-	local mapInfo = C_Map.GetMapInfoAtPosition(self:GetMapID(), normalizedCursorX, normalizedCursorY);
-	if mapInfo then
-		self:SetMapID(mapInfo.mapID);
-	end
-end
-
-local function PrioritySorter(left, right)
-	return left.priority > right.priority;
-end
-
--- Add a function that will be checked when the canvas is clicked
--- If the function returns true then handling will stop
--- A priority can optionally be specified, higher priority values will be called first
-function MapCanvasMixin:AddCanvasClickHandler(handler, priority)
-	table.insert(self.mouseClickHandlers, { handler = handler, priority = priority or 0 });
-	table.sort(self.mouseClickHandlers, PrioritySorter);
-end
-
-function MapCanvasMixin:RemoveCanvasClickHandler(handler, priority)
-	for i, handlerInfo in ipairs(self.mouseClickHandlers) do
-		if handlerInfo.handler == handler and (not priority or handlerInfo.priority == priority) then
-			table.remove(self.mouseClickHandlers, i);
-			break;
-		end
-	end
-end
-
-function MapCanvasMixin:ProcessCanvasClickHandlers(button, cursorX, cursorY)
-	for i, handlerInfo in ipairs(self.mouseClickHandlers) do
-		local success, stopChecking = xpcall(handlerInfo.handler, CallErrorHandler, self, button, cursorX, cursorY);
-		if success and stopChecking then
-			return true;
-		end
-	end
-	return false;
-end
-
--- Add a function that will be checked when any pin is clicked
--- If the function returns true then handling will stop
--- A priority can optionally be specified, higher priority values will be called first
-function MapCanvasMixin:AddGlobalPinMouseActionHandler(handler, priority)
-	table.insert(self.globalPinMouseActionHandlers, { handler = handler, priority = priority or 0 });
-	table.sort(self.globalPinMouseActionHandlers, PrioritySorter);
-end
-
-function MapCanvasMixin:RemoveGlobalPinMouseActionHandler(handler, priority)
-	for i, handlerInfo in ipairs(self.globalPinMouseActionHandlers) do
-		if handlerInfo.handler == handler and (not priority or handlerInfo.priority == priority) then
-			table.remove(self.globalPinMouseActionHandlers, i);
-			break;
-		end
-	end
-end
-
-function MapCanvasMixin:ProcessGlobalPinMouseActionHandlers(mouseAction, button)
-	for i, handlerInfo in ipairs(self.globalPinMouseActionHandlers) do
-		local success, stopChecking = xpcall(handlerInfo.handler, CallErrorHandler, self, mouseAction, button);
-		if success and stopChecking then
-			return true;
-		end
-	end
-	return false;
-end
-
-function MapCanvasMixin:AddCursorHandler(handler, priority)
-	table.insert(self.cursorHandlers, { handler = handler, priority = priority or 0 });
-	table.sort(self.cursorHandlers, PrioritySorter);
-end
-
-function MapCanvasMixin:RemoveCursorHandler(handler, priority)
-	for i, handlerInfo in ipairs(self.cursorHandlers) do
-		if handlerInfo.handler == handler and (not priority or handlerInfo.priority == priority) then
-			table.remove(self.cursorHandlers, i);
-			break;
-		end
-	end
-end
-
-function MapCanvasMixin:ProcessCursorHandlers()
-	local focus = GetMouseFocus();
-	if focus then
-		-- pins have a .owningMap, our pins should be pointing to us
-		if focus == self.ScrollContainer or focus.owningMap == self then
-			for i, handlerInfo in ipairs(self.cursorHandlers) do
-				local success, cursor = xpcall(handlerInfo.handler, CallErrorHandler, self);
-				if success and cursor then
-					self.lastCursor = cursor;
-					SetCursor(cursor);
-					return;
-				end
-			end
-		end
-	end
-	if self.lastCursor then
-		self.lastCursor = nil;
-		ResetCursor();
-	end
-end
-
-function MapCanvasMixin:GetGlobalPinScale()
-	return self.globalPinScale or 1;
-end
-
-function MapCanvasMixin:SetGlobalPinScale(scale)
-	if self.globalPinScale ~= scale then
-		self.globalPinScale = scale;
-
-		local function MapCanvasSetPinScaleCallback(pin)
-			pin:ApplyCurrentScale();
-		end
-
-		self:ExecuteOnAllPins(MapCanvasSetPinScaleCallback);
-	end
-end
-
-function MapCanvasMixin:GetGlobalAlpha()
-	return self.globalAlpha or 1;
-end
-
-function MapCanvasMixin:SetGlobalAlpha(globalAlpha)
-	if self.globalAlpha ~= globalAlpha then
-		self.globalAlpha = globalAlpha;
-		for detailLayer in self.detailLayerPool:EnumerateActive() do
-			detailLayer:SetGlobalAlpha(globalAlpha);
-		end
-
-		local function MapCanvasOnGlobalAlphaChangedCallback(dataProvider, included)
-			dataProvider:OnGlobalAlphaChanged();
-		end
-
-		secureexecuterange(self.dataProviders, MapCanvasOnGlobalAlphaChangedCallback);
-	end
-end
-
-function MapCanvasMixin:SetMaskTexture(maskTexture)
-	if self.maskTexture then
-		for texture, value in pairs(self.maskableTextures) do
-			self.maskableTextures[texture] = false;
-			texture:RemoveMaskTexture(self.maskTexture);
-		end
-	end
-	self.maskTexture = maskTexture;
-	if self.maskableTextures then
-		self:RefreshMaskableTextures();
+function MapCanvasMixin:SetTransformFlag(flag, value)
+	if value then
+		self.transformFlags = self.transformFlags and bit.bor(self.transformFlags, flag) or flag;
 	else
-		self.maskableTextures = { };
+		if self:IsTransformFlagSet(flag) then
+			self.transformFlags = self.transformFlags - flag;
+		end
 	end
 end
 
-function MapCanvasMixin:GetMaskTexture()
-	return self.maskTexture;
+function MapCanvasMixin:IsTransformFlagSet(flag)
+	if self.transformFlags then
+		return bit.band(self.transformFlags, flag) == flag;
+	end
+	return false;
 end
 
-function MapCanvasMixin:SetUseMaskTexture(useMaskTexture)
-	if not self:GetMaskTexture() then
-		error("Must have a mask texture");
-	end
-	self.useMaskTexture = useMaskTexture;
-	self:RefreshMaskableTextures();
+function MapCanvasMixin:GetTransformFlags()
+	return self.transformFlags;
 end
 
-function MapCanvasMixin:GetUseMaskTexture()
-	return not not self.useMaskTexture;
+MapCanvasScrollControllerMixin = {};
+
+MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_SMOOTH = 1;
+MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_FULL = 2;
+MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_NONE = 3;
+
+function MapCanvasScrollControllerMixin:OnLoad()
+	self.targetScrollX = 0.5;
+	self.targetScrollY = 0.5;
+
+	self.defaultMaxScale = .75;
+	self.defaultMinScale = .275;
+
+	self.zoomAmountPerMouseWheelDelta = .075;
+
+	self.mouseWheelZoomMode = MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_FULL;
+	self:SetScalingMode("SCALING_MODE_TRANSLATE_FASTER_THAN_SCALE");
+
+	self.normalizedZoomLerpAmount = .15;
+	self.normalizedPanXLerpAmount = .15;
+	self.normalizedPanYLerpAmount = .15;
 end
 
-function MapCanvasMixin:AddMaskableTexture(texture)
-	local maskTexture = self:GetMaskTexture();
-	if not maskTexture then
-		return;
-	end
-	if self.maskableTextures[texture] ~= nil then
-		return;
-	end
+function MapCanvasScrollControllerMixin:OnMouseDown(button)
+	if button == "LeftButton" then
+		self.isLeftButtonDown = true;
 
-	local useMaskTexture = self:GetUseMaskTexture();
-	self.maskableTextures[texture] = useMaskTexture;
-	if useMaskTexture then
-		texture:AddMaskTexture(maskTexture);
+		self.lastCursorX, self.lastCursorY = self:GetCursorPosition();
+		self.startCursorX, self.startCursorY = self.lastCursorX, self.lastCursorY;
+
+		if self:IsPanning() then
+			self.currentScrollX = self:GetNormalizedHorizontalScroll();
+			self.currentScrollY = self:GetNormalizedVerticalScroll();
+
+			self.targetScrollX = self.currentScrollX;
+			self.targetScrollY = self.currentScrollY;
+		end
+
+		self.accumulatedMouseDeltaX = 0.0;
+		self.accumulatedMouseDeltaY = 0.0;
 	end
 end
 
-function MapCanvasMixin:RefreshMaskableTextures()
-	local useMaskTexture = self:GetUseMaskTexture();
-	local maskTexture = self:GetMaskTexture();
-	for texture, value in pairs(self.maskableTextures) do
-		if value ~= useMaskTexture then
-			self.maskableTextures[texture] = useMaskTexture;
-			if useMaskTexture then
-				texture:AddMaskTexture(maskTexture);
-			else
-				texture:RemoveMaskTexture(maskTexture);
+function MapCanvasScrollControllerMixin:FindBestLocationForClick()
+	local endCursorX, endCursorY = self:GetCursorPosition();
+	local startDeltaX, startDeltaY = endCursorX - self.startCursorX, endCursorY - self.startCursorY;
+	local MAX_DIST_FOR_CLICK_SQ = 10;
+	
+	-- Make sure it was a click and not a pan
+	if startDeltaX * startDeltaX + startDeltaY * startDeltaY < MAX_DIST_FOR_CLICK_SQ then
+		local normalizedCursorX = self:NormalizeHorizontalSize(endCursorX / self:GetCanvasScale() - self.Child:GetLeft());
+		local normalizedCursorY = self:NormalizeVerticalSize(self.Child:GetTop() - endCursorY / self:GetCanvasScale());
+
+		local x = normalizedCursorX;
+		local y = normalizedCursorY;
+		if self:GetMap():ShouldShowSubzones() then
+			local zoneMapID = C_MapCanvas.FindZoneAtPosition(self.mapID, normalizedCursorX, normalizedCursorY);
+			if zoneMapID then
+				local zoneName, zoneDepth, left, right, top, bottom = C_MapCanvas.GetZoneInfoByID(self.mapID, zoneMapID);
+				local centerX = left + (right - left) * .5;
+				local centerY = top + (bottom - top) * .5;
+
+				x = centerX;
+				y = centerY;
+			end
+		end
+
+		local minX, maxX, minY, maxY = self:CalculateScrollExtentsAtScale(self:GetScaleForMaxZoom());
+		return Clamp(x, minX, maxX), Clamp(y, minY, maxY);
+	end
+end
+
+function MapCanvasScrollControllerMixin:TryPanOrZoomOnClick()
+	if self.mapID then
+		local shouldZoomOnClick = self:ShouldZoomInOnClick() and (self:IsZoomedOut() or self:IsZoomingOut());
+		if self:ShouldPanOnClick() or shouldZoomOnClick then
+			local x, y = self:FindBestLocationForClick();
+			if x and y then
+				self:SetPanTarget(x, y);
+				if shouldZoomOnClick then
+					self:ZoomIn();
+				end
+				return true;
 			end
 		end
 	end
+
+	return false;
+end
+
+function MapCanvasScrollControllerMixin:OnMouseUp(button)
+	if button == "LeftButton" then
+		if not self:TryPanOrZoomOnClick() and self:IsPanning() then
+			local deltaX, deltaY = self:GetNormalizedMouseDelta();
+			self:AccumulateMouseDeltas(GetTickTime(), deltaX, deltaY);
+
+			self.targetScrollX = Clamp(self.targetScrollX + self.accumulatedMouseDeltaX, self.scrollXExtentsMin, self.scrollXExtentsMax);
+			self.targetScrollY = Clamp(self.targetScrollY + self.accumulatedMouseDeltaY, self.scrollYExtentsMin, self.scrollYExtentsMax);
+		end
+		self.isLeftButtonDown = false;
+	elseif button == "RightButton" then
+		if self:ShouldZoomInOnClick() then
+			self:ZoomOut();
+		end
+	end
+end
+
+function MapCanvasScrollControllerMixin:OnMouseWheel(delta)
+	if self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_NONE then
+		return;
+	end
+
+	if delta > 0 then
+		if self:IsZoomedOut() or self:IsZoomingOut() or self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_SMOOTH then
+			local cursorX, cursorY = self:GetCursorPosition();
+			local normalizedCursorX = self:NormalizeHorizontalSize(cursorX / self:GetCanvasScale() - self.Child:GetLeft());
+			local normalizedCursorY = self:NormalizeVerticalSize(self.Child:GetTop() - cursorY / self:GetCanvasScale());
+
+			local minX, maxX, minY, maxY = self:CalculateScrollExtentsAtScale(self:GetScaleForMaxZoom());
+			
+			self:SetPanTarget(Clamp(normalizedCursorX, minX, maxX), Clamp(normalizedCursorY, minY, maxY));
+		end
+
+		if self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_SMOOTH then
+			self:SetZoomTarget(self:GetCanvasScale() + self.zoomAmountPerMouseWheelDelta)
+		elseif self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_FULL then
+			self:ZoomIn();
+		end
+	else
+		if self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_SMOOTH then
+			self:SetZoomTarget(self:GetCanvasScale() - self.zoomAmountPerMouseWheelDelta)
+		elseif self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_FULL then
+			self:ZoomOut();
+		end
+	end
+end
+
+function MapCanvasScrollControllerMixin:OnHide()
+	self.isLeftButtonDown = false;
+
+	self.currentScale = nil;
+	self.currentScrollX = nil;
+	self.currentScrollY = nil;
+end
+
+function MapCanvasScrollControllerMixin:SetCanvasSize(width, height)
+	self.Child:SetSize(width, height);
+	self.Child.TiledBackground:SetSize(width * 2, height * 2);
+	self:CalculateScaleExtents();
+	self:CalculateScrollExtents();
+end
+
+function MapCanvasScrollControllerMixin:RefreshCanvasScale()
+	self:SetZoomTarget(self.zoomTarget or 0);
+end
+
+function MapCanvasScrollControllerMixin:CalculateScaleExtents()
+	self.targetScale = Clamp(self.targetScale or self:GetScaleForMinZoom(), self:GetScaleForMinZoom(), self:GetScaleForMaxZoom());
+end
+
+function MapCanvasScrollControllerMixin:CalculateScrollExtents()
+	self.scrollXExtentsMin, self.scrollXExtentsMax, self.scrollYExtentsMin, self.scrollYExtentsMax = self:CalculateScrollExtentsAtScale(self:GetCanvasScale());
+end
+
+function MapCanvasScrollControllerMixin:CalculateScrollExtentsAtScale(scale)
+	local xOffset = self:NormalizeHorizontalSize((self:GetWidth() * .5) / scale);
+	local yOffset = self:NormalizeVerticalSize((self:GetHeight() * .5) / scale);
+	return 0.0 + xOffset, 1.0 - xOffset, 0.0 + yOffset, 1.0 - yOffset;
+end
+
+do
+	local MOUSE_DELTA_SAMPLES = 100;
+	local MOUSE_DELTA_FACTOR = 250;
+	function MapCanvasScrollControllerMixin:AccumulateMouseDeltas(elapsed, deltaX, deltaY)
+		-- If the mouse changes direction then clear out the old values so it doesn't slide the wrong direction
+		if deltaX > 0 and self.accumulatedMouseDeltaX < 0 or deltaX < 0 and self.accumulatedMouseDeltaX > 0 then
+			self.accumulatedMouseDeltaX = 0.0;
+		end
+
+		if deltaY > 0 and self.accumulatedMouseDeltaY < 0 or deltaY < 0 and self.accumulatedMouseDeltaY > 0 then
+			self.accumulatedMouseDeltaY = 0.0;
+		end
+			
+		local normalizedSamples = MOUSE_DELTA_SAMPLES * elapsed * 60;
+		self.accumulatedMouseDeltaX = (self.accumulatedMouseDeltaX / normalizedSamples) + (deltaX * MOUSE_DELTA_FACTOR) / normalizedSamples;
+		self.accumulatedMouseDeltaY = (self.accumulatedMouseDeltaY / normalizedSamples) + (deltaY * MOUSE_DELTA_FACTOR) / normalizedSamples;
+	end
+end
+
+function MapCanvasScrollControllerMixin:CalculateLerpScaling()
+	if self:ScalingMode() == "SCALING_MODE_TRANSLATE_FASTER_THAN_SCALE" then
+		-- Because of the way zooming in + isLeftButtonDown is perceived, we want to reduce the zoom weight so that panning completes first
+		-- However, for zooming out we want to prefer the zoom then pan
+		local SCALE_DELTA_FACTOR = self:IsZoomingOut() and 1.5 or .01; 
+		local scaleDelta = (math.abs(self:GetCanvasScale() - self.targetScale) / (self:GetScaleForMaxZoom() - self:GetScaleForMinZoom())) * SCALE_DELTA_FACTOR;
+		local scrollXDelta = math.abs(self:GetCurrentScrollX() - self.targetScrollX);
+		local scrollYDelta = math.abs(self:GetCurrentScrollY() - self.targetScrollY);
+
+		local largestDelta = math.max(math.max(scaleDelta, scrollXDelta), scrollYDelta);
+		if largestDelta ~= 0.0 then
+			return scaleDelta / largestDelta, scrollXDelta / largestDelta, scrollYDelta / largestDelta;
+		end
+		return 1.0, 1.0, 1.0;
+	elseif self:ScalingMode() == "SCALING_MODE_LINEAR" then
+		return 1.0, 1.0, 1.0;
+	end
+end
+
+function MapCanvasScrollControllerMixin:SetScalingMode(mode)
+	self.scalingMode = mode;
+end
+
+function MapCanvasScrollControllerMixin:ScalingMode()
+	return self.scalingMode;
+end
+
+local DELTA_SCALE_BEFORE_SNAP = .0001;
+local DELTA_POSITION_BEFORE_SNAP = .0001;
+function MapCanvasScrollControllerMixin:OnUpdate(elapsed)
+	if self:IsPanning() then
+		local deltaX, deltaY = self:GetNormalizedMouseDelta();
+
+		self.targetScrollX = Clamp(self.targetScrollX + deltaX, self.scrollXExtentsMin, self.scrollXExtentsMax);
+		self.targetScrollY = Clamp(self.targetScrollY + deltaY, self.scrollYExtentsMin, self.scrollYExtentsMax);
+
+		self.lastCursorX, self.lastCursorY = self:GetCursorPosition();
+
+		self:AccumulateMouseDeltas(elapsed, deltaX, deltaY);
+	end
+
+	local scaleScaling, scrollXScaling, scrollYScaling = self:CalculateLerpScaling();
+
+	if self.currentScale ~= self.targetScale then
+		local oldScrollX = self:GetNormalizedHorizontalScroll();
+		local oldScrollY = self:GetNormalizedVerticalScroll();
+
+		if not self.currentScale or math.abs(self.currentScale - self.targetScale) < DELTA_SCALE_BEFORE_SNAP then
+			self.currentScale = self.targetScale;
+		else
+			self.currentScale = FrameDeltaLerp(self.currentScale, self.targetScale, self.normalizedZoomLerpAmount * scaleScaling);
+		end
+
+		self.Child:SetScale(self.currentScale);
+		self:CalculateScrollExtents();
+
+		self:SetNormalizedHorizontalScroll(oldScrollX);
+		self:SetNormalizedVerticalScroll(oldScrollY);
+
+		self:GetMap():OnCanvasScaleChanged();
+		self:MarkAreaTriggersDirty();
+		self:MarkViewRectDirty();
+	end
+
+	local panChanged = false;
+	if not self.currentScrollX or self.currentScrollX ~= self.targetScrollX then
+		if not self.currentScrollX or self:IsPanning() or math.abs(self.currentScrollX - self.targetScrollX) < DELTA_POSITION_BEFORE_SNAP then
+			self.currentScrollX = self.targetScrollX;
+		else
+			self.currentScrollX = FrameDeltaLerp(self.currentScrollX, self.targetScrollX, self.normalizedPanXLerpAmount * scrollXScaling);
+		end
+
+		self:SetNormalizedHorizontalScroll(self.currentScrollX);
+		self:MarkAreaTriggersDirty();
+		self:MarkViewRectDirty();
+
+		panChanged = true;
+	end
+
+	if not self.currentScrollY or self.currentScrollY ~= self.targetScrollY then
+		if not self.currentScrollY or self:IsPanning() or math.abs(self.currentScrollY - self.targetScrollY) < DELTA_POSITION_BEFORE_SNAP then
+			self.currentScrollY = self.targetScrollY;
+		else
+			self.currentScrollY = FrameDeltaLerp(self.currentScrollY, self.targetScrollY, self.normalizedPanYLerpAmount * scrollYScaling);
+		end
+		self:SetNormalizedVerticalScroll(self.currentScrollY);
+		self:MarkAreaTriggersDirty();
+		self:MarkViewRectDirty();
+
+		panChanged = true;
+	end
+	
+	if panChanged then
+		self:GetMap():OnCanvasPanChanged();
+	end
+
+	if self.areaTriggersDirty then
+		self.areaTriggersDirty = false;
+		local viewRect = self:GetViewRect();
+		self:GetMap():UpdateAreaTriggers(viewRect);
+	end
+end
+
+function MapCanvasScrollControllerMixin:MarkAreaTriggersDirty()
+	self.areaTriggersDirty = true;
+end
+
+function MapCanvasScrollControllerMixin:MarkViewRectDirty()
+	self.viewRect = nil;
+end
+
+function MapCanvasScrollControllerMixin:MarkCanvasDirty()
+	-- Force an update unless an update is already going to occur
+	if self.currentScale == self.targetScale then
+		self.currentScale = nil;
+	end
+	if self.currentScrollX == self.targetScrollX then
+		self.currentScrollX = nil;
+	end
+	if self.currentScrollY == self.targetScrollY then
+		self.currentScrollY = nil;
+	end
+end
+
+function MapCanvasScrollControllerMixin:GetViewRect()
+	if not self.viewRect then
+		self.viewRect = self:CalculateViewRect(self:GetCanvasScale());
+	end
+	return self.viewRect;
+end
+
+function MapCanvasScrollControllerMixin:SetMapID(mapID)
+	self.mapID = mapID;
+	local mapMaxScale, mapMinScale = C_MapCanvas.GetScaleExtentsForMap(mapID);
+	self:SetMaxZoom(mapMaxScale);
+	self:SetMinZoom(mapMinScale);
+	local backgroundAtlas = C_MapCanvas.GetBackgroundInfo(mapID);
+	self.Child.TiledBackground:SetAtlas(backgroundAtlas);
+end
+
+function MapCanvasScrollControllerMixin:SetShouldZoomInOnClick(shouldZoomInOnClick)
+	self.shouldZoomInOnClick = shouldZoomInOnClick;
+end
+
+function MapCanvasScrollControllerMixin:ShouldZoomInOnClick()
+	return not not self.shouldZoomInOnClick;
+end
+
+function MapCanvasScrollControllerMixin:SetShouldPanOnClick(shouldPanOnClick)
+	self.shouldPanOnClick = shouldPanOnClick;
+end
+
+function MapCanvasScrollControllerMixin:ShouldPanOnClick()
+	return not not self.shouldPanOnClick;
+end
+
+function MapCanvasScrollControllerMixin:SetMaxZoom(scale)
+	self.maxScale = scale;
+	self:RefreshCanvasScale();
+end
+
+function MapCanvasScrollControllerMixin:SetMinZoom(scale)
+	self.minScale = scale;
+	self:RefreshCanvasScale();
+end
+
+function MapCanvasScrollControllerMixin:GetMaxZoomViewRect()
+	return self:CalculateViewRect(self:GetScaleForMaxZoom());
+end
+
+function MapCanvasScrollControllerMixin:GetMinZoomViewRect()
+	return self:CalculateViewRect(self:GetScaleForMinZoom());
+end
+
+function MapCanvasScrollControllerMixin:CalculateViewRect(scale)
+	local childWidth, childHeight = self.Child:GetSize();
+	local left = self:GetHorizontalScroll() / childWidth;
+	local right = left + (self:GetWidth() / scale) / childWidth;
+	local top = self:GetVerticalScroll() / childHeight;
+	local bottom = top + (self:GetHeight() / scale) / childHeight;
+	return CreateRectangle(left, right, top, bottom);
+end
+
+function MapCanvasScrollControllerMixin:CalculateZoomScaleAndPositionForAreaInViewRect(left, right, top, bottom, subViewLeft, subViewRight, subViewTop, subViewBottom)
+	local childWidth, childHeight = self.Child:GetSize();
+	local viewWidth, viewHeight = self:GetSize();
+
+	-- this is the desired width/height of the full view given the desired positions for the subview
+	local fullWidth = (right - left) / (subViewRight - subViewLeft);
+	local fullHeight = (bottom - top) / (subViewTop - subViewBottom);
+
+	local scale = ( viewWidth / fullWidth ) / childWidth;
+
+	-- translate from the upper-left of the subview to the center of the view.
+	local fullLeft = left - (fullWidth * subViewLeft);
+	local fullBottom = (1.0 - bottom) - (fullHeight * subViewBottom);
+
+	local fullCenterX = fullLeft + (fullWidth / 2);
+	local fullCenterY = 1.0 - (fullBottom + (fullHeight / 2));
+
+	return scale, fullCenterX, fullCenterY;
+end
+
+function MapCanvasScrollControllerMixin:SetPanTarget(normalizedX, normalizedY)
+	self.targetScrollX = normalizedX;
+	self.targetScrollY = normalizedY;
+end
+
+function MapCanvasScrollControllerMixin:SetZoomTarget(zoomTarget)
+	self.zoomTarget = zoomTarget;
+	self.targetScale = Clamp(zoomTarget, self:GetScaleForMinZoom(), self:GetScaleForMaxZoom());
+end
+
+function MapCanvasScrollControllerMixin:ZoomIn()
+	self:SetZoomTarget(self:GetScaleForMaxZoom());
+end
+
+function MapCanvasScrollControllerMixin:ZoomOut()
+	self:SetZoomTarget(self:GetScaleForMinZoom());
+	self:SetPanTarget(.5, .5);
+end
+
+function MapCanvasScrollControllerMixin:IsZoomingIn()
+	return self:GetCanvasScale() < self.targetScale;
+end
+
+function MapCanvasScrollControllerMixin:IsZoomingOut()
+	return self.targetScale < self:GetCanvasScale();
+end
+
+function MapCanvasScrollControllerMixin:IsZoomedIn()
+	return self:GetCanvasScale() == self:GetScaleForMaxZoom();
+end
+
+function MapCanvasScrollControllerMixin:IsZoomedOut()
+	return self:GetCanvasScale() == self:GetScaleForMinZoom();
+end
+
+function MapCanvasScrollControllerMixin:GetMap()
+	return self:GetParent();
+end
+
+function MapCanvasScrollControllerMixin:GetScaleForMaxZoom()
+	return (self.maxScale or 1) * self:GetMap():GetMaxZoomMultiplier();
+end
+
+function MapCanvasScrollControllerMixin:GetScaleForMinZoom()
+	return (self.minScale or 1) * self:GetMap():GetMinZoomMultiplier();
+end
+
+function MapCanvasScrollControllerMixin:IsPanning()
+	return self.isLeftButtonDown and not self:IsZoomingOut() and not self:IsZoomedOut();
+end
+
+function MapCanvasScrollControllerMixin:GetCanvasScale()
+	return self.currentScale or self.targetScale;
+end
+
+function MapCanvasScrollControllerMixin:GetCurrentScrollX()
+	return self.currentScrollX or self.targetScrollX;
+end
+
+function MapCanvasScrollControllerMixin:GetCurrentScrollY()
+	return self.currentScrollY or self.targetScrollY;
+end
+
+function MapCanvasScrollControllerMixin:GetCanvasZoomPercent()
+	return PercentageBetween(self:GetCanvasScale(), self:GetScaleForMinZoom(), self:GetScaleForMaxZoom());
+end
+
+function MapCanvasScrollControllerMixin:SetNormalizedHorizontalScroll(scrollAmount)
+	local offset = self:DenormalizeHorizontalSize(scrollAmount);
+	self:SetHorizontalScroll(offset - (self:GetWidth() * .5) / self:GetCanvasScale());
+end
+
+function MapCanvasScrollControllerMixin:GetNormalizedHorizontalScroll()
+	return (2.0 * self:GetHorizontalScroll() * self:GetCanvasScale() + self:GetWidth()) / (2.0 * self.Child:GetWidth() * self:GetCanvasScale());
+end
+
+function MapCanvasScrollControllerMixin:SetNormalizedVerticalScroll(scrollAmount)
+	local offset = self:DenormalizeVerticalSize(scrollAmount);
+	self:SetVerticalScroll(offset - (self:GetHeight() * .5) / self:GetCanvasScale());
+end
+
+function MapCanvasScrollControllerMixin:GetNormalizedVerticalScroll()
+	return (2.0 * self:GetVerticalScroll() * self:GetCanvasScale() + self:GetHeight()) / (2.0 * self.Child:GetHeight() * self:GetCanvasScale());
+end
+
+function MapCanvasScrollControllerMixin:NormalizeHorizontalSize(size)
+	return size / self.Child:GetWidth();
+end
+
+function MapCanvasScrollControllerMixin:DenormalizeHorizontalSize(size)
+	return size * self.Child:GetWidth();
+end
+
+function MapCanvasScrollControllerMixin:NormalizeVerticalSize(size)
+	return size / self.Child:GetHeight();
+end
+
+function MapCanvasScrollControllerMixin:DenormalizeVerticalSize(size)
+	return size * self.Child:GetHeight();
+end
+
+function MapCanvasScrollControllerMixin:GetCursorPosition()
+	local currentX, currentY = GetCursorPosition();
+	local effectiveScale = UIParent:GetEffectiveScale();
+	return currentX / effectiveScale, currentY / effectiveScale;
+end
+
+function MapCanvasScrollControllerMixin:GetNormalizedMouseDelta()
+	if self.lastCursorX and self.lastCursorY then
+		local currentX, currentY = self:GetCursorPosition();
+		return self:NormalizeHorizontalSize(self.lastCursorX - currentX) / self:GetCanvasScale(), self:NormalizeVerticalSize(currentY - self.lastCursorY) / self:GetCanvasScale();
+	end
+	return 0.0, 0.0;
+end
+
+-- Normalizes a global UI position to the map canvas
+function MapCanvasScrollControllerMixin:NormalizeUIPosition(x, y)
+	return Saturate(self:NormalizeHorizontalSize(x / self:GetCanvasScale() - self.Child:GetLeft())),
+		   Saturate(self:NormalizeVerticalSize(self.Child:GetTop() - y / self:GetCanvasScale()));
+end
+
+function MapCanvasScrollControllerMixin:GetNormalizedCursorPosition()
+	local x, y = self:GetCursorPosition();
+	return self:NormalizeUIPosition(x, y);
 end

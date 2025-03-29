@@ -3,22 +3,17 @@
 
 	<Script file="AlertFrames.lua"/>
 
-	<ContainedAlertFrame name="AlertFrameTemplate" toplevel="true" registerForClicks="LeftButtonUp,RightButtonUp" virtual="true">
+	<Button name="AlertFrameTemplate" toplevel="true" virtual="true">
 		<Scripts>
-			<OnEnter function="AlertFrame_PauseOutAnimation"/>
+			<OnLoad function="AlertFrameTemplate_OnLoad"/>
+			<OnEnter function="AlertFrame_StopOutAnimation"/>
 			<OnLeave function="AlertFrame_ResumeOutAnimation"/>
+			<OnHide function="AlertFrameTemplate_OnHide"/>
 			<OnClick function="AlertFrame_OnClick"/>
 		</Scripts>
-	</ContainedAlertFrame>
+	</Button>
 
-	<Frame name="AlertContainerTemplate" parent="UIParent" hidden="true" mixin="AlertContainerMixin" virtual="true">
-		<Scripts>
-			<OnLoad method="OnLoad"/>
-			<OnLoad method="OnEvent"/>
-		</Scripts>
-	</Frame>
-
-	<Frame name="AlertFrame" mixin="AlertFrameMixin" inherits="AlertContainerTemplate">
+	<Frame name="AlertFrame" parent="UIParent" hidden="true" mixin="AlertFrameMixin">
 		<Size x="10" y="10"/>
 		<Anchors>
 			<Anchor point="BOTTOM" x="0" y="128"/>

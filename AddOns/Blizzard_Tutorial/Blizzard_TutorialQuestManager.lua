@@ -45,10 +45,8 @@ function QuestData:GetTotalTime()
 	end
 end
 
--- ------------------------------------------------------------------------------------------------------------
-function QuestData:GetTurnInMapID()
-	return GetQuestUiMapID(self.QuestID);
-end
+
+
 
 
 
@@ -90,7 +88,7 @@ end
 function NPE_QuestManager:ReinitializeExistingQuests()
 	self.IsReinitializing = true;
 
-	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+	for i = 1, GetNumQuestLogEntries() do
 		self:QUEST_ACCEPTED(i);
 	end
 
@@ -111,11 +109,14 @@ function NPE_QuestManager:AreQuestsPending()
 end
 
 -- ------------------------------------------------------------------------------------------------------------
-function NPE_QuestManager:QUEST_ACCEPTED(questID)
-	local title = C_QuestLog.GetTitleForQuestID(questID);
-	if title then
+function NPE_QuestManager:QUEST_ACCEPTED(questLogIndex)
+	local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID = GetQuestLogTitle(questLogIndex);
+
+	if (not isHeader) then
 		local data = QuestData:new(questID, title);
+
 		self.Data[questID] = data;
+
 		self:_DoCallback(self.Events.Quest_Accepted, data);
 	end
 end
@@ -126,13 +127,13 @@ function NPE_QuestManager:QUEST_LOG_UPDATE()
 		if (not questData.IsComplete) then
 			if (not questData.Time_ObjectivesComplete) then
 				-- check to see if the objectives are complete
-				local objectivesComplete = C_QuestLog.IsComplete(questID);
+				local objectivesComplete = select(6, GetQuestLogTitle(GetQuestLogIndexByID(questID)));
 				if (objectivesComplete) then
 					questData:ObjectivesComplete();
 					self:_DoCallback(self.Events.Quest_ObjectivesComplete, questData);
 				end
 			else
-				if (C_QuestLog.IsQuestFlaggedCompleted(questID)) then
+				if (IsQuestFlaggedCompleted(questID)) then
 					questData:Complete();
 					self:_DoCallback(self.Events.Quest_TurnedIn, questData);
 				end

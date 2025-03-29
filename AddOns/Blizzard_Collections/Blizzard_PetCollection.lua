@@ -92,6 +92,7 @@ function PetJournalUtil_GetDisplayName(petID)
 end
 
 function PetJournal_OnLoad(self)
+	self:RegisterEvent("UNIT_PORTRAIT_UPDATE");
 	self:RegisterEvent("PET_JOURNAL_LIST_UPDATE");
 	self:RegisterEvent("PET_JOURNAL_PET_DELETED");
 	self:RegisterEvent("PET_JOURNAL_PETS_HEALED");
@@ -128,7 +129,7 @@ function PetJournal_OnShow(self)
 		end
 	end
 
-	CollectionsJournal:SetPortraitToAsset("Interface\\Icons\\PetJournalPortrait");
+	SetPortraitToTexture(CollectionsJournalPortrait, "Interface\\Icons\\PetJournalPortrait");
 end
 
 function PetJournal_OnHide(self)
@@ -249,7 +250,7 @@ end
 
 function PetJournalHealPetButton_OnLoad(self)
 	self.spellID = HEAL_PET_SPELL;
-	local spellName, _, spellIcon = GetSpellInfo(self.spellID);
+	local spellName, spellSubname, spellIcon = GetSpellInfo(self.spellID);
 	self.texture:SetTexture(spellIcon);
 	self.spellname:SetText(spellName);
 end
@@ -339,7 +340,7 @@ end
 function PetJournalSummonRandomFavoritePetButton_OnLoad(self)
 	self.spellID = SUMMON_RANDOM_FAVORITE_PET_SPELL;
 	self.petID = C_PetJournal.GetSummonRandomFavoritePetGUID();
-	local spellName, _, spellIcon = GetSpellInfo(self.spellID);
+	local spellName, spellSubname, spellIcon = GetSpellInfo(self.spellID);
 	self.texture:SetTexture(spellIcon);
 	self.spellname:SetText(PET_JOURNAL_SUMMON_RANDOM_FAVORITE_PET);
 end
@@ -379,7 +380,7 @@ function PetJournalSummonRandomFavoritePetButton_UpdateSpellUsability(self)
 			self.BlackCover:Hide();
 			self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 			self:RegisterForDrag("LeftButton");
-		end
+		end																				
 	else
 		self.BlackCover:Show();
 		self.texture:SetDesaturated(true);
@@ -410,7 +411,7 @@ function PetJournalSummonRandomFavoritePetButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 
 	local numPets, numOwned = C_PetJournal.GetNumPets();
-	if ( numOwned > 0 and not C_PetBattles.IsInBattle()  ) then
+	if ( numOwned > 0 and not C_PetBattles.IsInBattle()  ) then 
 		GameTooltip:SetCompanionPet(self.petID);
 	else
 		GameTooltip:SetSpellByID(self.spellID);
@@ -482,7 +483,7 @@ function PetJournal_ShowPetSelect(self)
 	self.selected:Show();
 	PetJournal.SpellSelect.slotIndex = slotIndex;
 	PetJournal.SpellSelect.abilityIndex = abilityIndex;
-	PetJournal.SpellSelect:SetFrameLevel(CollectionsJournal.NineSlice:GetFrameLevel() + 1);
+	PetJournal.SpellSelect:SetFrameLevel(PetJournalLoadoutBorder:GetFrameLevel()+1);
 	PetJournal_HideAbilityTooltip();
 
 	--Setup spell one
@@ -592,8 +593,7 @@ function PetJournal_UpdatePetLoadOut(forceSceneChange)
 				loadoutPlate.requirement.str:SetText(GetAchievementLink(UNLOCK_REQUIREMENTS[i].id));
 				loadoutPlate.requirement.achievementID = UNLOCK_REQUIREMENTS[i].id;
 			elseif (UNLOCK_REQUIREMENTS[i].requirement == "SPELL" and UNLOCK_REQUIREMENTS[i].id) then
-				local spellLink = GetSpellLink(UNLOCK_REQUIREMENTS[i].id);
-				loadoutPlate.requirement.str:SetText(spellLink);
+				loadoutPlate.requirement.str:SetText(GetSpellLink(UNLOCK_REQUIREMENTS[i].id));
 				loadoutPlate.requirement.spellID = UNLOCK_REQUIREMENTS[i].id;
 			end
 			loadoutPlate.helpFrame.text:SetText(_G["BATTLE_PET_UNLOCK_HELP_"..i]);
@@ -853,12 +853,6 @@ function PetJournal_UpdatePetList()
 					pet.icon:SetDesaturated(true);
 					pet.petTypeIcon:SetDesaturated(true);
 					pet.dragButton:Disable();
-				else
-					-- Only display the unusable texture if you'll never be able to summon this pet.
-					local isSummonable, error, errorText = C_PetJournal.GetPetSummonInfo(petID);
-					local neverUsable = error == Enum.PetJournalError.InvalidFaction or error == Enum.PetJournalError.InvalidCovenant;
-					pet.iconBorder:SetShown(not neverUsable);
-					CollectionItemListButton_SetRedOverlayShown(pet, neverUsable);
 				end
 			else
 				pet.dragButton.levelBG:Hide();
@@ -938,17 +932,6 @@ function PetJournalListItem_OnClick(self, button)
 	end
 end
 
-function PetJournalDragButton_OnEnter(self)
-	local petID = self:GetParent().petID;
-	if (not petID) then
-		return;
-	end
-
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetCompanionPet(petID);
-	GameTooltip:Show();
-end
-
 function PetJournalDragButton_OnClick(self, button)
 	if ( IsModifiedClick("CHATLINK") ) then
 		local id = self:GetParent().petID;
@@ -1003,7 +986,7 @@ function PetJournalDragButton_OnDragStart(self)
 
 	for i=1,MAX_ACTIVE_PETS do
 		local loadoutPlate = PetJournal.Loadout["Pet"..i];
-		local petID, ability1ID, ability2ID, ability3ID, locked = C_PetJournal.GetPetLoadOutInfo(i - 1);
+		local petID, ability1ID, ability2ID, ability3ID, locked = C_PetJournal.GetPetLoadOutInfo(i);
 		if(locked) then
 			PetJournal.Loadout["Pet"..i].setButton:Hide();
 		else
@@ -1116,7 +1099,7 @@ function PetJournalPetCard_OnClick(self, button)
 		end
 	elseif button == "RightButton" then
 		if ( PetJournalPetCard.petID ) then
-			PetJournal_ShowPetDropdown(PetJournalPetCard.petIndex, self, 0, 0, PetJournalPetCard.petID);
+			PetJournal_ShowPetDropdown(PetJournalPetCard.petIndex, self, 0, 0);
 		end
 	else
 		PetJournalDragButton_OnDragStart(self);
@@ -1164,7 +1147,6 @@ function PetJournal_UpdatePetCard(self, forceSceneChange)
 	local isDead = false;
 	local needsFanfare = false;
 	local speciesID, customName, level, name, icon, petType, creatureID, xp, maxXp, displayID, isFavorite, sourceText, description, isWild, canBattle, tradable, unique;
-	local _;
 	if PetJournalPetCard.petID then
 		speciesID, customName, level, xp, maxXp, displayID, isFavorite, name, icon, petType, creatureID, sourceText, description, isWild, canBattle, tradable, unique = C_PetJournal.GetPetInfoByPetID(PetJournalPetCard.petID);
 		if ( not speciesID ) then
@@ -1385,121 +1367,154 @@ function GetPetTypeTexture(petType)
 	end
 end
 
+
 function PetJournalFilterDropDown_OnLoad(self)
 	UIDropDownMenu_Initialize(self, PetJournalFilterDropDown_Initialize, "MENU");
-	PetJournalResetFiltersButton_UpdateVisibility();
 end
 
-function PetJournalFilterDropDown_ResetFilters()
-	C_PetJournal.SetDefaultFilters();
-	PetJournalFilterButton.ResetButton:Hide();
-end
-
-function PetJournalResetFiltersButton_UpdateVisibility()
-	PetJournalFilterButton.ResetButton:SetShown(not C_PetJournal.IsUsingDefaultFilters());
-end
-
-function PetJournalFilterDropDown_SetCollectedFilter(value)
-	C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED, value);
-end
-
-function PetJournalFilterDropDown_GetCollectedFilter()
-	return C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED);
-end
-
-function PetJournalFilterDropDown_SetNotCollectedFilter(value)
-	C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED, value);
-end
-
-function PetJournalFilterDropDown_GetNotCollectedFilter()
-	return C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED);
-end
-
-function PetJournalFilterDropDown_SetAllPetTypes(value)
-	C_PetJournal.SetAllPetTypesChecked(value);
-	UIDropDownMenu_Refresh(PetJournalFilterDropDown, UIDROPDOWNMENU_MENU_VALUE, UIDROPDOWNMENU_MENU_LEVEL);
-end 
-
-function PetJournalFilterDropDown_SetAllPetSources(value)
-	C_PetJournal.SetAllPetSourcesChecked(value);
-	UIDropDownMenu_Refresh(PetJournalFilterDropDown, UIDROPDOWNMENU_MENU_VALUE, UIDROPDOWNMENU_MENU_LEVEL);
-end
 
 function PetJournalFilterDropDown_Initialize(self, level)
-	local filterSystem = {
-		onUpdate = PetJournalResetFiltersButton_UpdateVisibility,	
-		filters = {
-			{ type = FilterComponent.Checkbox, text = COLLECTED, set= PetJournalFilterDropDown_SetCollectedFilter, isSet = PetJournalFilterDropDown_GetCollectedFilter, },
-			{ type = FilterComponent.Checkbox, text = NOT_COLLECTED, set = PetJournalFilterDropDown_SetNotCollectedFilter, isSet = PetJournalFilterDropDown_GetNotCollectedFilter, },
-			{ type = FilterComponent.Submenu, text = PET_FAMILIES, value = 1, childrenInfo = {
-					filters = {
-						{ type = FilterComponent.TextButton, 
-						  text = CHECK_ALL,
-						  set = function() PetJournalFilterDropDown_SetAllPetTypes(true); end, 
-						},
-						{ type = FilterComponent.TextButton,
-						  text = UNCHECK_ALL,
-						  set = function() PetJournalFilterDropDown_SetAllPetTypes(false); end, 
-						},
-						{ type = FilterComponent.DynamicFilterSet,
-						  buttonType = FilterComponent.Checkbox, 
-						  set = C_PetJournal.SetPetTypeFilter,
-						  isSet = C_PetJournal.IsPetTypeChecked,
-						  numFilters = C_PetJournal.GetNumPetTypes,
-						  globalPrepend = "BATTLE_PET_NAME_", 
-						},
-					},
-				},
-			},
-			{ type = FilterComponent.Submenu, text = SOURCES, value = 2, childrenInfo = {
-					filters = {
-						{ type = FilterComponent.TextButton, 
-						  text = CHECK_ALL,
-						  set = function() PetJournalFilterDropDown_SetAllPetSources(true); end, 
-						},
-						{ type = FilterComponent.TextButton,
-						  text = UNCHECK_ALL,
-						  set = function() PetJournalFilterDropDown_SetAllPetSources(false); end,  
-						},
-						{ type = FilterComponent.DynamicFilterSet,
-						  buttonType = FilterComponent.Checkbox, 
-						  set = C_PetJournal.SetPetSourceChecked,
-						  isSet = C_PetJournal.IsPetSourceChecked,
-						  numFilters = C_PetJournal.GetNumPetSources,
-						  globalPrepend = "BATTLE_PET_SOURCE_", 
-						},
-					},
-				},
-			},
-			{ type = FilterComponent.Submenu, text = RAID_FRAME_SORT_LABEL, value = 3, childrenInfo = {
-					filters = {
-						{ type = FilterComponent.CustomFunction, customFunc = PetJournalFilterDropDown_AddInSortParameters, },
-					},
-				},
-			},
-		},
-	};
+	local info = UIDropDownMenu_CreateInfo();
+	info.keepShownOnClick = true;
 
-	FilterDropDownSystem.Initialize(self, filterSystem, level);
-end
+	if level == 1 then
 
-function PetJournalFilterDropDown_AddInSortParameters(level)
-	local sortParameters = {
-		{ text = NAME, parameter = LE_SORT_BY_NAME, },
-		{ text = LEVEL, parameter = LE_SORT_BY_LEVEL, },
-		{ text = RARITY, parameter = LE_SORT_BY_RARITY, },
-		{ text = TYPE, parameter = LE_SORT_BY_PETTYPE, },
-	};
+		info.text = COLLECTED
+		info.func = 	function(_, _, _, value)
+							C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED, value);
+						end
+		info.checked = C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED);
+		info.isNotRadio = true;
+		UIDropDownMenu_AddButton(info, level);
 
-	for index, sortParameters in ipairs(sortParameters) do
-		local setSelected = function() 
-					C_PetJournal.SetPetSortParameter(sortParameters.parameter); 
-					PetJournal_UpdatePetList(); 
-				end
-		local isSelected = function() return C_PetJournal.GetPetSortParameter() == sortParameters.parameter end;
-		FilterDropDownSystem.AddRadioButton(sortParameters.text, setSelected, isSelected, level);
+		info.disabled = nil;
+
+		info.text = NOT_COLLECTED;
+		info.func = 	function(_, _, _, value)
+							C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED, value);
+						end
+		info.checked = C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED);
+		info.isNotRadio = true;
+		UIDropDownMenu_AddButton(info, level);
+
+		info.checked = 	nil;
+		info.isNotRadio = nil;
+		info.func =  nil;
+		info.hasArrow = true;
+		info.notCheckable = true;
+
+		info.text = PET_FAMILIES;
+		info.value = 1;
+		UIDropDownMenu_AddButton(info, level);
+
+		info.text = SOURCES;
+		info.value = 2;
+		UIDropDownMenu_AddButton(info, level);
+
+		info.text = RAID_FRAME_SORT_LABEL;
+		info.value = 3;
+		UIDropDownMenu_AddButton(info, level);
+
+	else --if level == 2 then
+		if UIDROPDOWNMENU_MENU_VALUE == 1 then
+			info.hasArrow = false;
+			info.isNotRadio = true;
+			info.notCheckable = true;
+
+			info.text = CHECK_ALL;
+			info.func = function()
+							C_PetJournal.SetAllPetTypesChecked(true);
+							UIDropDownMenu_Refresh(PetJournalFilterDropDown, 1, 2);
+						end
+			UIDropDownMenu_AddButton(info, level);
+
+			info.text = UNCHECK_ALL;
+			info.func = function()
+							C_PetJournal.SetAllPetTypesChecked(false);
+							UIDropDownMenu_Refresh(PetJournalFilterDropDown, 1, 2);
+						end
+			UIDropDownMenu_AddButton(info, level);
+
+			info.notCheckable = false;
+			local numTypes = C_PetJournal.GetNumPetTypes();
+			for i=1,numTypes do
+				info.text = _G["BATTLE_PET_NAME_"..i];
+				info.func = function(_, _, _, value)
+							C_PetJournal.SetPetTypeFilter(i, value);
+						end
+				info.checked = function() return C_PetJournal.IsPetTypeChecked(i) end;
+				UIDropDownMenu_AddButton(info, level);
+			end
+		elseif UIDROPDOWNMENU_MENU_VALUE == 2 then
+			info.hasArrow = false;
+			info.isNotRadio = true;
+			info.notCheckable = true;
+
+			info.text = CHECK_ALL;
+			info.func = function()
+							C_PetJournal.SetAllPetSourcesChecked(true);
+							UIDropDownMenu_Refresh(PetJournalFilterDropDown, 2, 2);
+						end
+			UIDropDownMenu_AddButton(info, level);
+
+			info.text = UNCHECK_ALL;
+			info.func = function()
+							C_PetJournal.SetAllPetSourcesChecked(false);
+							UIDropDownMenu_Refresh(PetJournalFilterDropDown, 2, 2);
+						end
+			UIDropDownMenu_AddButton(info, level);
+
+			info.notCheckable = false;
+			local numSources = C_PetJournal.GetNumPetSources();
+			for i=1,numSources do
+				info.text = _G["BATTLE_PET_SOURCE_"..i];
+				info.func = function(_, _, _, value)
+							C_PetJournal.SetPetSourceChecked(i, value);
+						end
+				info.checked = function() return C_PetJournal.IsPetSourceChecked(i) end;
+				UIDropDownMenu_AddButton(info, level);
+			end
+		elseif UIDROPDOWNMENU_MENU_VALUE == 3 then
+			info.hasArrow = false;
+			info.isNotRadio = nil;
+			info.notCheckable = nil;
+			info.keepShownOnClick = nil;
+
+			info.text = NAME;
+			info.func = function()
+							C_PetJournal.SetPetSortParameter(LE_SORT_BY_NAME);
+							PetJournal_UpdatePetList();
+						end
+			info.checked = function() return C_PetJournal.GetPetSortParameter() == LE_SORT_BY_NAME end;
+			UIDropDownMenu_AddButton(info, level);
+
+			info.text = LEVEL;
+			info.func = function()
+							C_PetJournal.SetPetSortParameter(LE_SORT_BY_LEVEL);
+							PetJournal_UpdatePetList();
+						end
+			info.checked = function() return C_PetJournal.GetPetSortParameter() == LE_SORT_BY_LEVEL end;
+			UIDropDownMenu_AddButton(info, level);
+
+			info.text = RARITY;
+			info.func = function()
+							C_PetJournal.SetPetSortParameter(LE_SORT_BY_RARITY);
+							PetJournal_UpdatePetList();
+						end
+			info.checked = function() return C_PetJournal.GetPetSortParameter() == LE_SORT_BY_RARITY end;
+			UIDropDownMenu_AddButton(info, level);
+
+			info.text = TYPE;
+			info.func = function()
+							C_PetJournal.SetPetSortParameter(LE_SORT_BY_PETTYPE);
+							PetJournal_UpdatePetList();
+						end
+			info.checked = function() return C_PetJournal.GetPetSortParameter() == LE_SORT_BY_PETTYPE end;
+			UIDropDownMenu_AddButton(info, level);
+		end
 	end
 end
+
 
 function PetOptionsMenu_Init(self, level)
 	local info = UIDropDownMenu_CreateInfo();
@@ -1649,7 +1664,7 @@ end
 
 function PET_JOURNAL_ABILITY_INFO:GetPetOwner(target)
 	self:EnsureTarget(target);
-	return Enum.BattlePetOwner.Ally;
+	return LE_BATTLE_PET_ALLY;
 end
 
 function PET_JOURNAL_ABILITY_INFO:GetPetType(target)
@@ -1739,7 +1754,7 @@ end
 function PetJournalPetCount_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	GameTooltip:SetText(BATTLE_PETS_TOTAL_PETS, 1, 1, 1);
-	GameTooltip:AddLine(BATTLE_PETS_TOTAL_PETS_TOOLTIP, nil, nil, nil, true);
+	GameTooltip:AddLine(format(BATTLE_PETS_TOTAL_PETS_TOOLTIP, C_PetJournal.GetNumMaxPets()), nil, nil, nil, true);
 	GameTooltip:Show();
 end
 
@@ -1788,14 +1803,6 @@ function PetJournalSummonButton_OnEnter(self)
 	else
 		GameTooltip:AddLine(BATTLE_PETS_SUMMON_TOOLTIP, nil, nil, nil, true);
 	end
-
-	if PetJournalPetCard.petID ~= nil then
-		local isSummonable, error, errorText = C_PetJournal.GetPetSummonInfo(PetJournalPetCard.petID);
-		if errorText then
-			GameTooltip_AddErrorLine(GameTooltip, errorText, true);
-		end
-	end
-
 	GameTooltip:Show();
 end
 
@@ -1819,7 +1826,8 @@ function PetJournal_ToggleTutorial()
 	if ( helpPlate and not HelpPlate_IsShowing(helpPlate) ) then
 		HelpPlate_Show( helpPlate, PetJournal, PetJournal.MainHelpButton );
 		SetCVarBitfield( "closedInfoFrames", LE_FRAME_TUTORIAL_PET_JOURNAL, true );
-		CollectionsJournal_HideTabHelpTips();
+		CollectionsJournal.HeirloomTabHelpBox:Hide();
+		CollectionsJournal.WardrobeTabHelpBox:Hide();
 	else
 		HelpPlate_Hide(true);
 	end

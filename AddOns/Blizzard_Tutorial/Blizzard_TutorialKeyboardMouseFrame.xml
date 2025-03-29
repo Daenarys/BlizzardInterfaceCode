@@ -148,14 +148,14 @@
 	</Frame>
 
 
-	<Frame name="NPE_TutorialInterfaceHelp" parent="UIParent" hidden="true" frameStrata="MEDIUM" inherits="BackdropTemplate">
+	<Frame name="NPE_TutorialInterfaceHelp" parent="UIParent" hidden="true" frameStrata="MEDIUM">
 		<Size x="200" y="50" />
 		<Anchors>
-			<Anchor point="BOTTOMRIGHT" relativeTo="ActionButton12" relativePoint="TOPRIGHT" x="4" y="10" />
+			<Anchor point="BOTTOM" relativeTo="GuildMicroButton" relativePoint="TOP" y="-10" />
 		</Anchors>
-		<KeyValues>
-			<KeyValue key="backdropInfo" value="BACKDROP_TEXT_PANEL_0_16" type="global"/>
-		</KeyValues>
+		<Backdrop edgeFile="Interface\Glues\Common\TextPanel-Border" tile="true">
+			<EdgeSize val="16" />
+		</Backdrop>
 
 		<Layers>
 			<Layer level="BACKGROUND">
@@ -177,7 +177,7 @@
 		</Layers>
 
 		<Frames>
-			<ItemButton parentKey="btnOpen" name="xx">
+			<Button parentKey="btnOpen" inherits="ItemButtonTemplate" name="xx">
 				<Anchors>
 					<Anchor point="RIGHT" x="-5" y="1"/>
 				</Anchors>
@@ -188,7 +188,7 @@
 						self.icon:SetAtlas("NPE_Icon");
 					</OnLoad>
 				</Scripts>
-			</ItemButton>
+			</Button>
 		</Frames>
 
 		<Animations>

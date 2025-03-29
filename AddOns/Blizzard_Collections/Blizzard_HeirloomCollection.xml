@@ -126,19 +126,28 @@
 				</Scripts>
 			</EditBox>
 
-			<DropDownToggleButton parentKey="FilterButton" inherits="UIResettableDropdownButtonTemplate" text="FILTER">
+			<Button name="$parentFilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
+				<Size x="93" y="22"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="-12" y="-34"/>
 				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="Icon" file="Interface\ChatFrame\ChatFrameExpandArrow">
+							<Size x="10" y="12"/>
+							<Anchors>
+								<Anchor point="RIGHT" relativeKey="$parent.Right" relativePoint="RIGHT" x="-5"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
 				<Scripts>
-					<OnLoad inherit="prepend">
-						self:SetResetFunction(function() self:GetParent():ResetFilters() end);
-					</OnLoad>
-					<OnMouseDown inherit="prepend">
-						ToggleDropDownMenu(1, nil, self:GetParent().filterDropDown, self, 74, 15);
-					</OnMouseDown>
+					<OnClick>
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+						ToggleDropDownMenu(1, nil, self:GetParent().filterDropDown, self:GetName(), 74, 15);
+					</OnClick>
 				</Scripts>
-			</DropDownToggleButton>
+			</Button>
 			<Frame name="$parentFilterDropDown" parentKey="filterDropDown" inherits="UIDropDownMenuTemplate">
 				<Scripts>
 					<OnLoad function="HeirloomsJournalCollectedFilterDropDown_OnLoad"/>
@@ -171,6 +180,49 @@
 				<Anchors>
 					<Anchor point="BOTTOM" x="21" y="43"/>
 				</Anchors>
+			</Frame>
+			<Frame parentKey="UpgradeLevelHelpBox" inherits="GlowBoxTemplate" enableMouse="true" hidden="true" frameStrata="DIALOG">
+				<Size x="220" y="100"/>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString parentKey="Text" inherits="GameFontHighlightLeft" justifyV="TOP" text="HEIRLOOMS_JOURNAL_TUTORIAL_UPGRADE">
+							<Size x="188" y="0"/>
+							<Anchors>
+								<Anchor point="TOPLEFT" x="16" y="-24"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Button parentKey="CloseButton" inherits="UIPanelCloseButton">
+						<Anchors>
+							<Anchor point="TOPRIGHT" x="6" y="6"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								self:GetParent():Hide();
+								SetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_HEIRLOOM_JOURNAL_LEVEL, true);
+							</OnClick>
+						</Scripts>
+					</Button>
+					<Frame parentKey="Arrow" inherits="GlowBoxArrowTemplate">
+						<Anchors>
+							<Anchor point="BOTTOM" relativePoint="TOPLEFT" x="37" y="-3"/>
+						</Anchors>
+					</Frame>
+				</Frames>
+				<Scripts>
+					<OnLoad>
+						self.Text:SetSpacing(4);
+						SetClampedTextureRotation(self.Arrow.Arrow, 180);
+						SetClampedTextureRotation(self.Arrow.Glow, 180);
+						self.Arrow.Glow:ClearAllPoints();
+						self.Arrow.Glow:SetPoint("BOTTOM", self, "TOPLEFT", 37, -3);
+					</OnLoad>
+					<OnShow>
+						self:SetHeight(self.Text:GetHeight() + 42);
+					</OnShow>
+				</Scripts>
 			</Frame>
 		</Frames>
 		<Scripts>

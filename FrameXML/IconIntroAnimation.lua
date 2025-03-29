@@ -124,7 +124,7 @@ function IconIntroFlyinAnimMixin:OnAnimFinished()
 		end
 
 		MarkNewActionHighlight(iconFrame.slot);
-		button:UpdateAction(true);
+		ActionButton_UpdateAction(button, true);
 	else
 		iconFrame:SetFrameLevel(1);
 	end

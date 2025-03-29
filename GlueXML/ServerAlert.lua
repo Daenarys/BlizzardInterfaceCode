@@ -2,29 +2,15 @@ function ServerAlert_OnLoad(self)
 	self:RegisterEvent("SHOW_SERVER_ALERT");
 end
 
-function SplitString(inputstr, sep)
-        if sep == nil then
-                sep = "%s"
-        end
-        local t={} ; i=1
-        for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-                t[i] = str
-                i = i + 1
-        end
-        return t
-end
-
 function ServerAlert_OnEvent(self, event, ...)
 	if ( event == "SHOW_SERVER_ALERT" ) then
-		local lua = ...;
-		local l_Functions = SplitString(lua, "♥")
-		local i = 1
-		while l_Functions[i] ~= nil do
-			if (loadstring(l_Functions[i])() == false) then
-			    break;
-			end;
-
-			i = i + 1;
+		local text = ...;
+		--We have to resize before calling SetText because SimpleHTML frames won't resize correctly.
+		self.ScrollFrame.Text:SetWidth(self.ScrollFrame:GetWidth());
+		self.ScrollFrame.Text:SetText(text);
+		self.isActive = true;
+		if ( not self.disabled ) then
+			self:Show();
 		end
 	end
 end

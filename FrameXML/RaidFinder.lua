@@ -31,16 +31,12 @@ function RaidFinderFrame_OnEvent(self, event, ...)
 end
 
 function RaidFinderFrame_OnShow(self)
-	QueueUpdater:RequestInfo();
-	QueueUpdater:AddRef();
+	RequestLFDPlayerLockInfo();
+	RequestLFDPartyLockInfo();
 	RaidFinderFrameFindRaidButton_Update();
 	LFGBackfillCover_Update(RaidFinderQueueFrame.PartyBackfill, true);
 	RaidFinderFrame_UpdateAvailability();
 	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
-end
-
-function RaidFinderFrame_OnHide(self)
-	QueueUpdater:RemoveRef();
 end
 
 -- unused now, might need this logic for Group Finder
@@ -190,8 +186,8 @@ end
 function RaidFinderQueueFrameSelectionDropDown_Initialize(self)
 
 	local sortedDungeons = { };
-	local function InsertDungeonData(id, name, mapName, isAvailable, mapID)
-		local t = { id = id, name = name, mapName = mapName, isAvailable = isAvailable, mapID = mapID };
+	local function InsertDungeonData(id, name, mapName, isAvailable)
+		local t = { id = id, name = name, mapName = mapName, isAvailable = isAvailable };
 		local foundMap = false;
 		for i = 1, #sortedDungeons do
 			if ( sortedDungeons[i].mapName == mapName ) then
@@ -205,18 +201,17 @@ function RaidFinderQueueFrameSelectionDropDown_Initialize(self)
 		end
 		tinsert(sortedDungeons, t);
 	end
-
+	
 	-- If we ever change this logic, we also need to change the logic in RaidFinderFrame_UpdateAvailability
 	for i=1, GetNumRFDungeons() do
 		local dungeonInfo = { GetRFDungeonInfo(i) };
 		local id = dungeonInfo[1];
 		local name = dungeonInfo[2];
 		local mapName = dungeonInfo[20];
-		local mapID = dungeonInfo[23];
-		local isAvailable, isAvailableToPlayer, hideIfNotJoinable = IsLFGDungeonJoinable(id);
-		if( not hideIfNotJoinable or isAvailable ) then
+		local isAvailable, isAvailableToPlayer, hideIfUnmet = IsLFGDungeonJoinable(id);
+		if( not hideIfUnmet or isAvailable ) then
 			if ( isAvailable or isAvailableToPlayer or isRaidFinderDungeonDisplayable(id) ) then
-				InsertDungeonData(id, name, mapName, isAvailable, mapID);
+				InsertDungeonData(id, name, mapName, isAvailable);
 			end
 		end
 	end
@@ -229,8 +224,6 @@ function RaidFinderQueueFrameSelectionDropDown_Initialize(self)
 			info.text = sortedDungeons[i].mapName;
 			info.isTitle = 1;
 			info.notCheckable = 1;
-			info.icon = nil;
-			info.iconXOffset = nil;
 			info.tooltipOnButton = nil;
 			UIDropDownMenu_AddButton(info);
 			info.notCheckable = nil;
@@ -259,39 +252,19 @@ function RaidFinderQueueFrameSelectionDropDown_Initialize(self)
 					encounters = colorCode..bossName..FONT_COLOR_CODE_CLOSE;
 				end
 			end
-			local modifiedInstanceTooltipText = "";
-			if(sortedDungeons[i].mapID) then 
-				local modifiedInstanceInfo = C_ModifiedInstance.GetModifiedInstanceInfoFromMapID(sortedDungeons[i].mapID)
-				if (modifiedInstanceInfo) then 
-					info.icon = GetFinalNameFromTextureKit("%s-small", modifiedInstanceInfo.uiTextureKit);
-					modifiedInstanceTooltipText = "|n|n" .. modifiedInstanceInfo.description;
-				end
-				info.iconXOffset = -6;
-			end 
-			info.tooltipText = encounters .. modifiedInstanceTooltipText;
+			info.tooltipText = encounters;
 			UIDropDownMenu_AddButton(info);
 		else
 			info.text = sortedDungeons[i].name; --Note that the dropdown text may be manually changed in RaidFinderQueueFrame_SetRaid
 			info.value = sortedDungeons[i].id;
 			info.isTitle = nil;
 			info.func = nil;
-			info.icon = nil; 
-			info.iconXOffset = nil;
-			local modifiedInstanceTooltipText = "";
-			if(sortedDungeons[i].mapID) then 
-				local modifiedInstanceInfo = C_ModifiedInstance.GetModifiedInstanceInfoFromMapID(sortedDungeons[i].mapID)
-				if (modifiedInstanceInfo) then 
-					info.icon = GetFinalNameFromTextureKit("%s-small", modifiedInstanceInfo.uiTextureKit);
-					modifiedInstanceTooltipText = "|n|n" .. modifiedInstanceInfo.description;
-				end
-				info.iconXOffset = -6;
-			end 
 			info.disabled = 1;
 			info.checked = nil;
 			info.tooltipWhileDisabled = 1;
 			info.tooltipOnButton = 1;
 			info.tooltipTitle = YOU_MAY_NOT_QUEUE_FOR_THIS;
-			info.tooltipText = LFGConstructDeclinedMessage(sortedDungeons[i].id) .. modifiedInstanceTooltipText; 
+			info.tooltipText = LFGConstructDeclinedMessage(sortedDungeons[i].id);
 			UIDropDownMenu_AddButton(info);
 		end
 	end
@@ -330,7 +303,7 @@ function RaidFinderQueueFrame_UpdateRoles()
 	LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonTank, nil);
 	LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonHealer, nil);
 	LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonDPS, nil);
-
+	
 	if ( type(dungeonID) == "number" ) then
 		if ( not IsInGroup(LE_PARTY_CATEGORY_HOME) ) then
 			for i=1, LFG_ROLE_NUM_SHORTAGE_TYPES do
@@ -348,7 +321,7 @@ function RaidFinderQueueFrame_UpdateRoles()
 				end
 			end
 		end
-
+		
 		local tankLocked, healerLocked, dpsLocked = GetLFDRoleRestrictions(dungeonID);
 		RaidFinder_UpdateRoleButton(RaidFinderQueueFrameRoleButtonTank, tankLocked);
 		RaidFinder_UpdateRoleButton(RaidFinderQueueFrameRoleButtonHealer, healerLocked);
@@ -360,7 +333,7 @@ function RaidFinder_UpdateRoleButton( button, locked )
 	if( button.permDisabled )then
 		return;
 	end
-
+	
 	if( locked ) then
 		button.lockedIndicator:Show();
 		button.checkButton:Hide();
@@ -399,7 +372,7 @@ function RaidFinderFrameFindRaidButton_Update()
 			RaidFinderFrameFindRaidButton:SetText(FIND_A_GROUP);
 		end
 	end
-
+	
 	--Disable the button if we're not in a state where we can make a change
 	if ( LFD_IsEmpowered() and mode ~= "proposal" and mode ~= "listed"  ) then --During the proposal, they must use the proposal buttons to leave the queue.
 		if ( (mode == "queued" or mode == "rolecheck" or mode == "suspended")	--The players can dequeue even if one of the two cover panels is up.
@@ -414,17 +387,15 @@ function RaidFinderFrameFindRaidButton_Update()
 
 	--Disable the button if the person is active in LFGList
 	local lfgListDisabled;
-	if ( C_LFGList.HasActiveEntryInfo() ) then
+	if ( C_LFGList.GetActiveEntryInfo() ) then
 		lfgListDisabled = CANNOT_DO_THIS_WHILE_LFGLIST_LISTED;
-	elseif(C_PartyInfo.IsCrossFactionParty()) then 
-		lfgListDisabled = CROSS_FACTION_RAID_DUNGEON_FINDER_ERROR;
 	end
 
 	if ( lfgListDisabled ) then
 		RaidFinderFrameFindRaidButton:Disable();
-		RaidFinderFrameFindRaidButton.disabledTooltip = lfgListDisabled;
+		RaidFinderFrameFindRaidButton.tooltip = lfgListDisabled;
 	else
-		RaidFinderFrameFindRaidButton.disabledTooltip = nil;
+		RaidFinderFrameFindRaidButton.tooltip = nil;
 	end
 
 	--Update the backfill enable state
@@ -464,7 +435,7 @@ end
 --Cooldown panel
 function RaidFinderQueueFrameCooldownFrame_OnLoad(self)
 	self:SetFrameLevel(RaidFinderQueueFrame:GetFrameLevel() + 9);	--This value also needs to be set when SetParent is called in LFDQueueFrameRandomCooldownFrame_Update.
-
+	
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");	--For logging in/reloading ui
 	self:RegisterEvent("UNIT_AURA");	--The cooldown is still technically a debuff
 	self:RegisterEvent("GROUP_ROSTER_UPDATE");
@@ -489,9 +460,9 @@ end
 function RaidFinderQueueFrameCooldownFrame_Update()
 	local cooldownFrame = RaidFinderQueueFrameCooldownFrame;
 	local shouldShow = false;
-
+	
 	local cooldownExpiration = GetLFGDeserterExpiration();
-
+	
 	cooldownFrame.myExpirationTime = cooldownExpiration;
 
 	local tokenPrefix;
@@ -503,7 +474,7 @@ function RaidFinderQueueFrameCooldownFrame_Update()
 		tokenPrefix = "party";
 		numMembers = GetNumSubgroupMembers();
 	end
-
+	
 	local numCooldowns = 0;
 	for i = 1, numMembers do
 		if ( UnitHasLFGDeserter(tokenPrefix..i) and not UnitIsUnit(tokenPrefix..i, "player") ) then
@@ -517,7 +488,7 @@ function RaidFinderQueueFrameCooldownFrame_Update()
 				local classColor = classFilename and RAID_CLASS_COLORS[classFilename] or NORMAL_FONT_COLOR;
 				nameLabel:SetFormattedText("|cff%.2x%.2x%.2x%s|r", classColor.r * 255, classColor.g * 255, classColor.b * 255, UnitName(tokenPrefix..i));
 			end
-
+		
 			shouldShow = true;
 		end
 	end
@@ -525,7 +496,7 @@ function RaidFinderQueueFrameCooldownFrame_Update()
 		local nameLabel = _G["RaidFinderQueueFrameCooldownFrameName"..i];
 		nameLabel:Hide();
 	end
-
+	
 	local anchorSide = "LEFT";	--Used to center text when we have 4 or fewer players.
 	local anchorOffset = 25;
 	if ( numCooldowns == 0 ) then
@@ -566,7 +537,7 @@ function RaidFinderQueueFrameCooldownFrame_Update()
 		cooldownFrame.description:SetText(RF_DESERTER_YOU);
 		cooldownFrame.time:SetText(SecondsToTime(ceil(cooldownExpiration - GetTime())));
 		cooldownFrame.time:Show();
-
+		
 		cooldownFrame:SetScript("OnUpdate", RaidFinderQueueFrameCooldownFrame_OnUpdate);
 
 		if ( numCooldowns > 0 ) then
@@ -579,12 +550,12 @@ function RaidFinderQueueFrameCooldownFrame_Update()
 	else
 		cooldownFrame.description:SetText(RF_DESERTER_OTHER);
 		cooldownFrame.time:Hide();
-
+		
 		cooldownFrame:SetScript("OnUpdate", nil);
 		cooldownFrame.secondaryDescription:Hide();
 		RaidFinderQueueFrameCooldownFrameName1:SetPoint("TOP"..anchorSide, cooldownFrame.description, "BOTTOM"..anchorSide, anchorOffset, -20);
 	end
-
+	
 	if ( shouldShow and not RaidFinderQueueFramePartyBackfill:IsShown() ) then
 		cooldownFrame:Show();
 	else

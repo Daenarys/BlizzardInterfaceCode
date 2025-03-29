@@ -1,7 +1,6 @@
+## Interface: 70300
 ## Title: Blizzard WoW Token UI
+## Secure: 1
 ## LoadOnDemand: 0
-..\..\SharedXML\NineSliceLayouts.lua
-..\..\SharedXML\NineSlice.lua
-..\..\SharedXML\SecureUIPanelTemplates.lua
 Blizzard_WowTokenUI.xml
 Blizzard_WowTokenUIInsecure.xml

@@ -3,7 +3,7 @@
     <Script file="EquipmentFlyout.lua"/>
 
 	<Texture name="EquipmentFlyoutTexture" file="Interface\PaperDollInfoFrame\UI-GearManager-Flyout" hidden="true" virtual="true"/>
-	<ItemButton name="EquipmentFlyoutButtonTemplate" virtual="true">
+	<Button name="EquipmentFlyoutButtonTemplate" inherits="ItemButtonTemplate" virtual="true">
 		<Frames>
 			<Cooldown name="$parentCooldown" parentKey="cooldown" inherits="CooldownFrameTemplate"/>
 		</Frames>
@@ -24,7 +24,7 @@
 			</OnLeave>
 			<OnClick function="EquipmentFlyoutButton_OnClick"/>
 		</Scripts>
-	</ItemButton>
+	</Button>
 	<Button name="EquipmentFlyoutPopoutButtonTemplate" hidden="true" virtual="true">
 		<Size>
 			<AbsDimension x="16" y="32"/>
@@ -43,7 +43,7 @@
 		<Size x="43" y="43"/>
 		<Layers>
 			<Layer level="OVERLAY">
-				<Texture parentKey="Highlight" name="$parentHighlight" file="Interface\PaperDollInfoFrame\UI-GearManager-ItemButton-Highlight">
+				<Texture name="$parentHighlight" file="Interface\PaperDollInfoFrame\UI-GearManager-ItemButton-Highlight">
 					<Size x="50" y="50"/>
 					<Anchors>
 						<Anchor point="LEFT">
@@ -85,7 +85,7 @@
 				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
-						<Texture parentKey="BottomBackground" inherits="EquipmentFlyoutTexture" hidden="false" setAllPoints="true">
+						<Texture name="Test2" file="Interface\PaperDollInfoFrame\UI-GearManager-Flyout" setAllPoints="true">
 							<TexCoords left="0" right="0.8359375" top="0.7890625" bottom="0.94921875"/>
 						</Texture>
 					</Layer>

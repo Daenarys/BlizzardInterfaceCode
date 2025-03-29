@@ -2,7 +2,7 @@
 ..\FrameXML\UI.xsd">
 	<Script file="Blizzard_TalkingHeadUI.lua"/>
 
-	<ContainedAlertFrame name="TalkingHeadFrame" toplevel="true" parent="UIParent" hidden="true" frameStrata="HIGH" frameLevel="1">
+	<Button name="TalkingHeadFrame" toplevel="true" parent="UIParent" hidden="true" frameStrata="HIGH" frameLevel="1">
 		<Size x="570" y="155"/>
 		<Anchors>
 			<Anchor point="BOTTOM" x="0" y="96"/>
@@ -34,10 +34,7 @@
 			<Frame parentKey="TextFrame" setAllPoints="true" useParentLevel="true">
 				<Layers>
 					<Layer level="ARTWORK">
-						<FontString parentKey="Text" inherits="GameFontHighlightLarge" alpha="0.01" justifyH="LEFT" justifyV="TOP" mixin="AutoScalingFontStringMixin">
-							<KeyValues>
-								<KeyValue key="minLineHeight" value="12" type="number"/>
-							</KeyValues>
+						<FontString parentKey="Text" inherits="GameFontHighlightLarge" alpha="0.01" justifyH="LEFT" justifyV="TOP" mixin="ShrinkUntilTruncateFontStringMixin">
 							<Anchors>
 								<Anchor point="TOPLEFT" relativeKey="$parent.$parent.NameFrame.Name" relativePoint="BOTTOMLEFT" x="0" y="-3"/>
 								<Anchor point="BOTTOMRIGHT" x="-42" y="12"/>
@@ -76,7 +73,7 @@
 			<Frame parentKey="PortraitFrame" setAllPoints="true">
 				<Layers>
 					<Layer level="OVERLAY">
-						<Texture parentKey="Portrait" hidden="false" alpha="0.01" alphaMode="BLEND" atlas="TalkingHeads-Alliance-PortraitFrame" useAtlasSize="true">
+						<Texture parentKey="Portrait" hidden="false" alpha="0.01" alphaMode="BLEND" atlas="TalkingHeads-PortraitFrame" useAtlasSize="true">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="5" y="-6"/>
 							</Anchors>
@@ -108,7 +105,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<PlayerModel parentKey="Model" alpha="0.01" >
+					<PlayerModel parentKey="Model" alpha="0.01" alphaMode="BLEND" >
 						<Size x="115" y="115"/>
 						<Anchors>
 							<Anchor point="TOPLEFT" x="21" y="-21"/>
@@ -134,6 +131,7 @@
 								end
 							</OnEvent>
 							<OnModelLoaded function="TalkingHeadFrame_OnModelLoaded"/>
+							<OnAnimFinished function="TalkingHeadFrame_OnAnimFinished"/>
 						</Scripts>
 					</PlayerModel>
 					<Frame parentKey="Overlay">
@@ -161,7 +159,7 @@
 							</Layer>
 						</Layers>
 					</Frame>
-					<Button parentKey="CloseButton" inherits="UIPanelCloseButtonNoScripts" alpha="0.01">
+					<Button parentKey="CloseButton" inherits="UIPanelCloseButtonNoScripts" alpha="0.01" alphaMode="BLEND">
 						<Anchors>
 							<Anchor point="TOPRIGHT" x="-12" y="-12"/>
 						</Anchors>
@@ -229,5 +227,5 @@
 			<OnEvent function="TalkingHeadFrame_OnEvent"/>
 			<OnClick function="TalkingHeadFrame_OnClick"/>
 		</Scripts>
-	</ContainedAlertFrame>
+	</Button>
 </Ui>

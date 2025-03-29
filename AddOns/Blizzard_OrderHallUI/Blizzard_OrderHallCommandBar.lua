@@ -8,7 +8,7 @@ function OrderHallCommandBarMixin:OnLoad()
 
 	self.categoryPool = CreateFramePool("FRAME", self, "OrderHallClassSpecCategoryTemplate");
 
-	local primaryCurrency, _ = C_Garrison.GetCurrencyTypes(Enum.GarrisonType.Type_7_0);
+	local primaryCurrency, _ = C_Garrison.GetCurrencyTypes(LE_GARRISON_TYPE_7_0);
 	self.currency = primaryCurrency;
 
 
@@ -25,8 +25,6 @@ function OrderHallCommandBarMixin:OnLoad()
 	self:EnableMouse(true);
 
 	self.AreaName:SetText(_G["ORDER_HALL_"..class]);
- 
-    OrderHallUpdatePosition();
 end
 
 function OrderHallCommandBarMixin:OnShow()
@@ -43,7 +41,6 @@ function OrderHallCommandBarMixin:OnShow()
 	self:RegisterEvent("GARRISON_FOLLOWER_ADDED");
 	self:RegisterEvent("GARRISON_FOLLOWER_REMOVED");
 	self:RegisterEvent("UPDATE_BINDINGS");
-    self:RegisterEvent("NOTCHED_DISPLAY_MODE_CHANGED")
 
 	self:RequestCategoryInfo();
 	self:RefreshAll();
@@ -80,7 +77,7 @@ function OrderHallCommandBarMixin:OnEvent(event)
 
 		self:RefreshCategories();
 	elseif (event == "UNIT_AURA") then
-		local inOrderHall = C_Garrison.IsPlayerInGarrison(Enum.GarrisonType.Type_7_0);
+		local inOrderHall = C_Garrison.IsPlayerInGarrison(LE_GARRISON_TYPE_7_0);
 		self:SetShown(inOrderHall);
 	elseif (event == "GARRISON_TALENT_COMPLETE" 
 		or event == "GARRISON_TALENT_UPDATE"
@@ -90,22 +87,11 @@ function OrderHallCommandBarMixin:OnEvent(event)
 	elseif (event == "UPDATE_BINDINGS") then
 		self.WorldMapButton.tooltipText = MicroButtonTooltipText(WORLDMAP_BUTTON, "TOGGLEWORLDMAP");
 		self.WorldMapButton.newbieText = NEWBIE_TOOLTIP_WORLDMAP;
-    elseif (event == "NOTCHED_DISPLAY_MODE_CHANGED") then
-        OrderHallUpdatePosition();
 	end
-end
-
-function OrderHallUpdatePosition()
-    local topOffset = GetNotchHeight();
-	if (topOffset ~= 0) then
-		topOffset = topOffset + 1;
-	end
-    OrderHallCommandBar:ClearPointsOffset();
-    OrderHallCommandBar:AdjustPointsOffset(0, topOffset);
 end
 
 function OrderHallCommandBarMixin:RequestCategoryInfo()
-	C_Garrison.RequestClassSpecCategoryInfo(Enum.GarrisonFollowerType.FollowerType_7_0);
+	C_Garrison.RequestClassSpecCategoryInfo(LE_FOLLOWER_TYPE_GARRISON_7_0);
 end
 
 function OrderHallCommandBarMixin:RefreshAll()
@@ -115,7 +101,7 @@ end
 
 function OrderHallCommandBarMixin:RefreshCategories()
 	self.categoryPool:ReleaseAll();
-	local categoryInfo = C_Garrison.GetClassSpecCategoryInfo(Enum.GarrisonFollowerType.FollowerType_7_0);
+	local categoryInfo = C_Garrison.GetClassSpecCategoryInfo(LE_FOLLOWER_TYPE_GARRISON_7_0);
 
 	local numCategories = #categoryInfo;
 	local prevCategory, firstCategory;
@@ -143,8 +129,7 @@ function OrderHallCommandBarMixin:RefreshCategories()
 end
 
 function OrderHallCommandBarMixin:RefreshCurrency()
-	local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(self.currency);
-	local amount = currencyInfo and currencyInfo.quantity or 0;
+	local currencyName, amount, currencyTexture = GetCurrencyInfo(self.currency);
 	amount = BreakUpLargeNumbers(amount);
 	self.Currency:SetText(amount);
 	-- self.CurrencyIcon:SetTexture(currencyTexture);

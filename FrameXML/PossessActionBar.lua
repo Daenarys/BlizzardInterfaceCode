@@ -22,7 +22,7 @@ function PossessBar_Update ()
 end
 
 function PossessBar_UpdateState ()
-	local texture, spellID, enabled;
+	local texture, name, enabled;
 	local button, background, icon, cooldown;
 
 	for i=1, NUM_POSSESS_SLOTS do
@@ -30,7 +30,7 @@ function PossessBar_UpdateState ()
 		button = _G["PossessButton"..i];
 		background = _G["PossessBackground"..i];
 		icon = _G["PossessButton"..i.."Icon"];
-		texture, spellID, enabled = GetPossessInfo(i);
+		texture, name, enabled = GetPossessInfo(i);
 		icon:SetTexture(texture);
 
 		--Cooldown stuffs
@@ -61,15 +61,16 @@ function PossessButton_OnClick (self)
 			TaxiRequestEarlyLanding();
 			
 			-- Show that the request for landing has been received.
-			local icon = _G["PossessButton"..id.."Icon"];
+			icon = _G["PossessButton"..id.."Icon"];
 			icon:SetDesaturated(true);
-			local button = _G["PossessButton"..id];
+			button = _G["PossessButton"..id];
 			button:SetChecked(true);
 			button:Disable();
 		elseif ( UnitControllingVehicle("player") and CanExitVehicle() ) then
 			VehicleExit();
 		else
-			CancelPetPossess();
+			local texture, name = GetPossessInfo(id);
+			CancelUnitBuff("player", name);
 		end
 	end
 end

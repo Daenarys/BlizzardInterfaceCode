@@ -1,3 +1,6 @@
+TOOLTIP_DEFAULT_COLOR = { r = 1, g = 1, b = 1 };
+TOOLTIP_DEFAULT_BACKGROUND_COLOR = { r = 0.09, g = 0.09, b = 0.19 };
+
 -- Panel Positions
 PANEL_INSET_LEFT_OFFSET = 4;
 PANEL_INSET_RIGHT_OFFSET = -6;
@@ -21,6 +24,21 @@ function MagicButton_OnLoad(self)
 				self:SetPoint(point, relativeTo, relativePoint, 1, 0);
 			end
 
+			if (relativeTo.RightSeparator) then
+				-- Modify separator to make it a Middle
+				self.LeftSeparator = relativeTo.RightSeparator;
+			else
+				-- Add a Middle separator
+				self.LeftSeparator = self:CreateTexture(self:GetName() and self:GetName().."_LeftSeparator" or nil, "BORDER");
+				relativeTo.RightSeparator = self.LeftSeparator;
+			end
+
+			self.LeftSeparator:SetTexture("Interface\\FrameGeneral\\UI-Frame");
+			self.LeftSeparator:SetTexCoord(0.00781250, 0.10937500, 0.75781250, 0.95312500);
+			self.LeftSeparator:SetWidth(13);
+			self.LeftSeparator:SetHeight(25);
+			self.LeftSeparator:SetPoint("TOPRIGHT", self, "TOPLEFT", 5, 1);
+
 			leftHandled = true;
 
 		elseif (relativeTo:GetObjectType() == "Button" and (point == "TOPRIGHT" or point == "RIGHT")) then
@@ -28,6 +46,21 @@ function MagicButton_OnLoad(self)
 			if (offsetX == 0 and offsetY == 0) then
 				self:SetPoint(point, relativeTo, relativePoint, -1, 0);
 			end
+
+			if (relativeTo.LeftSeparator) then
+				-- Modify separator to make it a Middle
+				self.RightSeparator = relativeTo.LeftSeparator;
+			else
+				-- Add a Middle separator
+				self.RightSeparator = self:CreateTexture(self:GetName() and self:GetName().."_RightSeparator" or nil, "BORDER");
+				relativeTo.LeftSeparator = self.RightSeparator;
+			end
+
+			self.RightSeparator:SetTexture("Interface\\FrameGeneral\\UI-Frame");
+			self.RightSeparator:SetTexCoord(0.00781250, 0.10937500, 0.75781250, 0.95312500);
+			self.RightSeparator:SetWidth(13);
+			self.RightSeparator:SetHeight(25);
+			self.RightSeparator:SetPoint("TOPLEFT", self, "TOPRIGHT", -5, 1);
 
 			rightHandled = true;
 
@@ -47,111 +80,194 @@ function MagicButton_OnLoad(self)
 			end
 		end
 	end
-end
 
-function DynamicResizeButton_Resize(self)
-	local padding = 40;
-	local width = self:GetWidth();
-	local textWidth = self:GetTextWidth() + padding;
-	self:SetWidth(math.max(width, textWidth));
-end
-
--- Frame template utilities to show/hide various decorative elements and to resize content areas
-function FrameTemplate_SetAtticHeight(self, atticHeight)
-	if self.bottomInset then
-		self.bottomInset:SetPoint("TOPLEFT", self, "TOPLEFT", PANEL_INSET_LEFT_OFFSET, -atticHeight);
-	else
-		self.Inset:SetPoint("TOPLEFT", self, "TOPLEFT", PANEL_INSET_LEFT_OFFSET, -atticHeight);
+	-- If this button didn't have a left anchor, add the left border texture
+	if (not leftHandled) then
+		if (not self.LeftSeparator) then
+			-- Add a Left border
+			self.LeftSeparator = self:CreateTexture(self:GetName() and self:GetName().."_LeftSeparator" or nil, "BORDER");
+			self.LeftSeparator:SetTexture("Interface\\FrameGeneral\\UI-Frame");
+			self.LeftSeparator:SetTexCoord(0.24218750, 0.32812500, 0.63281250, 0.82812500);
+			self.LeftSeparator:SetWidth(11);
+			self.LeftSeparator:SetHeight(25);
+			self.LeftSeparator:SetPoint("TOPRIGHT", self, "TOPLEFT", 6, 1);
+		end
 	end
-end
 
-function FrameTemplate_SetButtonBarHeight(self, buttonBarHeight)
-	if self.topInset then
-		self.topInset:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", PANEL_INSET_RIGHT_OFFSET, buttonBarHeight);
-	else
-		self.Inset:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", PANEL_INSET_RIGHT_OFFSET, buttonBarHeight);
+	-- If this button didn't have a right anchor, add the right border texture
+	if (not rightHandled) then
+		if (not self.RightSeparator) then
+			-- Add a Right border
+			self.RightSeparator = self:CreateTexture(self:GetName() and self:GetName().."_RightSeparator" or nil, "BORDER");
+			self.RightSeparator:SetTexture("Interface\\FrameGeneral\\UI-Frame");
+			self.RightSeparator:SetTexCoord(0.90625000, 0.99218750, 0.00781250, 0.20312500);
+			self.RightSeparator:SetWidth(11);
+			self.RightSeparator:SetHeight(25);
+			self.RightSeparator:SetPoint("TOPLEFT", self, "TOPRIGHT", -6, 1);
+		end
 	end
 end
 
 -- ButtonFrameTemplate code
 function ButtonFrameTemplate_HideButtonBar(self)
-	FrameTemplate_SetButtonBarHeight(self, PANEL_INSET_BOTTOM_OFFSET);
+	if self.bottomInset then
+		self.bottomInset:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", PANEL_INSET_RIGHT_OFFSET, PANEL_INSET_BOTTOM_OFFSET);
+	else
+		_G[self:GetName() .. "Inset"]:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", PANEL_INSET_RIGHT_OFFSET, PANEL_INSET_BOTTOM_OFFSET);
+	end
+	_G[self:GetName() .. "BtnCornerLeft"]:Hide();
+	_G[self:GetName() .. "BtnCornerRight"]:Hide();
+	_G[self:GetName() .. "ButtonBottomBorder"]:Hide();
 end
 
 function ButtonFrameTemplate_ShowButtonBar(self)
-	FrameTemplate_SetButtonBarHeight(self, PANEL_INSET_BOTTOM_BUTTON_OFFSET);
+	if self.topInset then
+		self.topInset:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", PANEL_INSET_RIGHT_OFFSET, PANEL_INSET_BOTTOM_BUTTON_OFFSET);
+	else
+		_G[self:GetName() .. "Inset"]:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", PANEL_INSET_RIGHT_OFFSET, PANEL_INSET_BOTTOM_BUTTON_OFFSET);
+	end
+	_G[self:GetName() .. "BtnCornerLeft"]:Show();
+	_G[self:GetName() .. "BtnCornerRight"]:Show();
+	_G[self:GetName() .. "ButtonBottomBorder"]:Show();
 end
 
 function ButtonFrameTemplate_HideAttic(self)
-	FrameTemplate_SetAtticHeight(self, -PANEL_INSET_TOP_OFFSET);
-
-	if self.TopTileStreaks then
-		self.TopTileStreaks:Hide();
+	if self.topInset then
+		self.topInset:SetPoint("TOPLEFT", self, "TOPLEFT", PANEL_INSET_LEFT_OFFSET, PANEL_INSET_TOP_OFFSET);
+	else
+		self.Inset:SetPoint("TOPLEFT", self, "TOPLEFT", PANEL_INSET_LEFT_OFFSET, PANEL_INSET_TOP_OFFSET);
 	end
+	self.TopTileStreaks:Hide();
 end
 
 function ButtonFrameTemplate_ShowAttic(self)
-	FrameTemplate_SetAtticHeight(self, -PANEL_INSET_ATTIC_OFFSET);
-
-	if self.TopTileStreaks then
-		self.TopTileStreaks:Show();
+	if self.topInset then
+		self.topInset:SetPoint("TOPLEFT", self, "TOPLEFT", PANEL_INSET_LEFT_OFFSET, PANEL_INSET_ATTIC_OFFSET);
+	else
+		self.Inset:SetPoint("TOPLEFT", self, "TOPLEFT", PANEL_INSET_LEFT_OFFSET, PANEL_INSET_ATTIC_OFFSET);
 	end
+	self.TopTileStreaks:Show();
 end
+
 
 function ButtonFrameTemplate_HidePortrait(self)
-	self:SetBorder("ButtonFrameTemplateNoPortrait");
-	self:SetPortraitShown(false);
+	self.portrait:Hide();
+	self.portraitFrame:Hide();
+	self.topLeftCorner:Show();
+	self.topBorderBar:SetPoint("TOPLEFT", self.topLeftCorner, "TOPRIGHT",  0, 0);
+	self.leftBorderBar:SetPoint("TOPLEFT", self.topLeftCorner, "BOTTOMLEFT",  0, 0);
 end
+
 
 function ButtonFrameTemplate_ShowPortrait(self)
-	self:SetBorder("PortraitFrameTemplate");
-	self:SetPortraitShown(true);
-end
-
-function ButtonFrameTemplateMinimizable_HidePortrait(self)
-	self:SetBorder("ButtonFrameTemplateNoPortraitMinimizable");
-	self:SetPortraitShown(false);
-end
-
-function ButtonFrameTemplateMinimizable_ShowPortrait(self)
-	self:SetBorder("PortraitFrameTemplateMinimizable");
-	self:SetPortraitShown(true);
+	self.portrait:Show();
+	self.portraitFrame:Show();
+	self.topLeftCorner:Hide();
+	self.topBorderBar:SetPoint("TOPLEFT", self.portraitFrame, "TOPRIGHT",  0, -10);
+	self.leftBorderBar:SetPoint("TOPLEFT", self.portraitFrame, "BOTTOMLEFT",  8, 0);
 end
 
 -- A bit ugly, we want the talent frame to display a dialog box in certain conditions.
-function UIPanelCloseButton_OnClick(self)
-	local parent = self:GetParent();
-	if parent then
-		if parent.onCloseCallback then
-			parent.onCloseCallback(self);
+function PortraitFrameCloseButton_OnClick(self)
+	if ( self:GetParent().onCloseCallback) then
+		self:GetParent().onCloseCallback(self);
+	elseif ( IsOnGlueScreen() ) then
+		self:GetParent():Hide();
+	else
+		HideParentPanel(self);
+	end
+end
+
+
+-- Function to handle the update of manually calculated scrollframes.  Used mostly for listings with an indeterminate number of items
+function FauxScrollFrame_Update(frame, numItems, numToDisplay, buttonHeight, button, smallWidth, bigWidth, highlightFrame, smallHighlightWidth, bigHighlightWidth, alwaysShowScrollBar )
+	-- If more than one screen full of skills then show the scrollbar
+	local frameName = frame:GetName();
+	local scrollBar = _G[ frameName.."ScrollBar" ];
+	local showScrollBar;
+	if ( numItems > numToDisplay or alwaysShowScrollBar ) then
+		frame:Show();
+		showScrollBar = 1;
+	else
+		scrollBar:SetValue(0);
+		frame:Hide();
+	end
+	if ( frame:IsShown() ) then
+		local scrollChildFrame = _G[ frameName.."ScrollChildFrame" ];
+		local scrollUpButton = _G[ frameName.."ScrollBarScrollUpButton" ];
+		local scrollDownButton = _G[ frameName.."ScrollBarScrollDownButton" ];
+		local scrollFrameHeight = 0;
+		local scrollChildHeight = 0;
+
+		if ( numItems > 0 ) then
+			scrollFrameHeight = (numItems - numToDisplay) * buttonHeight;
+			scrollChildHeight = numItems * buttonHeight;
+			if ( scrollFrameHeight < 0 ) then
+				scrollFrameHeight = 0;
+			end
+			scrollChildFrame:Show();
 		else
-			HideUIPanel(parent);
+			scrollChildFrame:Hide();
+		end
+		local maxRange = (numItems - numToDisplay) * buttonHeight;
+		if (maxRange < 0) then
+			maxRange = 0;
+		end
+		scrollBar:SetMinMaxValues(0, maxRange);
+		scrollBar:SetValueStep(buttonHeight);
+		scrollBar:SetStepsPerPage(numToDisplay-1);
+		scrollChildFrame:SetHeight(scrollChildHeight);
+
+		-- Arrow button handling
+		if ( scrollBar:GetValue() == 0 ) then
+			scrollUpButton:Disable();
+		else
+			scrollUpButton:Enable();
+		end
+		if ((scrollBar:GetValue() - scrollFrameHeight) == 0) then
+			scrollDownButton:Disable();
+		else
+			scrollDownButton:Enable();
+		end
+
+		-- Shrink because scrollbar is shown
+		if ( highlightFrame ) then
+			highlightFrame:SetWidth(smallHighlightWidth);
+		end
+		if ( button ) then
+			for i=1, numToDisplay do
+				_G[button..i]:SetWidth(smallWidth);
+			end
+		end
+	else
+		-- Widen because scrollbar is hidden
+		if ( highlightFrame ) then
+			highlightFrame:SetWidth(bigHighlightWidth);
+		end
+		if ( button ) then
+			for i=1, numToDisplay do
+				_G[button..i]:SetWidth(bigWidth);
+			end
 		end
 	end
+	return showScrollBar;
 end
 
-function UIPanelStaticPopupSpecialCloseButton_OnClick(self)
-	StaticPopupSpecial_Hide(self:GetParent());
-end
-
-function UIPanelCloseButton_SetBorderAtlas(self, atlas, xOffset, yOffset, textureKit)
-	local border = self.Border or self:CreateTexture(nil, "OVERLAY", nil, 7);
-	self.Border = border;
-
-	if textureKit then
-		-- NOTE: Using atlas as the texture kit format string here.
-		SetupTextureKitOnFrame(textureKit, border, atlas, TextureKitConstants.DoNotSetVisibility, TextureKitConstants.UseAtlasSize);
-	else
-		border:SetAtlas(atlas, true);
+function FauxScrollFrame_OnVerticalScroll(self, value, itemHeight, updateFunction)
+	local scrollbar = _G[self:GetName().."ScrollBar"];
+	scrollbar:SetValue(value);
+	self.offset = floor((value / itemHeight) + 0.5);
+	if ( updateFunction ) then
+		updateFunction(self);
 	end
-
-	border:SetPoint("CENTER", self, "CENTER", xOffset or 0, yOffset or 0);
 end
 
-function UIPanelCloseButton_SetBorderShown(self, shown)
-	if self.Border then
-		self.Border:SetShown(shown);
-	end
+function FauxScrollFrame_GetOffset(frame)
+	return frame.offset;
+end
+
+function FauxScrollFrame_SetOffset(frame, offset)
+	frame.offset = offset;
 end
 
 -- Scrollframe functions
@@ -282,32 +398,6 @@ function ScrollBar_AdjustAnchors(scrollBar, topAdj, bottomAdj, xAdj)
 	scrollBar:SetPoint("BOTTOMLEFT", parent, "BOTTOMRIGHT", x + xAdj, bottomY + bottomAdj);
 end
 
-function ScrollBar_Disable(scrollBar)
-	scrollBar:Disable();
-	local scrollDownButton = scrollBar.ScrollDownButton or _G[scrollBar:GetName().."ScrollDownButton"];
-	if scrollDownButton then
-		scrollDownButton:Disable();
-	end
-	local scrollUpButton = scrollBar.ScrollUpButton or _G[scrollBar:GetName().."ScrollUpButton"];
-	if scrollUpButton then
-		scrollUpButton:Disable();
-	end
-end
-
-function ScrollBar_Enable(scrollBar)
-	scrollBar:Enable();
-	local currValue = scrollBar:GetValue();
-	local minVal, maxVal = scrollBar:GetMinMaxValues();
-	local scrollDownButton = scrollBar.ScrollDownButton or _G[scrollBar:GetName().."ScrollDownButton"];
-	if scrollDownButton and currValue < maxVal then
-		scrollDownButton:Enable();
-	end
-	local scrollUpButton = scrollBar.ScrollUpButton or _G[scrollBar:GetName().."ScrollUpButton"];
-	if scrollUpButton and currValue > minVal then
-		scrollUpButton:Enable();
-	end
-end
-
 function HideParentPanel(self)
 	HideUIPanel(self:GetParent());
 end
@@ -337,8 +427,20 @@ function EditBox_HandleTabbing(self, tabList)
 	_G[target]:SetFocus();
 end
 
+function EditBox_ClearFocus (self)
+	self:ClearFocus();
+end
+
 function EditBox_SetFocus (self)
 	self:SetFocus();
+end
+
+function EditBox_HighlightText (self)
+	self:HighlightText();
+end
+
+function EditBox_ClearHighlight (self)
+	self:HighlightText(0, 0);
 end
 
 function InputBoxInstructions_OnTextChanged(self)
@@ -357,45 +459,6 @@ end
 
 function InputBoxInstructions_OnEnable(self)
 	InputBoxInstructions_UpdateColorForEnabledState(self, self.enabledColor);
-end
-
-function SearchBoxTemplate_OnLoad(self)
-	self.searchIcon:SetVertexColor(0.6, 0.6, 0.6);
-	self:SetTextInsets(16, 20, 0, 0);
-	self.Instructions:SetText(SEARCH);
-	self.Instructions:ClearAllPoints();
-	self.Instructions:SetPoint("TOPLEFT", self, "TOPLEFT", 16, 0);
-	self.Instructions:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -20, 0);
-end
-
-function SearchBoxTemplate_OnEditFocusLost(self)
-	if ( self:GetText() == "" ) then
-		self.searchIcon:SetVertexColor(0.6, 0.6, 0.6);
-		self.clearButton:Hide();
-	end
-end
-
-function SearchBoxTemplate_OnEditFocusGained(self)
-	self.searchIcon:SetVertexColor(1.0, 1.0, 1.0);
-	self.clearButton:Show();
-end
-
-function SearchBoxTemplate_OnTextChanged(self)
-	if ( not self:HasFocus() and self:GetText() == "" ) then
-		self.searchIcon:SetVertexColor(0.6, 0.6, 0.6);
-		self.clearButton:Hide();
-	else
-		self.searchIcon:SetVertexColor(1.0, 1.0, 1.0);
-		self.clearButton:Show();
-	end
-	InputBoxInstructions_OnTextChanged(self);
-end
-
-function SearchBoxTemplateClearButton_OnClick(self)
-	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	local editBox = self:GetParent();
-	editBox:SetText("");
-	editBox:ClearFocus();
 end
 
 -- functions to manage tab interfaces where only one tab of a group may be selected
@@ -442,12 +505,11 @@ end
 function PanelTemplates_TabResize(tab, padding, absoluteSize, minWidth, maxWidth, absoluteTextSize)
 	local tabName = tab:GetName();
 
-	local buttonMiddle = tab.Middle or tab.middleTexture or _G[tabName.."Middle"];
-	local buttonMiddleDisabled = tab.MiddleDisabled or (tabName and _G[tabName.."MiddleDisabled"]);
-	local left = tab.Left or tab.leftTexture or _G[tabName.."Left"];
-	local sideWidths = 2 * left:GetWidth();
+	local buttonMiddle = tab.Middle or _G[tabName.."Middle"];
+	local buttonMiddleDisabled = tab.MiddleDisabled or _G[tabName.."MiddleDisabled"];
+	local sideWidths = tab.Left and 2 * tab.Left:GetWidth() or 2 * _G[tabName.."Left"]:GetWidth();
 	local tabText = tab.Text or _G[tab:GetName().."Text"];
-	local highlightTexture = tab.HighlightTexture or (tabName and _G[tabName.."HighlightTexture"]);
+	local highlightTexture = tab.HighlightTexture or _G[tabName.."HighlightTexture"];
 
 	local width, tabWidth;
 	local textWidth;
@@ -516,7 +578,7 @@ function PanelTemplates_ResizeTabsToFit(frame, maxWidthForAllTabs)
 	for i = 1, frame.numTabs do
 		local tab = GetTabByIndex(frame, i);
 		currentWidth = currentWidth + tab:GetWidth();
-		if tab.Text and tab.Text:IsTruncated() then
+		if tab.Text:IsTruncated() then
 			truncatedText = true;
 		end
 	end
@@ -607,9 +669,8 @@ function PanelTemplates_SelectTab(tab)
 	middleDisabled:Show();
 	rightDisabled:Show();
 
-	local tooltip = GetAppropriateTooltip();
-	if tooltip:IsOwned(tab) then
-		tooltip:Hide();
+	if ( GameTooltip and GameTooltip:IsOwned(tab) ) then
+		GameTooltip:Hide();
 	end
 end
 
@@ -803,9 +864,7 @@ end
 MaximizeMinimizeButtonFrameMixin = {};
 
 function MaximizeMinimizeButtonFrameMixin:OnShow()
-	if self.isAutomaticAction then
-		self.isAutomaticAction = false;
-	elseif self.cvar then
+	if self.cvar then
 		local minimized = GetCVarBool(self.cvar);
 		if minimized then
 			self:Minimize();
@@ -813,10 +872,6 @@ function MaximizeMinimizeButtonFrameMixin:OnShow()
 			self:Maximize();
 		end
 	end
-end
-
-function MaximizeMinimizeButtonFrameMixin:IsMinimized()
-	return self.isMinimized;
 end
 
 function MaximizeMinimizeButtonFrameMixin:SetMinimizedCVar(cvar)
@@ -827,1368 +882,32 @@ function MaximizeMinimizeButtonFrameMixin:SetOnMaximizedCallback(maximizedCallba
 	self.maximizedCallback = maximizedCallback;
 end
 
-function MaximizeMinimizeButtonFrameMixin:Maximize(isAutomaticAction)
+function MaximizeMinimizeButtonFrameMixin:Maximize()
 	if self.maximizedCallback then
 		self.maximizedCallback(self);
 	end
 
-	if not isAutomaticAction and self.cvar then
+	if self.cvar then
 		SetCVar(self.cvar, 0);
 	end
-
-	self.isMinimized = false;
-	self.isAutomaticAction = isAutomaticAction;
-
-	self:SetMinimizedLook();
+	
+	self.MaximizeButton:Hide();
+	self.MinimizeButton:Show();
 end
 
 function MaximizeMinimizeButtonFrameMixin:SetOnMinimizedCallback(minimizedCallback)
 	self.minimizedCallback = minimizedCallback;
 end
 
-function MaximizeMinimizeButtonFrameMixin:Minimize(isAutomaticAction)
+function MaximizeMinimizeButtonFrameMixin:Minimize()
 	if self.minimizedCallback then
-		self:minimizedCallback();
+		self.minimizedCallback(self);
 	end
-
-	if not isAutomaticAction and self.cvar then
+	
+	if self.cvar then
 		SetCVar(self.cvar, 1);
 	end
-
-	self.isMinimized = true;
-	self.isAutomaticAction = isAutomaticAction;
-
-	self:SetMaximizedLook();
-end
-
-function MaximizeMinimizeButtonFrameMixin:SetMinimizedLook()
-	self.MaximizeButton:Hide();
-	self.MinimizeButton:Show();
-end
-
-function MaximizeMinimizeButtonFrameMixin:SetMaximizedLook()
+	
 	self.MaximizeButton:Show();
 	self.MinimizeButton:Hide();
-end
-
--- Truncated Button code
-
-function TruncatedButton_OnSizeChanged(self, width, height)
-	self.Text:SetWidth(width - 5);
-	self.Text:SetHeight(height);
-end
-
-function TruncatedButton_OnEnter(self)
-	if self.Text:IsTruncated() then
-		local tooltip = GetAppropriateTooltip();
-		tooltip:SetOwner(self, "ANCHOR_RIGHT");
-		tooltip:SetText(self.Text:GetText());
-		tooltip:Show();
-	end
-end
-
-function TruncatedButton_OnLeave(self)
-	local tooltip = GetAppropriateTooltip();
-	if tooltip:GetOwner() == self then
-		tooltip:Hide();
-	end
-end
-
--- Truncated Tooltip Script code
-
-function TruncatedTooltipScript_OnEnter(self)
-	local text = self.truncatedTooltipScriptText or self.Text;
-	if text:IsTruncated() then
-		local tooltip = GetAppropriateTooltip();
-		tooltip:SetOwner(self, "ANCHOR_RIGHT");
-		GameTooltip_AddNormalLine(tooltip, text:GetText());
-		tooltip:Show();
-	end
-end
-
-function TruncatedTooltipScript_OnLeave(self)
-	local tooltip = GetAppropriateTooltip();
-	if tooltip:GetOwner() == self then
-		tooltip:Hide();
-	end
-end
-
--- Add more methods as needed to pass functionality through to the FontString (like SetText and SetTextColor below)
-TruncatedTooltipFontStringWrapperMixin = {}
-
-function TruncatedTooltipFontStringWrapperMixin:SetText(...)
-	self.Text:SetText(...);
-	self:MarkDirty();
-end
-
-function TruncatedTooltipFontStringWrapperMixin:SetTextColor(...)
-	self.Text:SetTextColor(...);
-end
-
-function TruncatedTooltipFontStringWrapperMixin:OnEnter()
-	if self.Text:IsTruncated() then
-		local tooltip = GetAppropriateTooltip();
-		tooltip:SetOwner(self, "ANCHOR_RIGHT");
-		tooltip:SetText(self.Text:GetText());
-		tooltip:Show();
-	end
-end
-
-function TruncatedTooltipFontStringWrapperMixin:OnLeave()
-	local tooltip = GetAppropriateTooltip();
-	if tooltip:GetOwner() == self then
-		tooltip:Hide();
-	end
-end
-
-function GetAppropriateTopLevelParent()
-	return UIParent or GlueParent;
-end
-
-function SetAppropriateTopLevelParent(frame)
-	local parent = GetAppropriateTopLevelParent();
-	if parent then
-		frame:SetParent(parent);
-	end
-end
-
-function GetAppropriateTooltip()
-	return UIParent and GameTooltip or GlueTooltip;
-end
-
-ColumnDisplayMixin = {};
-
-function ColumnDisplayMixin:OnLoad()
-	self.columnHeaders = CreateFramePool("BUTTON", self, "ColumnDisplayButtonTemplate");
-end
-
---[[
-The layout of your column display might look something like:
-local FOO_COLUMN_INFO = {
-	[1] = {
-		title = FOO_COLUMN_xxx_TITLE,
-		width = 60,
-	},
-
-	...
-
-	[5] = {
-		title = FOO_COLUMN_xxxxx_TITLE,
-		width = 0,
-	},
-};
---]]
-
-function ColumnDisplayMixin:LayoutColumns(columnInfo, extraColumnInfo)
-	self.columnHeaders:ReleaseAll();
-
-	local extraHeader = nil;
-	if extraColumnInfo then
-		extraHeader = self.columnHeaders:Acquire();
-		extraHeader:SetText(extraColumnInfo.title);
-		extraHeader:SetWidth(extraColumnInfo.width);
-		extraHeader:SetPoint("BOTTOMRIGHT", -28, 1);
-		extraHeader:SetID(#columnInfo + 1);
-		extraHeader:Show();
-	end
-
-	local previousHeader = nil;
-	for i, info in ipairs(columnInfo) do
-		local header = self.columnHeaders:Acquire();
-		header:SetText(info.title);
-		header:SetWidth(info.width);
-		header:SetID(i);
-		if i == 1 then
-			header:SetPoint("BOTTOMLEFT", 2, 1);
-			if #columnInfo == 1 then
-				header:SetPoint("BOTTOMRIGHT");
-			end
-		else
-			header:SetPoint("BOTTOMLEFT", previousHeader, "BOTTOMRIGHT", -2, 0);
-
-			if i == #columnInfo and info.width == 0 then
-				if extraHeader then
-					header:SetPoint("BOTTOMRIGHT", extraHeader, "BOTTOMLEFT", 2, 0);
-				else
-					header:SetPoint("BOTTOMRIGHT", -28, 1);
-				end
-			end
-		end
-
-		header:Show();
-		previousHeader = header;
-	end
-end
-
-function ColumnDisplayMixin:OnClick(columnIndex)
-	if self.sortingFunction then
-		self.sortingFunction(self, columnIndex);
-	end
-end
-
-function ColumnDisplayButton_OnClick(self)
-	self:GetParent():OnClick(self:GetID());
-end
-
-IconButtonMixin = {};
-
-function IconButtonMixin:OnMouseDown()
-	if self:IsEnabled() then
-		self.Icon:SetPoint("CENTER", self, "CENTER", 0, -1);
-	end
-end
-
-function IconButtonMixin:OnMouseUp()
-	self.Icon:SetPoint("CENTER", self, "CENTER", -1, 0);
-end
-
-SquareIconButtonMixin = {};
-
-function SquareIconButtonMixin:OnLoad()
-	if self.icon then
-		self:SetIcon(self.icon);
-	elseif self.iconAtlas then
-		self:SetAtlas(self.iconAtlas);
-	end
-end
-
-function SquareIconButtonMixin:SetIcon(icon)
-	self.Icon:SetTexture(icon);
-end
-
-function SquareIconButtonMixin:SetAtlas(atlas)
-	self.Icon:SetAtlas(atlas);
-end
-
-function SquareIconButtonMixin:SetOnClickHandler(onClickHandler)
-	self.onClickHandler = onClickHandler;
-end
-
-function SquareIconButtonMixin:SetTooltipInfo(tooltipTitle, tooltipText)
-	self.tooltipTitle = tooltipTitle;
-	self.tooltipText = tooltipText;
-end
-
-function SquareIconButtonMixin:OnMouseDown()
-	if self:IsEnabled() then
-		-- Square icon button template still uses down-to-the-left depress behavior to match the existing art.
-		self.Icon:SetPoint("CENTER", self, "CENTER", -2, -1);
-	end
-end
-
-function SquareIconButtonMixin:OnMouseUp()
-	self.Icon:SetPoint("CENTER", self, "CENTER", -1, 0);
-end
-
-function SquareIconButtonMixin:OnEnter()
-	if self.tooltipTitle then
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -8, -8);
-		GameTooltip_SetTitle(GameTooltip, self.tooltipTitle);
-
-		if self.tooltipText then
-			local wrap = true;
-			GameTooltip_AddNormalLine(GameTooltip, self.tooltipText, wrap);
-		end
-
-		GameTooltip:Show();
-	end
-end
-
-function SquareIconButtonMixin:OnLeave()
-	GameTooltip_Hide();
-end
-
-function SquareIconButtonMixin:OnClick(...)
-	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	if self.onClickHandler then
-		self.onClickHandler(self, ...);
-	end
-end
-
-function SquareIconButtonMixin:SetEnabledState(enabled)
-	self:SetEnabled(enabled);
-	self.Icon:SetDesaturated(not enabled);
-end
-
-UIMenuButtonStretchMixin = {}
-
-function UIMenuButtonStretchMixin:SetTextures(texture)
-	self.TopLeft:SetTexture(texture);
-	self.TopRight:SetTexture(texture);
-	self.BottomLeft:SetTexture(texture);
-	self.BottomRight:SetTexture(texture);
-	self.TopMiddle:SetTexture(texture);
-	self.MiddleLeft:SetTexture(texture);
-	self.MiddleRight:SetTexture(texture);
-	self.BottomMiddle:SetTexture(texture);
-	self.MiddleMiddle:SetTexture(texture);
-end
-
-function UIMenuButtonStretchMixin:OnMouseDown(button)
-	if ( self:IsEnabled() ) then
-		self:SetTextures("Interface\\Buttons\\UI-Silver-Button-Down");
-		if ( self.Icon ) then
-			if ( not self.Icon.oldPoint ) then
-				local point, relativeTo, relativePoint, x, y = self.Icon:GetPoint(1);
-				self.Icon.oldPoint = point;
-				self.Icon.oldX = x;
-				self.Icon.oldY = y;
-			end
-			self.Icon:SetPoint(self.Icon.oldPoint, self.Icon.oldX + 1, self.Icon.oldY - 1);
-		end
-	end
-end
-
-function UIMenuButtonStretchMixin:OnMouseUp(button)
-	if ( self:IsEnabled() ) then
-		self:SetTextures("Interface\\Buttons\\UI-Silver-Button-Up");
-		if ( self.Icon ) then
-			self.Icon:SetPoint(self.Icon.oldPoint, self.Icon.oldX, self.Icon.oldY);
-		end
-	end
-end
-
-function UIMenuButtonStretchMixin:OnShow()
-	-- we need to reset our textures just in case we were hidden before a mouse up fired
-	self:SetTextures("Interface\\Buttons\\UI-Silver-Button-Up");
-end
-
-function UIMenuButtonStretchMixin:OnEnable()
-	self:SetTextures("Interface\\Buttons\\UI-Silver-Button-Up");
-end
-
-function UIMenuButtonStretchMixin:OnEnter()
-	if(self.tooltipText ~= nil) then
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-		GameTooltip_SetTitle(GameTooltip, self.tooltipText);
-		GameTooltip:Show();
-	end
-end
-
-function UIMenuButtonStretchMixin:OnLeave()
-	if(self.tooltipText ~= nil) then
-		GameTooltip:Hide();
-	end
-end
-
-UIResettableDropdownButtonMixin = {};
-
-function UIResettableDropdownButtonMixin:OnLoad()
-	self.ResetButton:SetScript("OnClick", function(button, buttonName, down)
-		if self.resetFunction then
-			 self.resetFunction();
-		end
-
-		self.ResetButton:Hide();
-	end);
-end
-
-function UIResettableDropdownButtonMixin:OnMouseDown()
-	UIMenuButtonStretchMixin.OnMouseDown(self, button);
-	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-end
-
-function UIResettableDropdownButtonMixin:SetResetFunction(resetFunction)
-	self.resetFunction = resetFunction;
-end
-
-DialogHeaderMixin = {};
-
-function DialogHeaderMixin:OnLoad()
-	if self.textString then
-		self:Setup(self.textString);
-	end
-end
-
-function DialogHeaderMixin:Setup(text)
-	self.Text:SetText(text);
-	self:SetWidth(self.Text:GetWidth() + self.headerTextPadding);
-end
-
-UIButtonMixin = {}
-
-function UIButtonMixin:InitButton()
-	self:SetNormalAtlas(self.atlasName);
-	self:SetPushedAtlas(self.atlasName.."-Pressed");
-	self:SetDisabledAtlas(self.atlasName.."-Disabled");
-	self:SetHighlightAtlas(self.atlasName.."-Highlight");
-end
-
-function UIButtonMixin:GetAppropriateTooltip()
-	return UIParent and GameTooltip or GlueTooltip;
-end
-
-function UIButtonMixin:OnEnter()
-	local tooltipText = GetValueOrCallFunction(self, "tooltip");
-	if tooltipText then
-		local tooltip = self:GetAppropriateTooltip();
-		tooltip:SetOwner(self, "ANCHOR_RIGHT");
-		tooltip:SetText(tooltipText);
-	end
-end
-
-function UIButtonMixin:OnLeave()
-	local tooltip = self:GetAppropriateTooltip();
-	tooltip:Hide();
-end
-
-ThreeSliceButtonMixin = CreateFromMixins(UIButtonMixin);
-
-function ThreeSliceButtonMixin:GetLeftAtlasName()
-	return self.atlasName.."-Left";
-end
-
-function ThreeSliceButtonMixin:GetRightAtlasName()
-	return self.atlasName.."-Right";
-end
-
-function ThreeSliceButtonMixin:GetCenterAtlasName()
-	return "_"..self.atlasName.."-Center";
-end
-
-function ThreeSliceButtonMixin:GetHighlightAtlasName()
-	return self.atlasName.."-Highlight";
-end
-
-function ThreeSliceButtonMixin:InitButton()
-	self.leftAtlasInfo = C_Texture.GetAtlasInfo(self:GetLeftAtlasName());
-	self.rightAtlasInfo = C_Texture.GetAtlasInfo(self:GetRightAtlasName());
-
-	self:SetHighlightAtlas(self:GetHighlightAtlasName());
-end
-
-function ThreeSliceButtonMixin:UpdateScale()
-	local buttonHeight = self:GetHeight();
-	local buttonWidth = self:GetWidth();
-	local scale = buttonHeight / self.leftAtlasInfo.height;
-	self.Left:SetScale(scale);
-	self.Right:SetScale(scale);
-
-	local leftWidth = self.leftAtlasInfo.width * scale;
-	local rightWidth = self.rightAtlasInfo.width * scale;
-	local leftAndRightWidth = leftWidth + rightWidth;
-
-	if leftAndRightWidth > buttonWidth then
-		-- At the current buttonHeight, the left and right textures are too big to fit within the button width
-		-- So slice some width off of the textures and adjust texture coords accordingly
-		local extraWidth = leftAndRightWidth - buttonWidth;
-		local newLeftWidth = leftWidth;
-		local newRightWidth = rightWidth;
-
-		-- If one of the textures is sufficiently larger than the other one, we can remove all of the width from there
-		if (leftWidth - extraWidth) > rightWidth then
-			-- left is big enough to take the whole thing...deduct it all from there
-			newLeftWidth = leftWidth - extraWidth;
-		elseif (rightWidth - extraWidth) > leftWidth then
-			-- right is big enough to take the whole thing...deduct it all from there
-			newRightWidth = rightWidth - extraWidth;
-		else
-			-- neither side is sufficiently larger than the other to take the whole extra width
-			if leftWidth ~= rightWidth then
-				-- so set both widths equal to the smaller size and subtract the difference from extraWidth
-				local unevenAmount = math.abs(leftWidth - rightWidth);
-				extraWidth = extraWidth - unevenAmount;
-				newLeftWidth = math.min(leftWidth, rightWidth);
-				newRightWidth = newLeftWidth;
-			end
-			-- newLeftWidth and newRightWidth are now equal and we just need to remove half of extraWidth from each
-			local equallyDividedExtraWidth = extraWidth / 2;
-			newLeftWidth = newLeftWidth - equallyDividedExtraWidth;
-			newRightWidth = newRightWidth - equallyDividedExtraWidth;
-		end
-
-		-- Now set the tex coords and widths of both textures
-		local leftPercentage = newLeftWidth / leftWidth;
-		self.Left:SetTexCoord(0, leftPercentage, 0, 1);
-		self.Left:SetWidth(newLeftWidth / scale);
-
-		local rightPercentage = newRightWidth / rightWidth;
-		self.Right:SetTexCoord(1 - rightPercentage, 1, 0, 1);
-		self.Right:SetWidth(newRightWidth / scale);
-	else
-		self.Left:SetTexCoord(0, 1, 0, 1);
-		self.Left:SetWidth(self.leftAtlasInfo.width);
-		self.Right:SetTexCoord(0, 1, 0, 1);
-		self.Right:SetWidth(self.rightAtlasInfo.width);
-	end
-end
-
-function ThreeSliceButtonMixin:UpdateButton(buttonState)
-	buttonState = buttonState or self:GetButtonState();
-
-	if not self:IsEnabled() then
-		buttonState = "DISABLED";
-	end
-
-	local atlasNamePostfix = "";
-	if buttonState == "DISABLED" then
-		atlasNamePostfix = "-Disabled";
-	elseif buttonState == "PUSHED" then
-		atlasNamePostfix = "-Pressed";
-	end
-
-	local useAtlasSize = true;
-	self.Left:SetAtlas(self:GetLeftAtlasName()..atlasNamePostfix, useAtlasSize);
-	self.Center:SetAtlas(self:GetCenterAtlasName()..atlasNamePostfix);
-	self.Right:SetAtlas(self:GetRightAtlasName()..atlasNamePostfix, useAtlasSize);
-
-	self:UpdateScale();
-end
-
-function ThreeSliceButtonMixin:OnMouseDown()
-	self:UpdateButton("PUSHED");
-end
-
-function ThreeSliceButtonMixin:OnMouseUp()
-	self:UpdateButton("NORMAL");
-end
-
--- Allows inheriting buttons to override OnLoad and OnShow
-ButtonControllerMixin = {};
-
-function ButtonControllerMixin:OnLoad()
-	if self:GetParent().InitButton then
-		self:GetParent():InitButton();
-	end
-end
-
-function ButtonControllerMixin:OnShow()
-	if self:GetParent().UpdateButton then
-		self:GetParent():UpdateButton();
-	end
-end
-
-ResizeCheckButtonMixin = {}
-
-function ResizeCheckButtonMixin:OnLoad()
-	self.Label:SetText(self.labelText);
-end
-
-function ResizeCheckButtonMixin:OnShow()
-	ResizeLayoutMixin.OnShow(self);
-end
-
--- Override in derived mixins
-function ResizeCheckButtonMixin:OnCheckButtonClick()
-end
-
-SharedEditBoxMixin = {}
-
-function SharedEditBoxMixin:OnLoad()
-	local leftAtlasInfo = C_Texture.GetAtlasInfo("common-gray-button-entrybox-left");
-
-	local editBoxHeight = self:GetHeight();
-	local scale = editBoxHeight / leftAtlasInfo.height;
-
-	self.Left:SetScale(scale);
-	self.Right:SetScale(scale);
-
-	if self.justifyH then
-		self:SetJustifyH(self.justifyH);
-	end
-end
-
-SliderWithButtonsAndLabelMixin = {}
-
-function SliderWithButtonsAndLabelMixin:OnEnter()
-end
-
-function SliderWithButtonsAndLabelMixin:OnLeave()
-end
-
-function SliderWithButtonsAndLabelMixin:SetupSlider(minValue, maxValue, value, valueStep, label)
-	self.minValue = minValue;
-	self.maxValue = maxValue;
-	self.Slider:SetMinMaxValues(minValue, maxValue);
-
-	self.valueStep = valueStep;
-	self.Slider:SetValueStep(valueStep);
-
-	self.value = value;
-	self.Slider:SetValue(value);
-
-	self.Label:SetText(label);
-end
-
-function SliderWithButtonsAndLabelMixin:OnSliderValueChanged(value, userInput)
-	self.value = value;
-
-	self.IncrementButton:SetEnabled(value < self.maxValue);
-	self.DecrementButton:SetEnabled(value > self.minValue);
-end
-
-function SliderWithButtonsAndLabelMixin:Increment()
-	local userInput = true;
-	self.Slider:SetValue(self.value + self.valueStep, userInput);
-end
-
-function SliderWithButtonsAndLabelMixin:Decrement()
-	local userInput = true;
-	self.Slider:SetValue(self.value - self.valueStep, userInput);
-end
-
-SelectionPopoutButtonMixin = CreateFromMixins(CallbackRegistryMixin, EventButtonMixin);
-SelectionPopoutButtonMixin:GenerateCallbackEvents(
-	{
-		"OnValueChanged",
-	}
-);
-
-function SelectionPopoutButtonMixin:OnLoad()
-	CallbackRegistryMixin.OnLoad(self);
-
-	self.parent = self:GetParent();
-
-	self.SelectionDetails:SetFrameLevel(self:GetFrameLevel());
-
-	self.Popout.logicalParent = self;
-
-	if IsOnGlueScreen() then
-		self.Popout:SetParent(GlueParent);
-		self.Popout:SetFrameStrata("FULLSCREEN_DIALOG");
-		self.Popout:SetToplevel(true);
-		self.Popout:SetScale(self:GetEffectiveScale());
-	end
-
-	self.buttonPool = CreateFramePool("BUTTON", self.Popout, self.selectionEntryTemplates);
-	self.initialAnchor = AnchorUtil.CreateAnchor("TOPLEFT", self.Popout, "TOPLEFT", 6, -12);
-end
-
-function SelectionPopoutButtonMixin:HandlesGlobalMouseEvent(buttonID, event)
-	return event == "GLOBAL_MOUSE_DOWN" and buttonID == "LeftButton";
-end
-
-function SelectionPopoutButtonMixin:OnEnter()
-	self.parent:OnEnter();
-	if not self.Popout:IsShown() then
-		self.NormalTexture:SetAtlas("charactercreate-customize-dropdownbox-hover");
-	end
-end
-
-function SelectionPopoutButtonMixin:OnLeave()
-	self.parent:OnLeave();
-	if not self.Popout:IsShown() then
-		self.NormalTexture:SetAtlas("charactercreate-customize-dropdownbox");
-	end
-end
-
-function SelectionPopoutButtonMixin:SetEnabled_(enabled)
-	self:SetEnabled(enabled);
-end
-
-function SelectionPopoutButtonMixin:OnPopoutShown()
-	if self.parent.OnPopoutShown then
-		self.parent:OnPopoutShown();
-	end
-end
-
-function SelectionPopoutButtonMixin:OnHide()
-	self:HidePopout();
-end
-
-function SelectionPopoutButtonMixin:HidePopout()
-	self.Popout:Hide();
-
-	if GetMouseFocus() == self then
-		self.NormalTexture:SetAtlas("charactercreate-customize-dropdownbox-hover");
-	else
-		self.NormalTexture:SetAtlas("charactercreate-customize-dropdownbox");
-	end
-
-	self.HighlightTexture:SetAlpha(0);
-end
-
-function SelectionPopoutButtonMixin:ShowPopout()
-	if self.popoutNeedsUpdate then
-		self:UpdatePopout();
-	end
-	SelectionPopouts:CloseAll();
-
-	self.Popout:Show();
-	self.NormalTexture:SetAtlas("charactercreate-customize-dropdownbox-open");
-	self.HighlightTexture:SetAlpha(0.2);
-end
-
-function SelectionPopoutButtonMixin:SetupSelections(selections, selectedIndex)
-	self.selections = selections;
-	self.selectedIndex = selectedIndex;
-
-	if self.Popout:IsShown() then
-		self:UpdatePopout();
-	else
-		self.popoutNeedsUpdate = true;
-	end
-
-	self:UpdateButtonDetails();
-end
-
-local MAX_POPOUT_ENTRIES_FOR_1_COLUMN = 10;
-local MAX_POPOUT_ENTRIES_FOR_2_COLUMNS = 24;
-local MAX_POPOUT_ENTRIES_FOR_3_COLUMNS = 36;
-
-local function getNumColumnsAndStride(numSelections, maxStride)
-	local numColumns, stride;
-	if numSelections > MAX_POPOUT_ENTRIES_FOR_3_COLUMNS then
-		numColumns, stride = 4, math.ceil(numSelections / 4);
-	elseif numSelections > MAX_POPOUT_ENTRIES_FOR_2_COLUMNS then
-		numColumns, stride = 3, math.ceil(numSelections / 3);
-	elseif numSelections > MAX_POPOUT_ENTRIES_FOR_1_COLUMN then
-		numColumns, stride =  2, math.ceil(numSelections / 2);
-	else
-		numColumns, stride =  1, numSelections;
-	end
-
-	if maxStride and stride > maxStride then
-		numColumns = math.ceil(numSelections / maxStride);
-		stride = math.ceil(numSelections / numColumns);
-	end
-
-	return numColumns, stride;
-end
-
-function SelectionPopoutButtonMixin:GetMaxPopoutStride()
-	local maxPopoutHeight = self:GetParent():GetMaxPopoutHeight();
-	if maxPopoutHeight then
-		local selectionHeight = 20;
-		return math.floor(maxPopoutHeight / selectionHeight);
-	end
-end
-
-function SelectionPopoutButtonMixin:UpdatePopout()
-	self.buttonPool:ReleaseAll();
-
-	local selections = self:GetSelections();
-	local numColumns, stride = getNumColumnsAndStride(#selections, self:GetMaxPopoutStride());
-	local buttons = {};
-
-	local hasIneligibleChoice = false;
-	for _, selectionData in ipairs(selections) do
-		if selectionData.ineligibleChoice then
-			hasIneligibleChoice = true;
-			break;
-		end
-	end
-
-	local maxDetailsWidth = 0;
-	for index, selectionData in ipairs(selections) do
-		local button = self.buttonPool:Acquire();
-		local selectionInfo = selections[index];
-
-		local isSelected = (index == self.selectedIndex);
-		button:SetupEntry(selectionInfo, index, isSelected, numColumns > 1, hasIneligibleChoice);
-		maxDetailsWidth = math.max(maxDetailsWidth, button.SelectionDetails:GetWidth());
-
-		table.insert(buttons, button);
-	end
-
-	for _, button in ipairs(buttons) do
-		button.SelectionDetails:SetWidth(maxDetailsWidth);
-		button:Layout();
-		button:Show();
-	end
-
-	if stride ~= self.lastStride then
-		self.layout = AnchorUtil.CreateGridLayout(GridLayoutMixin.Direction.TopLeftToBottomRightVertical, stride);
-		self.lastStride = stride;
-	end
-
-	AnchorUtil.GridLayout(buttons, self.initialAnchor, self.layout);
-
-	self.popoutNeedsUpdate = false;
-end
-
-function SelectionPopoutButtonMixin:GetSelections()
-	return self.selections;
-end
-
-function SelectionPopoutButtonMixin:GetCurrentSelectedData()
-	local selections = self:GetSelections();
-	return selections[self.selectedIndex];
-end
-
-function SelectionPopoutButtonMixin:UpdateButtonDetails()
-end
-
-function SelectionPopoutButtonMixin:GetTooltipText()
-	return self.SelectionDetails:GetTooltipText();
-end
-
-function SelectionPopoutButtonMixin:TogglePopout()
-	local showPopup = not self.Popout:IsShown();
-	if showPopup then
-		self:ShowPopout();
-	else
-		self:HidePopout();
-	end
-end
-
-function SelectionPopoutButtonMixin:OnMouseWheel(delta)
-	if delta > 0 then
-		self:Increment();
-	else
-		self:Decrement();
-	end
-end
-
-function SelectionPopoutButtonMixin:OnMouseDown()
-	if self:IsEnabled() then
-		self:TogglePopout();
-		PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON);
-	end
-end
-
-function SelectionPopoutButtonMixin:FindIndex(predicate)
-	return FindInTableIf(self:GetSelections(), predicate);
-end
-
-function SelectionPopoutButtonMixin:IsDataMatch(data1, data2)
-	return data1 == data2;
-end
-
-function SelectionPopoutButtonMixin:OnEntryClicked(entryData)
-	local newIndex = self:FindIndex(function(element)
-		return self:IsDataMatch(element, entryData);
-	end);
-	self:SetSelectedIndex(newIndex);
-
-	self:HidePopout();
-
-	PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON);
-end
-
-function SelectionPopoutButtonMixin:Update()
-	self:UpdateButtonDetails();
-	self:UpdatePopout();
-	self:GetParent():UpdateButtons();
-end
-
-function SelectionPopoutButtonMixin:CallOnEntrySelected(entryData)
-	self:TriggerEvent(SelectionPopoutButtonMixin.Event.OnValueChanged, entryData);
-
-	if self.parent.OnEntrySelected then
-		self.parent:OnEntrySelected(entryData);
-	end
-end
-
-function SelectionPopoutButtonMixin:OnEntryMouseEnter(entry)
-	if self.parent.OnEntryMouseEnter then
-		self.parent:OnEntryMouseEnter(entry);
-	end
-end
-
-function SelectionPopoutButtonMixin:OnEntryMouseLeave(entry)
-	if self.parent.OnEntryMouseLeave then
-		self.parent:OnEntryMouseLeave(entry);
-	end
-end
-
-function SelectionPopoutButtonMixin:GetAdjustedIndex(forward, selections)
-	if not self.selectedIndex then
-		return nil;
-	end
-
-	local offset = forward and 1 or -1;
-	local nextIndex = self.selectedIndex + offset;
-	local data = selections[nextIndex];
-	while data do
-		if data.disabled == nil then
-			return nextIndex;
-		else
-			nextIndex = nextIndex + offset;
-			data = selections[currentIndex];
-		end
-	end
-
-	return nil;
-end
-
-function SelectionPopoutButtonMixin:Increment()
-	local forward = true;
-	local index = self:GetAdjustedIndex(forward, self:GetSelections());
-	self:SetSelectedIndex(index);
-end
-
-function SelectionPopoutButtonMixin:Decrement()
-	local forward = false;
-	local index = self:GetAdjustedIndex(forward, self:GetSelections());
-	self:SetSelectedIndex(index);
-end
-
-function SelectionPopoutButtonMixin:SetSelectedIndex(newIndex)
-	if newIndex and newIndex ~= self.selectedIndex then
-		self.selectedIndex = newIndex;
-		self:Update();
-
-		self:CallOnEntrySelected(self:GetCurrentSelectedData());
-	end
-end
-
-SelectionPopoutWithButtonsMixin = {};
-
-function SelectionPopoutWithButtonsMixin:OnLoad()
-	self.IncrementButton:SetPoint("LEFT", self.Button, "RIGHT", 4, 0);
-	self.IncrementButton:SetScript("OnClick", GenerateClosure(self.OnIncrementClicked, self));
-
-	self.DecrementButton:SetPoint("RIGHT", self.Button, "LEFT", -5, 0);
-	self.DecrementButton:SetScript("OnClick", GenerateClosure(self.OnDecrementClicked, self));
-end
-
-function SelectionPopoutWithButtonsMixin:SetEnabled_(enabled)
-	self.Button:SetEnabled_(enabled);
-	self:UpdateButtons();
-end
-
-function SelectionPopoutWithButtonsMixin:OnIncrementClicked(button, buttonName, down)
-	self.Button:Increment();
-end
-
-function SelectionPopoutWithButtonsMixin:OnDecrementClicked(button, buttonName, down)
-	self.Button:Decrement();
-end
-
-function SelectionPopoutWithButtonsMixin:SetupSelections(selections, selectedIndex, label)
-	self.Button:SetupSelections(selections, selectedIndex);
-	self:UpdateButtons();
-end
-
-function SelectionPopoutWithButtonsMixin:OnEnter()
-end
-
-function SelectionPopoutWithButtonsMixin:OnLeave()
-end
-
-function SelectionPopoutWithButtonsMixin:Increment()
-	self.Button:Increment();
-end
-
-function SelectionPopoutWithButtonsMixin:Decrement()
-	self.Button:Decrement();
-end
-
-function SelectionPopoutWithButtonsMixin:OnPopoutShown()
-end
-
-function SelectionPopoutWithButtonsMixin:HidePopout()
-	self.Button:HidePopout();
-end
-
-function SelectionPopoutWithButtonsMixin:OnEntrySelected(entryData)
-end
-
-function SelectionPopoutWithButtonsMixin:GetTooltipText()
-	return self.Button:GetTooltipText();
-end
-
-function SelectionPopoutWithButtonsMixin:OnEntryMouseEnter(entry)
-end
-
-function SelectionPopoutWithButtonsMixin:OnEntryMouseLeave(entry)
-end
-
-function SelectionPopoutWithButtonsMixin:GetMaxPopoutHeight()
-end
-
-function SelectionPopoutWithButtonsMixin:UpdateButtons()
-	local enabled = self.Button:IsEnabled();
-	if enabled then
-		local selections = self.Button:GetSelections()
-
-		local forward = true;
-		local index = self.Button:GetAdjustedIndex(forward, selections);
-		self.IncrementButton:SetEnabled(index ~= nil);
-
-		forward = false;
-		local index = self.Button:GetAdjustedIndex(forward, selections);
-		self.DecrementButton:SetEnabled(index ~= nil);
-	else
-		self.IncrementButton:SetEnabled(false);
-		self.DecrementButton:SetEnabled(false);
-	end
-end
-
-SelectionPopoutWithButtonsAndLabelMixin = CreateFromMixins(SelectionPopoutWithButtonsMixin);
-
-function SelectionPopoutWithButtonsAndLabelMixin:SetupSelections(selections, selectedIndex, label)
-	SelectionPopoutWithButtonsMixin.SetupSelections(self, selections, selectedIndex);
-
-	self.Label:SetText(label);
-end
-
-SelectionPopoutMixin = {};
-
-function SelectionPopoutMixin:OnShow()
-	self:Layout();
-	self.logicalParent:OnPopoutShown();
-	SelectionPopouts:Add(self);
-end
-
-function SelectionPopoutMixin:OnHide()
-	SelectionPopouts:Remove(self);
-end
-
-SelectionPopoutEntryMixin = {};
-
-function SelectionPopoutEntryMixin:OnLoad()
-	self.parentButton = self:GetParent().logicalParent;
-end
-
-function SelectionPopoutEntryMixin:HandlesGlobalMouseEvent(buttonID, event)
-	return event == "GLOBAL_MOUSE_DOWN" and buttonID == "LeftButton";
-end
-
-function SelectionPopoutEntryMixin:SetupEntry(selectionData, index, isSelected, multipleColumns, hasAFailedReq)
-	self.isSelected = isSelected;
-	self.selectionData = selectionData;
-	self.popoutHasAFailedReq = hasAFailedReq;
-
-	self.SelectionDetails:SetupDetails(selectionData, index, isSelected, hasAFailedReq);
-	self.SelectionDetails:AdjustWidth(multipleColumns, self.defaultWidth);
-end
-
-function SelectionPopoutEntryMixin:GetTooltipText()
-	return self.SelectionDetails:GetTooltipText();
-end
-
-function SelectionPopoutEntryMixin:OnEnter()
-	self.parentButton:OnEntryMouseEnter(self);
-end
-
-function SelectionPopoutEntryMixin:OnLeave()
-	self.parentButton:OnEntryMouseLeave(self);
-end
-
-function SelectionPopoutEntryMixin:OnClick()
-	self.parentButton:OnEntryClicked(self.selectionData);
-end
-
-SelectionPopouts = {};
-
-function SelectionPopouts:OnLoad()
-	self.popouts = {};
-end
-
-function SelectionPopouts:ContainsMouse()
-	for index, popout in ipairs(self.popouts) do
-		if popout:IsShown() and popout:IsMouseOver() then
-			return true;
-		end
-	end
-	return false;
-end
-
-function SelectionPopouts:CloseAll()
-	local shallow = true;
-	local popoutsCopy = CopyTable(self.popouts, shallow);
-	wipe(self.popouts);
-
-	for index, popout in ipairs(popoutsCopy) do
-		popout.logicalParent:HidePopout();
-	end
-end
-
-function SelectionPopouts:HandleGlobalMouseEvent(buttonID, event)
-	if event == "GLOBAL_MOUSE_DOWN" and (buttonID == "LeftButton" or buttonID == "RightButton") then
-		if not self:ContainsMouse() then
-			self:CloseAll();
-		end
-	end
-end
-
-function SelectionPopouts:Add(popout)
-	table.insert(self.popouts, popout);
-end
-
-function SelectionPopouts:Remove(popout)
-	tDeleteItem(self.popouts, popout);
-end
-
-SelectionPopouts:OnLoad();
-
-DefaultScaleFrameMixin = {};
-
-function DefaultScaleFrameMixin:OnDefaultScaleFrameLoad()
-	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
-	self:UpdateScale();
-end
-
-function DefaultScaleFrameMixin:OnDefaultScaleFrameEvent(event, ...)
-	if event == "DISPLAY_SIZE_CHANGED" then
-		self:UpdateScale();
-	end
-end
-
-function DefaultScaleFrameMixin:UpdateScale()
-	ApplyDefaultScale(self, self.minScale, self.maxScale);
-end
-
--- Click to drag directly attached to frame itself.
-ClickToDragMixin = {};
-
-function ClickToDragMixin:OnLoad()
-	self:RegisterForDrag("LeftButton");
-end
-
-function ClickToDragMixin:OnDragStart()
-	self:StartMoving();
-end
-
-function ClickToDragMixin:OnDragStop()
-	self:StopMovingOrSizing();
-end
-
--- Click to drag attached to a subframe. For example, a title bar.
-PanelDragBarMixin = {};
-
-function PanelDragBarMixin:OnLoad()
-	self:RegisterForDrag("LeftButton");
-end
-
-function PanelDragBarMixin:Init(target)
-	self.target = target;
-end
-
-function PanelDragBarMixin:OnDragStart()
-	self.target:StartMoving();
-end
-
-function PanelDragBarMixin:OnDragStop()
-	self.target:StopMovingOrSizing();
-end
-
-PanelResizeButtonMixin = {};
-
-function PanelResizeButtonMixin:Init(target, minWidth, minHeight, maxWidth, maxHeight)
-	self.target = target;
-	self.minWidth = minWidth;
-	self.minHeight = minHeight;
-	self.maxWidth = maxWidth;
-	self.maxHeight = maxHeight;
-
-	local originalTargetOnSizeChanged = target:GetScript("OnSizeChanged") or nop;
-	target:SetScript("OnSizeChanged", function(target, width, height)
-		originalTargetOnSizeChanged(target, width, height);
-
-		if width < self.minWidth then
-			target:SetWidth(self.minWidth);
-		elseif self.maxWidth and width > self.maxWidth then
-			target:SetWidth(self.maxWidth);
-		end
-
-		if height < self.minHeight then
-			target:SetHeight(self.minHeight);
-		elseif self.maxHeight and height > self.maxHeight then
-			target:SetHeight(self.maxHeight);
-		end
-	end);
-end
-
-function PanelResizeButtonMixin:OnMouseDown()
-	if self.target then
-		self.target:StartSizing("BOTTOMRIGHT");
-	end
-end
-
-function PanelResizeButtonMixin:OnMouseUp()
-	if self.target then
-		self.target:StopMovingOrSizing();
-
-		if self.resizeStoppedCallback ~= nil then
-			self.resizeStoppedCallback(self.target);
-		end
-	end
-end
-
-function PanelResizeButtonMixin:SetOnResizeStoppedCallback(resizeStoppedCallback)
-	self.resizeStoppedCallback = resizeStoppedCallback;
-end
-
-DropDownControlMixin = {};
-
-function DropDownControlMixin:OnLoad()
-	local function InitializeDropDownFrame()
-		self:Initialize();
-	end
-
-	UIDropDownMenu_Initialize(self.DropDownMenu, InitializeDropDownFrame);
-
-	self:UpdateWidth(self:GetWidth());
-end
-
-function DropDownControlMixin:UpdateWidth(width)
-	UIDropDownMenu_SetWidth(self.DropDownMenu, width - 20);
-end
-
-function DropDownControlMixin:Initialize()
-	if self.options == nil then
-		return;
-	end
-
-	local function DropDownControlButton_OnClick(button)
-		local isUserInput = true;
-		self:SetSelectedValue(button.value, isUserInput);
-	end
-
-	for i, option in ipairs(self.options) do
-		local info = UIDropDownMenu_CreateInfo();
-		if not self.skipNormalSetup then
-			info.text = option.text;
-			info.minWidth = 108;
-			info.value = option.value;
-			info.checked = self.selectedValue == option.value;
-			info.func = DropDownControlButton_OnClick;
-		end
-
-		if self.customSetupCallback ~= nil then
-			self.customSetupCallback(info);
-		end
-
-		UIDropDownMenu_AddButton(info);
-	end
-end
-
-function DropDownControlMixin:SetSelectedValue(value, isUserInput)
-	self.selectedValue = value;
-
-	if value == nil then
-		UIDropDownMenu_SetText(self.DropDownMenu, self.noneSelectedText);
-	elseif self.options ~= nil then
-		for i, option in ipairs(self.options) do
-			if option.value == value then
-				UIDropDownMenu_SetText(self.DropDownMenu, option.selectedText or option.text);
-			end
-		end
-	end
-
-	if self.optionSelectedCallback ~= nil then
-		self.optionSelectedCallback(value, isUserInput);
-	end
-end
-
-function DropDownControlMixin:ClearSelectedValue()
-	self:SetSelectedValue(nil, false);
-end
-
-function DropDownControlMixin:GetSelectedValue()
-	return self.selectedValue;
-end
-
-function DropDownControlMixin:SetOptionSelectedCallback(optionSelectedCallback)
-	self.optionSelectedCallback = optionSelectedCallback;
-end
-
--- options: an array of tables that contain info to display the different dropdown options.
--- Option keys:
---   value: a unique value that identifies the option and is passed through to optionSelectedCallback.
---   text: the text that appears in the dropdown list, and on the dropdown control when an option is selected.
---   selectedText: an override for text that appears on the dropdown control when an option is selected.
-function DropDownControlMixin:CreateOption(value, text, selectedText)
-    return { value = value, text = text, selectedText = selectedText };
-end
-
-function DropDownControlMixin:SetOptions(options, defaultSelectedValue)
-	self.options = options;
-	self:Initialize();
-
-	if defaultSelectedValue then
-		self:SetSelectedValue(defaultSelectedValue);
-	end
-end
-
-function DropDownControlMixin:ClearOptions()
-	self:ClearSelectedValue();
-	self:SetOptions();
-end
-
-function DropDownControlMixin:GetOptionCount()
-	return self.options and #self.options or 0;
-end
-
-function DropDownControlMixin:HasOptions()
-	return self:GetOptionCount() > 0;
-end
-
-function DropDownControlMixin:SetCustomSetup(customSetupCallback, skipNormalSetup)
-	self.customSetupCallback = customSetupCallback;
-	self.skipNormalSetup = skipNormalSetup;
-end
-
-function DropDownControlMixin:SetTextJustifyH(...)
-	self.DropDownMenu.Text:SetJustifyH(...);
-end
-
-function DropDownControlMixin:AdjustTextPointsOffset(...)
-	self.DropDownMenu.Text:AdjustPointsOffset(...);
-end
-
-function DropDownControlMixin:SetEnabled(enabled)
-	UIDropDownMenu_SetDropDownEnabled(self.DropDownMenu, enabled);
-end
-
-EnumDropDownControlMixin = CreateFromMixins(DropDownControlMixin);
-
-function EnumDropDownControlMixin:SetEnum(enum, nameTranslation, ordering)
-	local options = {};
-	for enumKey, enumValue in pairs(enum) do
-		table.insert(options, { value = enumValue, text = nameTranslation(enumValue), });
-	end
-
-	if ordering then
-		local function EnumOrderingComparator(lhs, rhs)
-			return ordering[lhs.value] < ordering[rhs.value];
-		end
-
-		table.sort(options, EnumOrderingComparator);
-	else
-		local function EnumComparator(lhs, rhs)
-			return lhs.value < rhs.value;
-		end
-
-		table.sort(options, EnumComparator);
-	end
-
-	self:SetOptions(options);
-end
-
-DisabledTooltipButtonMixin = {};
-
-function DisabledTooltipButtonMixin:OnEnter()
-	if not self:IsEnabled() then
-		local disabledTooltip, disabledTooltipAnchor = self:GetDisabledTooltip();
-		if disabledTooltip ~= nil then
-			GameTooltip_ShowDisabledTooltip(GetAppropriateTooltip(), self, disabledTooltip, disabledTooltipAnchor);
-		end
-	end
-end
-
-function DisabledTooltipButtonMixin:OnLeave()
-	local tooltip = GetAppropriateTooltip();
-	tooltip:Hide();
-end
-
-function DisabledTooltipButtonMixin:SetDisabledTooltip(disabledTooltip, disabledTooltipAnchor)
-	self.disabledTooltip = disabledTooltip;
-	self.disabledTooltipAnchor = disabledTooltipAnchor;
-end
-
-function DisabledTooltipButtonMixin:GetDisabledTooltip()
-	return self.disabledTooltip, self.disabledTooltipAnchor;
-end
-
-function DisabledTooltipButtonMixin:SetDisabledState(disabled, disabledTooltip, disabledTooltipAnchor)
-	self:SetEnabled(not disabled);
-	self:SetDisabledTooltip(disabledTooltip, disabledTooltipAnchor);
-end
-
-AlphaHighlightButtonMixin = {};
-
-function AlphaHighlightButtonMixin:OnLoad()
-	self:SetHighlightAtlas(self.NormalTexture:GetAtlas());
-end
-
-function AlphaHighlightButtonMixin:OnMouseDown()
-	self:SetHighlightAtlas(self.PushedTexture:GetAtlas());
-end
-
-function AlphaHighlightButtonMixin:OnMouseUp()
-	self:SetHighlightAtlas(self.NormalTexture:GetAtlas());
 end

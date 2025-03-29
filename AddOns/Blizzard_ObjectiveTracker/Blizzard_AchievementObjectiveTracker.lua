@@ -2,9 +2,10 @@
 local ARENA_CATEGORY = 165;
 local MAX_CRITERIA_PER_ACHIEVEMENT = 5;
 
-ACHIEVEMENT_TRACKER_MODULE = ObjectiveTracker_GetModuleInfoTable("ACHIEVEMENT_TRACKER_MODULE");
+ACHIEVEMENT_TRACKER_MODULE = ObjectiveTracker_GetModuleInfoTable();
 ACHIEVEMENT_TRACKER_MODULE.updateReasonModule = OBJECTIVE_TRACKER_UPDATE_MODULE_ACHIEVEMENT;
 ACHIEVEMENT_TRACKER_MODULE.updateReasonEvents = OBJECTIVE_TRACKER_UPDATE_ACHIEVEMENT + OBJECTIVE_TRACKER_UPDATE_ACHIEVEMENT_ADDED;
+ACHIEVEMENT_TRACKER_MODULE.usedBlocks = { };
 ACHIEVEMENT_TRACKER_MODULE:SetHeader(ObjectiveTrackerFrame.BlocksFrame.AchievementHeader, TRACKER_HEADER_ACHIEVEMENTS, OBJECTIVE_TRACKER_UPDATE_ACHIEVEMENT_ADDED);
 
 local TIMED_CRITERIA = { };
@@ -31,14 +32,10 @@ function ACHIEVEMENT_TRACKER_MODULE:OnBlockHeaderClick(block, mouseButton)
 			else
 				AchievementFrame_ToggleAchievementFrame();
 			end
-		end
+		end	
 	else
 		ObjectiveTracker_ToggleDropDown(block, AchievementObjectiveTracker_OnOpenDropDown);
 	end
-end
-
-function ACHIEVEMENT_TRACKER_MODULE:GetDebugReportInfo(block)
-	return { debugType = "TrackedAchievement", achievementID = block.id, };
 end
 
 -- *****************************************************************************************************
@@ -59,16 +56,26 @@ function AchievementObjectiveTracker_OnOpenDropDown(self)
 	info.notCheckable = 1;
 
 	info.text = OBJECTIVES_VIEW_ACHIEVEMENT;
-	info.func = function (button, ...) OpenAchievementFrameToAchievement(...); end;
+	info.func = AchievementObjectiveTracker_OpenAchievement;
 	info.arg1 = block.id;
 	info.checked = false;
 	UIDropDownMenu_AddButton(info, UIDROPDOWN_MENU_LEVEL);
-
+	
 	info.text = OBJECTIVES_STOP_TRACKING;
 	info.func = AchievementObjectiveTracker_UntrackAchievement;
 	info.arg1 = block.id;
 	info.checked = false;
 	UIDropDownMenu_AddButton(info, UIDROPDOWN_MENU_LEVEL);
+end
+
+function AchievementObjectiveTracker_OpenAchievement(dropDownButton, achievementID)
+	if ( not AchievementFrame ) then
+		AchievementFrame_LoadUI();
+	end
+	if ( not AchievementFrame:IsShown() ) then
+		AchievementFrame_ToggleAchievementFrame();
+	end
+	AchievementFrame_SelectAchievement(achievementID);	
 end
 
 function AchievementObjectiveTracker_UntrackAchievement(dropDownButton, achievementID)
@@ -84,7 +91,7 @@ end
 
 function ACHIEVEMENT_TRACKER_MODULE:Update()
 
-	self:BeginLayout();
+	ACHIEVEMENT_TRACKER_MODULE:BeginLayout();
 
 	local _, instanceType = IsInInstance();
 	local displayOnlyArena = ArenaEnemyFrames and ArenaEnemyFrames:IsShown() and (instanceType == "arena");
@@ -102,22 +109,22 @@ function ACHIEVEMENT_TRACKER_MODULE:Update()
 				showAchievement = false;
 			end
 		end
-
+		
 		if ( showAchievement ) then
-			local block = self:GetBlock(achievementID);
-			self:SetBlockHeader(block, achievementName);
+			local block = ACHIEVEMENT_TRACKER_MODULE:GetBlock(achievementID);
+			ACHIEVEMENT_TRACKER_MODULE:SetBlockHeader(block, achievementName);
 			-- criteria
 			local numCriteria = GetAchievementNumCriteria(achievementID);
 			if ( numCriteria > 0 ) then
 				local numShownCriteria = 0;
 				for criteriaIndex = 1, numCriteria do
-					local criteriaString, criteriaType, criteriaCompleted, quantity, totalQuantity, name, flags, assetID, quantityString, criteriaID, eligible, duration, elapsed = GetAchievementCriteriaInfo(achievementID, criteriaIndex);
+					local criteriaString, criteriaType, criteriaCompleted, quantity, totalQuantity, name, flags, assetID, quantityString, criteriaID, eligible, duration, elapsed = GetAchievementCriteriaInfo(achievementID, criteriaIndex);			
 					local colorStyle = eligible and OBJECTIVE_TRACKER_COLOR["Normal"] or OBJECTIVE_TRACKER_COLOR["Failed"];
 					if ( criteriaCompleted or ( numShownCriteria > MAX_CRITERIA_PER_ACHIEVEMENT and not criteriaCompleted ) ) then
 						-- Do not display this one
 					elseif ( numShownCriteria == MAX_CRITERIA_PER_ACHIEVEMENT and numCriteria > (MAX_CRITERIA_PER_ACHIEVEMENT + 1) ) then
 						-- We ran out of space to display incomplete criteria >_<
-						self:AddObjective(block, "Extra", "...", nil, nil, OBJECTIVE_DASH_STYLE_HIDE);
+						ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, "Extra", "...", nil, nil, OBJECTIVE_DASH_STYLE_HIDE);
 						numShownCriteria = numShownCriteria + 1;
 					else
 						if ( description and bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR ) then
@@ -134,14 +141,14 @@ function ACHIEVEMENT_TRACKER_MODULE:Update()
 								_, criteriaString = GetAchievementInfo(assetID);
 							end
 						end
-						local line = self:AddObjective(block, criteriaIndex, criteriaString, nil, nil, OBJECTIVE_DASH_STYLE_SHOW, colorStyle);
+						local line = ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, criteriaIndex, criteriaString, nil, nil, OBJECTIVE_DASH_STYLE_SHOW, colorStyle);
 						numShownCriteria = numShownCriteria + 1;
 						-- timer bar
 						if ( duration and elapsed and elapsed < duration ) then
-							self:AddTimerBar(block, line, duration, GetTime() - elapsed);
+							ACHIEVEMENT_TRACKER_MODULE:AddTimerBar(block, line, duration, GetTime() - elapsed);
 						elseif ( line.TimerBar ) then
-							self:FreeTimerBar(block, line);
-						end
+							ACHIEVEMENT_TRACKER_MODULE:FreeTimerBar(block, line);
+						end						
 					end
 				end
 			else
@@ -165,18 +172,18 @@ function ACHIEVEMENT_TRACKER_MODULE:Update()
 					end
 				end
 				local colorStyle = (not timerFailed and IsAchievementEligible(achievementID)) and OBJECTIVE_TRACKER_COLOR["Normal"] or OBJECTIVE_TRACKER_COLOR["Failed"];
-				local line = self:AddObjective(block, 1, description, nil, nil, OBJECTIVE_DASH_STYLE_SHOW, colorStyle);
+				local line = ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, 1, description, nil, nil, OBJECTIVE_DASH_STYLE_SHOW, colorStyle);
 				if ( timerShown ) then
-					self:AddTimerBar(block, line, timerCriteriaDuration, timerCriteriaStartTime);
+					ACHIEVEMENT_TRACKER_MODULE:AddTimerBar(block, line, timerCriteriaDuration, timerCriteriaStartTime);
 				elseif ( line.TimerBar ) then
-					self:FreeTimerBar(block, line);
+					ACHIEVEMENT_TRACKER_MODULE:FreeTimerBar(block, line);
 				end
 			end
 			block:SetHeight(block.height);
 
 			if ( ObjectiveTracker_AddBlock(block) ) then
 				block:Show();
-				self:FreeUnusedLines(block);
+				ACHIEVEMENT_TRACKER_MODULE:FreeUnusedLines(block);
 			else
 				block.used = false;
 				break;
@@ -184,7 +191,7 @@ function ACHIEVEMENT_TRACKER_MODULE:Update()
 		end
 	end
 
-	self:EndLayout();
+	ACHIEVEMENT_TRACKER_MODULE:EndLayout();
 end
 
 function AchievementObjectiveTracker_OnAchievementUpdate(achievementID, criteriaID, elapsed, duration)
@@ -193,7 +200,7 @@ function AchievementObjectiveTracker_OnAchievementUpdate(achievementID, criteria
 	else
 		-- we're already handling timer bars for achievements with visible criteria
 		-- we use this system to handle timer bars for the rest
-		local numCriteria = GetAchievementNumCriteria(achievementID);
+		local numCriteria = GetAchievementNumCriteria(achievementID);		
 		if ( numCriteria == 0 ) then
 			local timedCriteria = TIMED_CRITERIA[criteriaID] or {};
 			timedCriteria.achievementID = achievementID;
