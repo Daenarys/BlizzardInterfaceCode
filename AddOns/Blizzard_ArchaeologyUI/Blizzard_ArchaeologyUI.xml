@@ -72,8 +72,8 @@
 	<Button name="ArchaeologyRaceTemplate" virtual="true" alpha="0.83">
 		<Animations>
 			<AnimationGroup parentKey="readyAnim" looping="REPEAT">
-				<Alpha target="$parentGlow" change="1.0" duration="0.9" order="1"/>
-				<Alpha target="$parentGlow" change="-1.0" duration="0.9" order="2"/>
+				<Alpha target="$parentGlow" fromAlpha="0" toAlpha="1" duration="0.9" order="1"/>
+				<Alpha target="$parentGlow" fromAlpha="1" toAlpha="0" duration="0.9" order="2"/>
 			</AnimationGroup>
 		</Animations>
 		
@@ -81,6 +81,7 @@
 		<Layers>
 			<Layer>
 				<FontString inherits="SystemFont_Med1" justifyH="CENTER" text="RACES" parentKey="raceName">
+					<Size x="118"/>
 					<Anchors>
 						<Anchor point="TOP" relativePoint="BOTTOM" x="0" y="6"/>
 					</Anchors>
@@ -99,7 +100,7 @@
 		<Scripts>
 			<OnClick>
 				ArchaeologyFrame_ShowArtifact(self:GetID() + ((ArchaeologyFrame.summaryPage.currentPage - 1) * ARCHAEOLOGY_MAX_RACES));
-				PlaySound("igSpellBookOpen");
+				PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN);
 			</OnClick>
 			<OnDisable>
 				SetDesaturation(self:GetNormalTexture(), true);
@@ -161,7 +162,7 @@
 		<Scripts>
 			<OnClick>
 				ArchaeologyFrame_ShowArtifact(self.raceIndex + ((ArchaeologyFrame.summaryPage.currentPage - 1) * ARCHAEOLOGY_MAX_RACES), self.projectIndex);
-				PlaySound("igSpellBookOpen");
+				PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN);
 			</OnClick>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT");
@@ -171,7 +172,7 @@
 				GameTooltip:AddLine(" ");
 				
 				local adate = date("*t", self.firstComletionTime);
-				GameTooltip:AddLine(ARCHAEOLOGY_TIMESTAMP.." |cffffffff"..string.format(SHORTDATE, adate.day, adate.month, adate.year).." "..
+				GameTooltip:AddLine(ARCHAEOLOGY_TIMESTAMP.." |cffffffff"..FormatShortDate(adate.day, adate.month, adate.year).." "..
 												GameTime_GetFormattedTime(adate.hour, adate.min, true).."|r");
 				GameTooltip:AddLine(string.format(ARCHAEOLOGY_COMPLETION, self.completionCount));
 				GameTooltip:Show();
@@ -201,7 +202,7 @@
 				ArchaeologyFrame_KeyStoneClick(self);
 				GameTooltip:SetOwner(self, "ANCHOR_LEFT");
 				GameTooltip:SetText(self.tooltip, NORMAL_FONT_COLOR[1], NORMAL_FONT_COLOR[2], NORMAL_FONT_COLOR[3], 1, true);
-				PlaySound("igMainMenuOptionCheckBoxOn");
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			</OnClick>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_LEFT");
@@ -343,7 +344,7 @@
 				<Scripts>
 					<OnClick>
 						ArchaeologyFrame_OnTabClick(self)
-						PlaySound("igSpellBookOpen");
+						PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN);
 					</OnClick>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT");
@@ -377,7 +378,7 @@
 				<Scripts>
 					<OnClick>
 						ArchaeologyFrame_OnTabClick(self)
-						PlaySound("igSpellBookOpen");
+						PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN);
 					</OnClick>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT");
@@ -792,7 +793,7 @@
 								ArchaeologyFrame.artifactPage:Hide();
 								ArchaeologyFrame.completedPage:Show();
 								ArchaeologyFrame.raceFilterDropDown:Show();
-								PlaySound("igMainMenuOptionCheckBoxOn");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 							</OnClick>
 						</Scripts>
 					</Button>
@@ -909,8 +910,8 @@
 					<Frame name="$parentFinishedGlow" parentKey="glow">
 						<Animations>
 							<AnimationGroup parentKey="completeAnim">
-								<Alpha change="1.0" duration="0.1" order="1" />
-								<Alpha startDelay="0.1" change="-1.0" duration="0.5" order="2" />
+								<Alpha fromAlpha="0" toAlpha="1" duration="0.1" order="1" />
+								<Alpha startDelay="0.1" fromAlpha="1" toAlpha="0" duration="0.5" order="2" />
 							</AnimationGroup>
 						</Animations>
 						<Size x="512" y="512"/>
@@ -933,7 +934,7 @@
 				<Scripts>
 					<OnClick>
 						ArchaeologyFrame_OnTabClick(self);
-						PlaySound("igSpellBookOpen");
+						PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN);
 					</OnClick>
 				</Scripts>
 			</Button>

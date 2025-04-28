@@ -7,16 +7,12 @@ StaticPopupDialogs["BID_BLACKMARKET"] = {
 	button1 = ACCEPT,
 	button2 = CANCEL,
 	OnAccept = function(self)
-		C_BlackMarket.ItemPlaceBid(self.data2, self.data);
+		C_BlackMarket.ItemPlaceBid(self.data.auctionID, self.data.bid);
 	end,
-	OnShow = function(self, bid)
-		MoneyFrame_Update(self.moneyFrame, self.data);
-	end,
-	hasMoneyFrame = 1,
-	showAlert = 1,
 	timeout = 0,
 	exclusive = 1,
-	hideOnEscape = 1
+	hideOnEscape = 1,
+	hasItemFrame = 1,
 };
 
 function BlackMarketFrame_Show()
@@ -24,12 +20,12 @@ function BlackMarketFrame_Show()
 	if ( not BlackMarketFrame:IsShown() ) then
 		C_BlackMarket.Close();
 	end
-	PlaySound("AuctionWindowOpen")
+	PlaySound(SOUNDKIT.AUCTION_WINDOW_OPEN)
 end
 
 function BlackMarketFrame_Hide()
 	HideUIPanel(BlackMarketFrame);
-	PlaySound("AuctionWindowClose");
+	PlaySound(SOUNDKIT.AUCTION_WINDOW_CLOSE);
 end
 
 function BlackMarketFrame_OnLoad(self)
@@ -39,6 +35,10 @@ function BlackMarketFrame_OnLoad(self)
 	self:RegisterEvent("BLACK_MARKET_BID_RESULT");
 	self:RegisterEvent("BLACK_MARKET_OUTBID");
 	MoneyInputFrame_SetGoldOnly(BlackMarketBidPrice, true);
+
+	BlackMarketBidPrice.gold:SetWidth(80);
+	BlackMarketBidPrice.gold:SetMaxLetters(8);
+	BlackMarketBidPrice.onValueChangedFunc = BlackMarketFrame_UpdateBidButton;
 end
 
 function BlackMarketFrame_OnEvent(self, event, ...)
@@ -74,12 +74,12 @@ function BlackMarketFrame_OnShow(self)
 	end
 
 	BlackMarketFrame.BidButton:Disable();
-	PlaySound("AuctionWindowOpen");
+	PlaySound(SOUNDKIT.AUCTION_WINDOW_OPEN);
 end
 
 function BlackMarketFrame_OnHide(self)
 	C_BlackMarket.Close();
-	PlaySound("AuctionWindowClose");
+	PlaySound(SOUNDKIT.AUCTION_WINDOW_CLOSE);
 end
 
 function BlackMarketFrame_UpdateHotItem(self)
@@ -94,12 +94,11 @@ function BlackMarketFrame_UpdateHotItem(self)
 			self.HotDeal.Item.IconTexture:SetVertexColor(1.0, 1.0, 1.0);
 		end
 
+		SetItemButtonQuality(self.HotDeal.Item, quality, link);
+
 		if (quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
-			self.HotDeal.Item.IconBorder:Show();
-			self.HotDeal.Item.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
 			self.HotDeal.Name:SetTextColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
 		else
-			self.HotDeal.Item.IconBorder:Hide();
 			self.HotDeal.Name:SetTextColor(1.0, 0.82, 0);
 		end
 
@@ -135,6 +134,10 @@ end
 function BlackMarketScrollFrame_Update()
 	local numItems = C_BlackMarket.GetNumItems();
 	
+	if (not numItems) then
+		numItems = 0;
+	end
+	
 	local scrollFrame = BlackMarketScrollFrame;
 	local offset = HybridScrollFrame_GetOffset(scrollFrame);
 	local buttons = scrollFrame.buttons;
@@ -157,12 +160,11 @@ function BlackMarketScrollFrame_Update()
 					button.Item.IconTexture:SetVertexColor(1.0, 1.0, 1.0);
 				end
 
+				SetItemButtonQuality(button.Item, quality, link);
+
 				if (quality and quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
-					button.Item.IconBorder:Show();
-					button.Item.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
 					button.Name:SetTextColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
 				else
-					button.Item.IconBorder:Hide();
 					button.Name:SetTextColor(1.0, 0.82, 0);
 				end
 
@@ -184,10 +186,8 @@ function BlackMarketScrollFrame_Update()
 				MoneyFrame_Update(button.CurrentBid, bidAmount);
 				
 				button.minNextBid = minNextBid;
-				button.youHaveHighBid = youHaveHighBid;
 				button.YourBid:SetShown(youHaveHighBid);
 				
-				button.auctionCompleate = (timeLeft == 0);
 				button.TimeLeft.Text:SetText(_G["AUCTION_TIME_LEFT"..timeLeft]);
 				button.TimeLeft.tooltip = _G["AUCTION_TIME_LEFT"..timeLeft.."_DETAIL"];
 				
@@ -213,33 +213,44 @@ function BlackMarketScrollFrame_Update()
 	HybridScrollFrame_Update(scrollFrame, totalHeight, displayedHeight);
 end
 
+function BlackMarketFrame_UpdateBidButton()
+	local enabled = false;
+	if ( BlackMarketFrame.selectedMarketID ) then
+		local name, texture, quantity, itemType, usable, level, levelType, sellerName, minBid, minIncrement, currBid, youHaveHighBid, numBids, timeLeft, link, marketID, quality = C_BlackMarket.GetItemInfoByID(BlackMarketFrame.selectedMarketID);
+		if ( timeLeft > 0 and not youHaveHighBid and GetMoney() >= MoneyInputFrame_GetCopper(BlackMarketBidPrice) ) then
+			enabled = true;
+		end
+	end
+	BlackMarketFrame.BidButton:SetEnabled(enabled);
+end
+
+function BlackMarketFrame_ConfirmBid(auctionID)
+	local bid = MoneyInputFrame_GetCopper(BlackMarketBidPrice);
+	local name, texture, quantity, _, _, _, _, _, _, _, _, _, _, _, link, _, quality = C_BlackMarket.GetItemInfoByID(auctionID);
+	local r, g, b = GetItemQualityColor(quality);
+	local data = {	["texture"] = texture, ["name"] = name, ["color"] = {r, g, b, 1}, 
+					["link"] = link, ["count"] = quantity,
+					["bid"] = bid, ["auctionID"] = auctionID,
+	};	
+	StaticPopup_Show("BID_BLACKMARKET", GetMoneyString(bid), nil, data);
+end
+
 function BlackMarketItem_OnClick(self, button, down)
 	MoneyInputFrame_SetCopper(BlackMarketBidPrice, self.minNextBid);
 	BlackMarketFrame.selectedMarketID = self.marketID;
 	BlackMarketScrollFrame_Update();
-	if ( self.auctionCompleate or self.youHaveHighBid or (GetMoney() < self.minNextBid) ) then
-		BlackMarketFrame.BidButton:Disable();
-	else
-		BlackMarketFrame.BidButton:Enable();
-	end
 end
 
 function BlackMarketHotItemBid_OnClick(self, button, down)
 	if (BlackMarketFrame.HotDeal.selectedMarketID) then
-		local dialog = StaticPopup_Show("BID_BLACKMARKET", nil, nil, MoneyInputFrame_GetCopper(BlackMarketHotItemBidPrice));
-		if ( dialog ) then
-			dialog.data2 = BlackMarketFrame.HotDeal.selectedMarketID;
-		end
+		BlackMarketFrame_ConfirmBid(BlackMarketFrame.HotDeal.selectedMarketID);
 	end
 	self:Disable();
 end
 
 function BlackMarketBid_OnClick(self, button, down)
 	if (BlackMarketFrame.selectedMarketID) then
-		local dialog = StaticPopup_Show("BID_BLACKMARKET", nil, nil, MoneyInputFrame_GetCopper(BlackMarketBidPrice));
-		if ( dialog ) then
-			dialog.data2 = BlackMarketFrame.selectedMarketID;
-		end
+		BlackMarketFrame_ConfirmBid(BlackMarketFrame.selectedMarketID);
 	end
 	self:Disable();
 end

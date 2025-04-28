@@ -5,26 +5,33 @@ STAGGER_YELLOW_TRANSITION = .30
 STAGGER_RED_TRANSITION = .60
 
 -- table indices of bar colors
-local GREEN_INDEX = 1;
-local YELLOW_INDEX = 2;
-local RED_INDEX = 3;
+STAGGER_GREEN_INDEX = 1;
+STAGGER_YELLOW_INDEX = 2;
+STAGGER_RED_INDEX = 3;
 
 function MonkStaggerBar_OnLoad(self)
 	self.specRestriction = SPEC_MONK_BREWMASTER;
 	self.textLockable = 1;
-	self.cvar = "playerStatusText";
+	self.cvar = "statusText";
 	self.cvarLabel = "STATUS_TEXT_PLAYER";
 	self.capNumericDisplay = true;
 	if ( not self.powerName ) then
 		self.powerName = BREWMASTER_POWER_BAR_NAME;
 	end
+	
+	self.DefaultBackground:Hide();
+	self.DefaultBorder:Hide();
+	self.DefaultBorderLeft:Hide();
+	self.DefaultBorderRight:Hide();
+	self.MonkBackground:Show();
+	self.MonkBorder:Show();
+	self:SetFrameLevel(100);
+	
 	local _, class = UnitClass("player")
 	self.class = class
 	if (class == "MONK") then
 		if (self.specRestriction == GetSpecialization()) then
-			self:RegisterEvent("PLAYER_ENTERING_WORLD");
-			self:RegisterEvent("UNIT_DISPLAYPOWER");
-			self:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR");	
+			MonkStaggerBar_RegisterEvents(self);
 		end
 		self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
 	end
@@ -35,20 +42,16 @@ end
 
 function MonkStaggerBar_OnEvent(self, event, arg1)
 	local parent = self:GetParent();
-	if ( event == "UNIT_DISPLAYPOWER" or event == "UPDATE_VEHICLE_ACTIONBAR" ) then
+	if ( event == "UNIT_DISPLAYPOWER" or event == "UPDATE_VEHICLE_ACTIONBAR" or event == "UNIT_EXITED_VEHICLE" ) then
 		MonkStaggerBar_UpdatePowerType(self);
 	elseif ( event == "PLAYER_SPECIALIZATION_CHANGED" ) then
 		if ( arg1 == nil or arg1 == parent.unit) then
-			AlternatePowerBar_SetLook(self);
 			MonkStaggerBar_UpdatePowerType(self);
 			if (self.specRestriction == GetSpecialization()) then
-				self:RegisterEvent("PLAYER_ENTERING_WORLD");
-				self:RegisterEvent("UNIT_DISPLAYPOWER");
-				self:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR");	
+				MonkStaggerBar_RegisterEvents(self);
 			end
 		end
 	elseif ( event == "PLAYER_ENTERING_WORLD" ) then
-		AlternatePowerBar_SetLook(self);
 		MonkStaggerBar_UpdateMaxValues(self);
 		MonkStaggerBar_UpdatePowerType(self);
 	end
@@ -58,14 +61,21 @@ function MonkStaggerBar_OnUpdate(self, elapsed)
 	MonkStaggerBar_UpdateValue(self);
 end
 
+function MonkStaggerBar_RegisterEvents(self)
+	self:RegisterEvent("PLAYER_ENTERING_WORLD");
+	self:RegisterEvent("UNIT_DISPLAYPOWER");
+	self:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR");	
+	self:RegisterEvent("UNIT_EXITED_VEHICLE");
+end
+
 function MonkStaggerBar_UpdateValue(self)
 	local currstagger = UnitStagger(self:GetParent().unit);
 	if (not currstagger) then
 		return;
 	end
 	self:SetValue(currstagger);
-	self.value = currstagger
-	MonkStaggerBar_UpdateMaxValues(self)
+	self.value = currstagger;
+	MonkStaggerBar_UpdateMaxValues(self);
 	
 	local _, maxstagger = self:GetMinMaxValues();
 	local percent = currstagger/maxstagger;
@@ -73,11 +83,11 @@ function MonkStaggerBar_UpdateValue(self)
 	
 	
 	if (percent > STAGGER_YELLOW_TRANSITION and percent < STAGGER_RED_TRANSITION) then
-		info = info[YELLOW_INDEX];
+		info = info[STAGGER_YELLOW_INDEX];
 	elseif (percent > STAGGER_RED_TRANSITION) then
-		info = info[RED_INDEX];
+		info = info[STAGGER_RED_INDEX];
 	else
-		info = info[GREEN_INDEX];
+		info = info[STAGGER_GREEN_INDEX];
 	end
 	self:SetStatusBarColor(info.r, info.g, info.b);
 end

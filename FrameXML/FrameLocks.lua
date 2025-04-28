@@ -4,42 +4,48 @@
 -- in this way).
 ----------------------------------------------------------------------------------------
 
+local HIDE_MOST = {
+	MinimapCluster		= "hidden",
+	PlayerFrame			= "hidden",
+	TargetFrame			= "hidden",
+	ObjectiveTrackerFrame = "hidden",
+	RuneFrame			= "hidden",
+	MainMenuBar			= "hidden",
+	DurabilityFrame 	= "hidden",
+	CompactRaidFrameManager = "hidden",
+	PartyMemberFrame1	= "hidden",
+	PartyMemberFrame2	= "hidden",
+	PartyMemberFrame3	= "hidden",
+	PartyMemberFrame4	= "hidden",
+	ConsolidatedBuffs	= "hidden",
+	BuffFrame			= "hidden",
+	MultiBarLeft		= "hidden",
+	MultiBarRight		= "hidden",
+	FocusFrame			= "hidden",
+	TemporaryEnchantFrame = "hidden",
+	WorldStateAlwaysUpFrame = "hidden",
+	ZoneAbilityFrame	= "hidden",
+	OrderHallCommandBar	= "hidden",
+	TalentMicroButtonAlert	="hidden";
+	WorldStateScoreFrame = "hidden";
+}
+
 --------Data on what locks exist and what frames are ruled by them--------
 FRAMELOCK_STATES = {
-	PETBATTLEOPENING = {
+	COMMENTATOR_SPECTATING_MODE = Mixin({
 		GeneralDockManager	= "hidden",
-		FriendsMicroButton	= "hidden",
+		QuickJoinToastButton	= "hidden",
 		ChatFrameMenuButton	= "hidden",
 		CombatLogQuickButtonFrame = "hidden",
+		ArenaEnemyFrames = "hidden",
 		ChatFrame1			= "hidden",
 		--Additional chat frames are added to this list as they are created.
-	},
-	PETBATTLES = {
-		MinimapCluster		= "hidden",
-		PlayerFrame			= "hidden",
-		TargetFrame			= "hidden",
-		ObjectiveTrackerFrame = "hidden",
-		RuneFrame			= "hidden",
-		MainMenuBar			= "hidden",
-		DurabilityFrame 	= "hidden",
-		CompactRaidFrameManager = "hidden",
-		PartyMemberFrame1	= "hidden",
-		PartyMemberFrame2	= "hidden",
-		PartyMemberFrame3	= "hidden",
-		PartyMemberFrame4	= "hidden",
-		ConsolidatedBuffs	= "hidden",
-		BuffFrame			= "hidden",
-		MultiBarLeft		= "hidden",
-		MultiBarRight		= "hidden",
-		FocusFrame			= "hidden",
-		TemporaryEnchantFrame = "hidden",
-		WorldStateAlwaysUpFrame = "hidden",
-		DraenorZoneAbilityFrame = "hidden",
-	},
+	}, HIDE_MOST),
+	PETBATTLES = HIDE_MOST,
 };
 
 FRAMELOCK_STATE_PRIORITIES = {
-	"PETBATTLEOPENING",
+	"COMMENTATOR_SPECTATING_MODE",
 	"PETBATTLES",
 };
 

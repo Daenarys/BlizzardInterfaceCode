@@ -37,6 +37,7 @@ function TradeSkillDetailsMixin:SetSelectedRecipeID(recipeID)
 	if self.selectedRecipeID ~= recipeID then
 		self.selectedRecipeID = recipeID;
 		self.craftable = false;
+		self.hasReagentDataByIndex = {};
 		self.createVerbOverride = nil;
 		self.GuildFrame:Clear();
 		self:RefreshButtons();
@@ -74,7 +75,7 @@ function TradeSkillDetailsMixin:CalculateContentHeight()
 	return height;
 end
 
-local SPACING_BETWEEN_LINES = 8;
+local SPACING_BETWEEN_LINES = 11;
 function TradeSkillDetailsMixin:RefreshDisplay()
 	self.activeContentWidgets = {};
 
@@ -85,9 +86,20 @@ function TradeSkillDetailsMixin:RefreshDisplay()
 		else
 			self.Background:SetAtlas("tradeskill-background-recipe-unlearned");
 		end
-		self.createVerbOverride = recipeInfo.alternateVerb;
+		
+		if ( recipeInfo.alternateVerb and recipeInfo.alternateVerb ~= "") then
+			self.createVerbOverride = recipeInfo.alternateVerb;
+		end
 
 		self.Contents.RecipeName:SetText(recipeInfo.name);
+		local recipeLink = C_TradeSkillUI.GetRecipeItemLink(self.selectedRecipeID);
+		if ( recipeInfo.productQuality ) then
+			self.Contents.RecipeName:SetTextColor(GetItemQualityColor(recipeInfo.productQuality));
+		else
+			self.Contents.RecipeName:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		end
+		
+		SetItemButtonQuality(self.Contents.ResultIcon, recipeInfo.productQuality, recipeLink);
 		self:AddContentWidget(self.Contents.RecipeName);
 
 		self.Contents.ResultIcon:SetNormalTexture(recipeInfo.icon);
@@ -124,14 +136,14 @@ function TradeSkillDetailsMixin:RefreshDisplay()
 		local recipeDescription = C_TradeSkillUI.GetRecipeDescription(self.selectedRecipeID);
 		if recipeDescription and #recipeDescription > 0 then
 			self.Contents.Description:SetText(recipeDescription);
-			self.Contents.RequirementLabel:SetPoint("TOPLEFT", self.Contents.Description, "BOTTOMLEFT", 0, -SPACING_BETWEEN_LINES);
+			self.Contents.RequirementLabel:SetPoint("TOPLEFT", self.Contents.Description, "BOTTOMLEFT", 0, -18);
 		else
 			self.Contents.Description:SetText("");
 			self.Contents.RequirementLabel:SetPoint("TOPLEFT", self.Contents.Description, "BOTTOMLEFT", 0, 0);
 		end
 		self:AddContentWidget(self.Contents.Description);
 
-		local craftable = recipeInfo.learned;
+		local craftable = recipeInfo.learned and recipeInfo.craftable;
 
 		local requiredToolsString = BuildColoredListString(C_TradeSkillUI.GetRecipeTools(self.selectedRecipeID));
 		if requiredToolsString then
@@ -190,31 +202,38 @@ function TradeSkillDetailsMixin:RefreshDisplay()
 			local reagentName, reagentTexture, reagentCount, playerReagentCount = C_TradeSkillUI.GetRecipeReagentInfo(self.selectedRecipeID, reagentIndex);
 			local reagentButton = self.Contents.Reagents[reagentIndex];
 
-			if not reagentName or not reagentTexture then
-				reagentButton:Hide();
-			else
-				reagentButton:Show();
-				self:AddContentWidget(reagentButton);
-				reagentButton.Icon:SetTexture(reagentTexture);
-				reagentButton.Name:SetText(reagentName);
+			reagentButton:Show();
+			self:AddContentWidget(reagentButton);
 
-				if playerReagentCount < reagentCount then
-					reagentButton.Icon:SetVertexColor(0.5, 0.5, 0.5);
-					reagentButton.Name:SetTextColor(GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
-					craftable = false;
+			if not self.hasReagentDataByIndex[reagentIndex] then
+				if not reagentName or not reagentTexture then
+					reagentButton.Icon:SetTexture("");
+					reagentButton.Name:SetText("");
 				else
-					reagentButton.Icon:SetVertexColor(1.0, 1.0, 1.0);
-					reagentButton.Name:SetTextColor(HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-				end
+					reagentButton.Icon:SetTexture(reagentTexture);
+					reagentButton.Name:SetText(reagentName);
 
-				local playerReagentCountAbbreviated = AbbreviateNumbers(playerReagentCount);
-				reagentButton.Count:SetFormattedText(TRADESKILL_REAGENT_COUNT, playerReagentCountAbbreviated, reagentCount);
-				--fix text overflow when the reagentButton count is too high
-				if math.floor(reagentButton.Count:GetStringWidth()) > math.floor(reagentButton.Icon:GetWidth() + .5) then 
-					--round count width down because the leftmost number can overflow slightly without looking bad
-					--round icon width because it should always be an int, but sometimes it's a slightly off float
-					reagentButton.Count:SetFormattedText("%s\n/%s", playerReagentCountAbbreviated, reagentCount);
+					self.hasReagentDataByIndex[reagentIndex] = true;
 				end
+			end
+
+
+			if playerReagentCount < reagentCount then
+				reagentButton.Icon:SetVertexColor(0.5, 0.5, 0.5);
+				reagentButton.Name:SetTextColor(GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
+				craftable = false;
+			else
+				reagentButton.Icon:SetVertexColor(1.0, 1.0, 1.0);
+				reagentButton.Name:SetTextColor(HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+			end
+
+			local playerReagentCountAbbreviated = AbbreviateNumbers(playerReagentCount);
+			reagentButton.Count:SetFormattedText(TRADESKILL_REAGENT_COUNT, playerReagentCountAbbreviated, reagentCount);
+			--fix text overflow when the reagentButton count is too high
+			if math.floor(reagentButton.Count:GetStringWidth()) > math.floor(reagentButton.Icon:GetWidth() + .5) then 
+				--round count width down because the leftmost number can overflow slightly without looking bad
+				--round icon width because it should always be an int, but sometimes it's a slightly off float
+				reagentButton.Count:SetFormattedText("%s\n/%s", playerReagentCountAbbreviated, reagentCount);
 			end
 		end
 
@@ -223,15 +242,40 @@ function TradeSkillDetailsMixin:RefreshDisplay()
 			reagentButton:Hide();
 		end
 
-		local sourceText = not recipeInfo.learned and C_TradeSkillUI.GetRecipeSourceText(self.selectedRecipeID);
+		self.Contents.NextRankText:Hide();
+		local sourceText, sourceTextIsForNextRank;
+		if not recipeInfo.learned then
+			sourceText = C_TradeSkillUI.GetRecipeSourceText(self.selectedRecipeID);
+		elseif recipeInfo.nextRecipeID then
+			sourceText = C_TradeSkillUI.GetRecipeSourceText(recipeInfo.nextRecipeID);
+			if sourceText then
+				sourceTextIsForNextRank = true;
+				-- replace the color at the beginning of the sourceText
+				sourceText = string.gsub(sourceText, "^|c%x%x%x%x%x%x", "|cC79C6E");
+				-- replace color after a newline
+				sourceText = string.gsub(sourceText, "|n|c%x%x%x%x%x%x", "|n|cC79C6E");
+			end
+		end
 
 		if sourceText then
 			self:AddContentWidget(self.Contents.SourceText);
 			self.Contents.SourceText:SetText(sourceText);
-			if numReagents > 0 then
-				self.Contents.SourceText:SetPoint("TOP", self.Contents.Reagents[numReagents], "BOTTOM", 0, -5)
+
+			if ( sourceTextIsForNextRank ) then
+				self:AddContentWidget(self.Contents.NextRankText);
+				self.Contents.NextRankText:Show();
+				if numReagents > 0 then
+					self.Contents.NextRankText:SetPoint("TOP", self.Contents.Reagents[numReagents], "BOTTOM", 0, -15)
+				else
+					self.Contents.NextRankText:SetPoint("TOP", self.Contents.ReagentLabel, "TOP");
+				end
+				self.Contents.SourceText:SetPoint("TOP", self.Contents.NextRankText, "BOTTOM", 0, 0);
 			else
-				self.Contents.SourceText:SetPoint("TOP", self.Contents.ReagentLabel, "TOP");
+				if numReagents > 0 then
+					self.Contents.SourceText:SetPoint("TOP", self.Contents.Reagents[numReagents], "BOTTOM", 0, -15);
+				else
+					self.Contents.SourceText:SetPoint("TOP", self.Contents.ReagentLabel, "TOP");
+				end
 			end
 			self.Contents.SourceText:Show();
 		else
@@ -327,9 +371,13 @@ function TradeSkillDetailsMixin:SetPendingCreationAmount(amount)
 end
 
 function TradeSkillDetailsMixin:OnResultMouseEnter(resultButton)
-	GameTooltip:SetOwner(resultButton, "ANCHOR_RIGHT");
-	GameTooltip:SetRecipeResultItem(self.selectedRecipeID);
-	CursorUpdate(resultButton);
+	if self.selectedRecipeID then
+		GameTooltip:SetOwner(resultButton, "ANCHOR_RIGHT");
+		GameTooltip:SetRecipeResultItem(self.selectedRecipeID);
+		CursorUpdate(resultButton);
+	end
+	
+	resultButton.UpdateTooltip = resultButton.UpdateTooltip or function(owner) self:OnResultMouseEnter(owner); end;
 end
 
 function TradeSkillDetailsMixin:OnResultClicked(resultButton)
@@ -343,7 +391,10 @@ function TradeSkillDetailsMixin:OnReagentMouseEnter(reagentButton)
 end
 
 function TradeSkillDetailsMixin:OnReagentClicked(reagentButton)
-	HandleModifiedItemClick(C_TradeSkillUI.GetRecipeReagentItemLink(self.selectedRecipeID, reagentButton.reagentIndex));
+	local clickHandled = HandleModifiedItemClick(C_TradeSkillUI.GetRecipeReagentItemLink(self.selectedRecipeID, reagentButton.reagentIndex));
+	if not clickHandled then
+		TradeSkillFrame.SearchBox:SetText(reagentButton.Name:GetText());
+	end
 end
 
 function TradeSkillDetailsMixin:OnStarsMouseEnter(starsFrame)
@@ -355,6 +406,7 @@ TradeSkillGuildListingMixin = {};
 
 function TradeSkillGuildListingMixin:OnLoad()
 	HybridScrollFrame_CreateButtons(self.Container.ScrollFrame, "TradeSkillGuildCrafterButtonTemplate", 0, 0);
+	self.Container.ScrollFrame.update = function() self:Refresh() end;
 
 	self:RegisterEvent("GUILD_RECIPE_KNOWN_BY_MEMBERS");
 end

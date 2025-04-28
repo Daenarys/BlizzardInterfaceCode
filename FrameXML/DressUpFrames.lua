@@ -2,6 +2,17 @@ function DressUpItemLink(link)
 	if ( not link or not IsDressableItem(link) ) then
 		return false;
 	end
+	return DressUpVisual(link);
+end
+
+function DressUpTransmogLink(link)
+	if ( not link or not (strsub(link, 1, 16) == "transmogillusion" or strsub(link, 1, 18) == "transmogappearance") ) then
+		return false;
+	end
+	return DressUpVisual(link);
+end
+
+function DressUpVisual(...)
 	if ( SideDressUpFrame.parentFrame and SideDressUpFrame.parentFrame:IsShown() ) then
 		if ( not SideDressUpFrame:IsShown() or SideDressUpFrame.mode ~= "player" ) then
 			SideDressUpFrame.mode = "player";
@@ -13,19 +24,10 @@ function DressUpItemLink(link)
 			ShowUIPanel(SideDressUpFrame);
 			SideDressUpModel:SetUnit("player");
 		end
-		SideDressUpModel:TryOn(link);
+		SideDressUpModel:TryOn(...);
 	else
-		if ( not DressUpFrame:IsShown() or DressUpFrame.mode ~= "player") then
-			DressUpFrame.mode = "player";
-			DressUpFrame.ResetButton:Show();
-
-			local race, fileName = UnitRace("player");
-			SetDressUpBackground(DressUpFrame, fileName);
-
-			ShowUIPanel(DressUpFrame);
-			DressUpModel:SetUnit("player");
-		end
-		DressUpModel:TryOn(link);
+		DressUpFrame_Show();
+		DressUpModel:TryOn(...);
 	end
 	return true;
 end
@@ -71,7 +73,7 @@ function DressUpTexturePath(raceFileName)
 	return "Interface\\DressUpFrame\\DressUpBackground-"..raceFileName;
 end
 
-function SetDressUpBackground(frame, fileName)
+function SetDressUpBackground(frame, fileName, atlasPostfix)
 	local texture = DressUpTexturePath(fileName);
 	
 	if ( frame.BGTopLeft ) then
@@ -86,18 +88,82 @@ function SetDressUpBackground(frame, fileName)
 	if ( frame.BGBottomRight ) then
 		frame.BGBottomRight:SetTexture(texture..4);
 	end
+	
+	if ( frame.ModelBackground and atlasPostfix ) then
+		frame.ModelBackground:SetAtlas("dressingroom-background-"..atlasPostfix);
+	end
+end
+
+function DressUpFrame_OnDressModel(self)
+	-- only want 1 update per frame
+	if ( not self.gotDressed ) then
+		self.gotDressed = true;
+		C_Timer.After(0, function() self.gotDressed = nil; DressUpFrameOutfitDropDown:UpdateSaveButton(); end);
+	end
+end
+
+function DressUpFrame_Show()
+	if ( not DressUpFrame:IsShown() or DressUpFrame.mode ~= "player") then
+		DressUpFrame.mode = "player";
+		DressUpFrame.ResetButton:Show();
+
+		local className, classFileName = UnitClass("player");
+		SetDressUpBackground(DressUpFrame, nil, classFileName);
+
+		ShowUIPanel(DressUpFrame);
+		DressUpModel:SetUnit("player");
+	end
+end
+
+function DressUpSources(appearanceSources, mainHandEnchant, offHandEnchant)
+	if ( not appearanceSources ) then
+		return true;
+	end
+
+	DressUpFrame_Show();
+	local mainHandSlotID = GetInventorySlotInfo("MAINHANDSLOT");
+	local secondaryHandSlotID = GetInventorySlotInfo("SECONDARYHANDSLOT");
+	for i = 1, #appearanceSources do
+		if ( i ~= mainHandSlotID and i ~= secondaryHandSlotID ) then
+			if ( appearanceSources[i] and appearanceSources[i] ~= NO_TRANSMOG_SOURCE_ID ) then
+				DressUpModel:TryOn(appearanceSources[i]);
+			end
+		end
+	end
+
+	DressUpModel:TryOn(appearanceSources[mainHandSlotID], "MAINHANDSLOT", mainHandEnchant);
+	DressUpModel:TryOn(appearanceSources[secondaryHandSlotID], "SECONDARYHANDSLOT", offHandEnchant);
+end
+
+DressUpOutfitMixin = { };
+
+function DressUpOutfitMixin:GetSlotSourceID(slot, transmogType)
+	local slotID = GetInventorySlotInfo(slot);
+	local appearanceSourceID, illusionSourceID = DressUpModel:GetSlotTransmogSources(slotID);
+	if ( transmogType == LE_TRANSMOG_TYPE_APPEARANCE ) then
+		return appearanceSourceID;
+	elseif ( transmogType == LE_TRANSMOG_TYPE_ILLUSION ) then
+		return illusionSourceID;
+	end
+end
+
+function DressUpOutfitMixin:LoadOutfit(outfitID)
+	if ( not outfitID ) then
+		return;
+	end
+	DressUpSources(C_TransmogCollection.GetOutfitSources(outfitID))
 end
 
 function SideDressUpFrame_OnShow(self)
 	SetUIPanelAttribute(self.parentFrame, "width", self.openWidth);
 	UpdateUIPanelPositions(self.parentFrame);
-	PlaySound("igCharacterInfoOpen");
+	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
 end
 
 function SideDressUpFrame_OnHide(self)
 	SetUIPanelAttribute(self.parentFrame, "width", self.closedWidth);
 	UpdateUIPanelPositions();
-	PlaySound("igCharacterInfoClose");
+	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
 end
 
 function SetUpSideDressUpFrame(parentFrame, closedWidth, openWidth, point, relativePoint, offsetX, offsetY)

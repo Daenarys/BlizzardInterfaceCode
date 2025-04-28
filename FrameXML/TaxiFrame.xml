@@ -48,13 +48,10 @@
 		<Scripts>
 			<OnLoad function="TaxiFrame_OnLoad"/>
 			<OnEvent function="TaxiFrame_OnEvent"/>
-			<OnShow>
-				PlaySound("igMainMenuOpen");
-				DrawOneHopLines();
-			</OnShow>
+			<OnShow function="TaxiFrame_OnShow" />
 			<OnHide>
 				CloseTaxiMap();
-				PlaySound("igMainMenuClose");
+				PlaySound(SOUNDKIT.IG_MAINMENU_CLOSE);
 			</OnHide>
 		</Scripts>
 	</Frame>

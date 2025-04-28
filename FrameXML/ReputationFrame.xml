@@ -1,6 +1,46 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
 	<Script file="ReputationFrame.lua"/>
+
+	<Frame name="ReputationParagonFrameTemplate" frameStrata="HIGH" enableMouse="true" virtual="true">
+		<Size x="20" y="20"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Glow" atlas="ParagonReputation_Glow" useAtlasSize="true">
+					<Anchors>
+						<Anchor point="CENTER" x="-1" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Icon" atlas="ParagonReputation_Bag" useAtlasSize="true">
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture parentKey="Check" atlas="ParagonReputation_Checkmark" useAtlasSize="true">
+					<Anchors>
+						<Anchor point="CENTER" x="5" y="-2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="HIGHLIGHT">
+				<Texture parentKey="Highlight" atlas="ParagonReputation_Bag" useAtlasSize="true" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnEnter function="ReputationParagonFrame_OnEnter"/>
+			<OnLeave function="ReputationParagonFrame_OnLeave"/>
+			<OnUpdate function="ReputationParagonFrame_OnUpdate"/>
+		</Scripts>
+	</Frame>
+
 	<Button name="ReputationBarTemplate" virtual="true">
 		<Size>
 			<AbsDimension x="295" y="20"/>
@@ -52,7 +92,7 @@
 				</CheckedTexture>
 				<Animations>
 					<AnimationGroup parentKey="GlowAnim" looping="BOUNCE">
-						<Alpha childKey="Glow" change="-0.75" duration="1.0" smoothing="IN_OUT" order="1"/>
+						<Alpha childKey="Glow" fromAlpha="0.75" toAlpha="0" duration="1.0" smoothing="IN_OUT" order="1"/>
 						<Scripts>
 							<OnPlay>
 								self.loopsRemaining = 5;
@@ -263,8 +303,8 @@
 				ReputationBar_OnClick(self, button, down);
 			</OnClick>
 			<OnEnter>
-				if (self.tooltip) then
-					_G[self:GetName().."ReputationBarFactionStanding"]:SetText(self.tooltip);
+				if (self.rolloverText) then
+					_G[self:GetName().."ReputationBarFactionStanding"]:SetText(self.rolloverText);
 				end
 				_G[self:GetName().."ReputationBarHighlight1"]:Show();
 				_G[self:GetName().."ReputationBarHighlight2"]:Show();
@@ -287,7 +327,9 @@
 		</Scripts>
 	</Button>
 	
-	<Frame name="ReputationFrame" setAllPoints="true" enableMouse="true" parent="CharacterFrame" useParentLevel="true" hidden="true" id="3">
+	<Frame name="ReputationParagonTooltipStatusBar" inherits="TooltipProgressBarTemplate"/>
+
+	<Frame name="ReputationFrame" setAllPoints="true" enableMouse="true" parent="CharacterFrame" useParentLevel="true" hidden="true" id="2">
 		<HitRectInsets>
 			<AbsInset left="0" right="30" top="0" bottom="75"/>
 		</HitRectInsets>
@@ -612,7 +654,7 @@
 						</Anchors>
 						<Scripts>
 							<OnClick>
-								PlaySound("igMainMenuOptionCheckBoxOn");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 								HideParentPanel(self);
 							</OnClick>
 						</Scripts>
@@ -645,9 +687,9 @@
 							<OnClick>
 								FactionToggleAtWar(GetSelectedFaction());
 								if ( self:GetChecked() ) then
-									PlaySound("igMainMenuOptionCheckBoxOn");
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 								else
-									PlaySound("igMainMenuOptionCheckBoxOff");
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 								end
 								ReputationFrame_Update();
 							</OnClick>
@@ -694,10 +736,10 @@
 							</OnLoad>
 							<OnClick>
 								if ( self:GetChecked() ) then
-									PlaySound("igMainMenuOptionCheckBoxOn");
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 									SetFactionInactive(GetSelectedFaction());
 								else
-									PlaySound("igMainMenuOptionCheckBoxOff");
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 									SetFactionActive(GetSelectedFaction());
 								end
 							</OnClick>
@@ -728,13 +770,18 @@
 							</OnLoad>
 							<OnClick>
 								if ( self:GetChecked() ) then
-									PlaySound("igMainMenuOptionCheckBoxOn");
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 									SetWatchedFactionIndex(GetSelectedFaction());
+									SetWatchingHonorAsXP(false);
+									if (C_ArtifactUI.GetEquippedArtifactInfo()) then
+										SetCVar("showArtifactXPBar", false);
+									end
 								else
-									PlaySound("igMainMenuOptionCheckBoxOff");
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 									SetWatchedFactionIndex(0);
+									SetCVar("showArtifactXPBar", true);
 								end
-								ReputationWatchBar_Update();
+								MainMenuBar_UpdateExperienceBars();
 							</OnClick>
 							<OnEnter>
 								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -763,10 +810,10 @@
 							</OnLoad>
 							<OnClick>
 								if ( self:GetChecked() ) then
-									PlaySound("igMainMenuOptionCheckBoxOn");
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 									ReputationBar_SetLFBonus(self.factionID)
 								else
-									PlaySound("igMainMenuOptionCheckBoxOff");
+									PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 									ReputationBar_SetLFBonus(0)
 								end
 							</OnClick>
@@ -783,137 +830,12 @@
 		<Scripts>
 			<OnLoad function="ReputationFrame_OnLoad"/>
 			<OnShow function="ReputationFrame_OnShow"/>
+			<OnHide function="ReputationFrame_OnHide"/>
 			<OnEvent function="ReputationFrame_OnEvent"/>
 			<OnMouseWheel function=""/>
 		</Scripts>
 	</Frame>
-	<Frame name="ReputationWatchBar" enableMouse="true" parent="MainMenuBar" hidden="true">
-		<Size>
-			<AbsDimension x="1024" y="11"/>
-		</Size>
-		<Anchors>
-			<Anchor point="BOTTOM" relativeTo="MainMenuBar" relativePoint="TOP">
-				<Offset>
-					<AbsDimension x="0" y="-3"/>
-				</Offset>
-			</Anchor>
-		</Anchors>
-		<Frames>
-			<StatusBar name="ReputationWatchStatusBar" drawLayer="ARTWORK">
-				<Size>
-					<AbsDimension x="1024" y="8"/>
-				</Size>
-				<Anchors>
-					<Anchor point="TOP"/>
-				</Anchors>
-				<Layers>
-					<Layer level="OVERLAY">
-						<Texture name="ReputationWatchBarTexture0" file="Interface\PaperDollInfoFrame\UI-ReputationWatchBar">
-							<Size>
-								<AbsDimension x="256" y="11"/>
-							</Size>
-							<Anchors>
-								<Anchor point="TOPLEFT">
-									<Offset>
-										<AbsDimension x="0" y="2"/>
-									</Offset>
-								</Anchor>
-							</Anchors>
-							<TexCoords left="0" right="1.0" top="0" bottom="0.171875"/>
-						</Texture>
-						<Texture name="ReputationWatchBarTexture1" file="Interface\PaperDollInfoFrame\UI-ReputationWatchBar">
-							<Size>
-								<AbsDimension x="256" y="11"/>
-							</Size>
-							<Anchors>
-								<Anchor point="LEFT" relativeTo="ReputationWatchBarTexture0" relativePoint="RIGHT"/>
-							</Anchors>
-							<TexCoords left="0" right="1.0" top="0.171875" bottom="0.34375"/>
-						</Texture>
-						<Texture name="ReputationWatchBarTexture2" file="Interface\PaperDollInfoFrame\UI-ReputationWatchBar">
-							<Size>
-								<AbsDimension x="256" y="11"/>
-							</Size>
-							<Anchors>
-								<Anchor point="LEFT" relativeTo="ReputationWatchBarTexture1" relativePoint="RIGHT"/>
-							</Anchors>
-							<TexCoords left="0" right="1.0" top="0.34375" bottom="0.515625"/>
-						</Texture>
-						<Texture name="ReputationWatchBarTexture3" file="Interface\PaperDollInfoFrame\UI-ReputationWatchBar">
-							<Size>
-								<AbsDimension x="256" y="11"/>
-							</Size>
-							<Anchors>
-								<Anchor point="LEFT" relativeTo="ReputationWatchBarTexture2" relativePoint="RIGHT"/>
-							</Anchors>
-							<TexCoords left="0" right="1.0" top="0.515625" bottom="0.6875"/>
-						</Texture>
-						<Texture name="ReputationXPBarTexture0" file="Interface\MainMenuBar\UI-MainMenuBar-Dwarf">
-							<Size>
-								<AbsDimension x="256" y="10"/>
-							</Size>
-							<Anchors>
-								<Anchor point="TOPLEFT">
-									<Offset>
-										<AbsDimension x="0" y="0"/>
-									</Offset>
-								</Anchor>
-							</Anchors>
-							<TexCoords left="0" right="1.0" top="0.79296875" bottom="0.83203125"/>
-						</Texture>
-						<Texture name="ReputationXPBarTexture1" file="Interface\MainMenuBar\UI-MainMenuBar-Dwarf">
-							<Size>
-								<AbsDimension x="256" y="10"/>
-							</Size>
-							<Anchors>
-								<Anchor point="LEFT" relativeTo="ReputationXPBarTexture0" relativePoint="RIGHT"/>
-							</Anchors>
-							<TexCoords left="0" right="1.0" top="0.54296875" bottom="0.58203125"/>
-						</Texture>
-						<Texture name="ReputationXPBarTexture2" file="Interface\MainMenuBar\UI-MainMenuBar-Dwarf">
-							<Size>
-								<AbsDimension x="256" y="10"/>
-							</Size>
-							<Anchors>
-								<Anchor point="LEFT" relativeTo="ReputationXPBarTexture1" relativePoint="RIGHT"/>
-							</Anchors>
-							<TexCoords left="0" right="1.0" top="0.29296875" bottom="0.33203125"/>
-						</Texture>
-						<Texture name="ReputationXPBarTexture3" file="Interface\MainMenuBar\UI-MainMenuBar-Dwarf">
-							<Size>
-								<AbsDimension x="256" y="10"/>
-							</Size>
-							<Anchors>
-								<Anchor point="LEFT" relativeTo="ReputationXPBarTexture2" relativePoint="RIGHT"/>
-							</Anchors>
-							<TexCoords left="0" right="1.0" top="0.04296875" bottom="0.08203125"/>
-						</Texture>
-					</Layer>
-					<Layer level="BACKGROUND">
-						<Texture name="ReputationWatchStatusBarBackground">
-							<Color r="0.0" g="0.0" b="0.0" a="0.5"/>
-						</Texture>
-					</Layer>
-				</Layers>
-				<BarTexture file="Interface\TargetingFrame\UI-StatusBar"/>
-				<BarColor r="0.58" g="0.0" b="0.55"/>
-			</StatusBar>
-			<Frame name="ReputationWatchBarOverlayFrame" frameStrata="DIALOG" setAllPoints="true">
-				<Layers>
-					<Layer level="ARTWORK">
-						<FontString name="ReputationWatchStatusBarText" inherits="TextStatusBarText" hidden="true">
-							<Anchors>
-								<Anchor point="CENTER">
-									<Offset>
-										<AbsDimension x="0" y="3"/>
-									</Offset>
-								</Anchor>
-							</Anchors>
-						</FontString>
-					</Layer>
-				</Layers>
-			</Frame>
-		</Frames>
+	<Frame name="ReputationWatchBar" enableMouse="true" parent="MainMenuBar" hidden="true" inherits="MainMenuBarWatchBarTemplate">
 		<Scripts>
 			<OnLoad>
 				self:RegisterEvent("UPDATE_FACTION");
@@ -929,34 +851,88 @@
 					if ( self:IsShown() ) then
 						ReputationFrame_Update();
 					end
-					ReputationWatchBar_Update();
+					MainMenuBar_UpdateExperienceBars();
 				elseif( event == "PLAYER_LEVEL_UP" or event == "ENABLE_XP_GAIN" or event == "DISABLE_XP_GAIN" or event == "UPDATE_EXPANSION_LEVEL" ) then
 					ReputationWatchBar_UpdateMaxLevel();
-					ReputationWatchBar_Update(arg1);
+					
+					if event == "PLAYER_LEVEL_UP" then
+						MainMenuBar_UpdateExperienceBars(arg1);
+					else
+						MainMenuBar_UpdateExperienceBars();
+					end
+					
 					UIParent_ManageFramePositions();
 				elseif( event == "CVAR_UPDATE" and arg1 == "XP_BAR_TEXT" ) then
 					if( arg2 == "1" ) then
-						ShowWatchedReputationBarText("lock");
+						ShowWatchBarText(ReputationWatchBar, "lock");
 					else
-						HideWatchedReputationBarText("unlock");
+						HideWatchBarText(ReputationWatchBar, "unlock");
 					end
 				end
 			</OnEvent>
 			<OnShow>
-				if ( GetCVar("xpBarText") == "1" ) then
-					ShowWatchedReputationBarText("lock");
+				if ( GetCVarBool("xpBarText") ) then
+					ShowWatchBarText(ReputationWatchBar, "lock");
 				end
 				UIParent_ManageFramePositions();
 			</OnShow>
 			<OnHide function="UIParent_ManageFramePositions"/>
 			<OnEnter>
-				ReputationWatchStatusBarText:Show();
+				self.OverlayFrame.Text:Show();
+				ReputationParagonWatchBar_OnEnter(self);
 			</OnEnter>
 			<OnLeave>
 				if(not ReputationWatchBar.textLocked) then
-					ReputationWatchStatusBarText:Hide();
+				self.OverlayFrame.Text:Hide();
 				end
+				ReputationParagonWatchBar_OnLeave(self);
 			</OnLeave>
 		</Scripts>
 	</Frame>
+
+	<GameTooltip name="ReputationParagonTooltip" frameStrata="TOOLTIP" hidden="true" parent="ReputationFrame" inherits="GameTooltipTemplate">
+		<Frames>
+			<Frame parentKey="ItemTooltip" inherits="EmbeddedItemTooltip" hidden="true">
+				<Size x="100" y="100"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMLEFT" x="10" y="13"/>
+				</Anchors>
+				<KeyValues>
+					<KeyValue key="yspacing" value="13" type="number"/>
+				</KeyValues>
+				<Scripts>
+					<OnLoad inherit="prepend">
+						self.Tooltip.shoppingTooltips = { ShoppingTooltip1, ShoppingTooltip2 };
+					</OnLoad>
+				</Scripts>
+			</Frame>
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+				self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+				self.shoppingTooltips = { ShoppingTooltip1, ShoppingTooltip2 };
+			</OnLoad>
+			<OnUpdate>
+				if ( self.recalculatePadding ) then
+					self.recalculatePadding = nil;
+					GameTooltip_CalculatePadding(self);
+				end
+				self.updateTooltip = (self.updateTooltip or TOOLTIP_UPDATE_TIME) - elapsed;
+				if ( self.updateTooltip > 0 ) then
+					return;
+				end
+				self.updateTooltip = TOOLTIP_UPDATE_TIME;
+				
+				ReputationParagonFrame_SetupParagonTooltip(self.owner, self.factionID);
+			</OnUpdate>
+			<OnHide inherit="prepend">
+				self.ItemTooltip:Hide();
+				self:SetPadding(0, 0);
+			</OnHide>
+			<OnSizeChanged inherit="prepend">
+				self.recalculatePadding = true;
+			</OnSizeChanged>
+		</Scripts>
+	</GameTooltip>
 </Ui>

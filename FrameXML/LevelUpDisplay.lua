@@ -1,5 +1,4 @@
 LEVEL_UP_TYPE_CHARACTER = "character";	--Name used in globalstring LEVEL_UP
-LEVEL_UP_TYPE_GUILD = "guild";	--Name used in globalstring GUILD_LEVEL_UP
 LEVEL_UP_TYPE_PET = "pet" -- Name used in globalstring PET_LEVEL_UP
 LEVEL_UP_TYPE_SCENARIO = "scenario";
 LEVEL_UP_TYPE_SPELL_BUCKET = "spellbucket";
@@ -10,19 +9,13 @@ TOAST_PET_BATTLE_LEVELUP = "petbattleleveluptoast";
 TOAST_PET_BATTLE_LOOT = "petbattleloot";
 TOAST_CHALLENGE_MODE_RECORD = "challengemode";
 TOAST_GARRISON_ABILITY = "garrisonability";
+TOAST_WORLD_QUESTS_UNLOCKED = "worldquestsunlocked";
 
 LEVEL_UP_EVENTS = {
 --  Level  = {unlock}
 	[10] = {"SpecializationUnlocked", "BGsUnlocked"},
 	[15] = {"TalentsUnlocked","LFDUnlocked"},
-	[25] = {"Glyphs"},
-	[30] = {"DualSpec"},
-	[50] = {"GlyphSlots"},
-	[70] = {"HeroicBurningCrusade"},
-	[75] = {"GlyphSlots"},
-	[80] = {"HeroicWrathOfTheLichKing"},
-	[85] = {"HeroicCataclysm"},
-	[90] = {"HeroicMistsOfPandaria"},
+	[110]= {"HonorTalentsUnlocked"},
 }
 
 SUBICON_TEXCOOR_BOOK 	= {0.64257813, 0.72070313, 0.03710938, 0.11132813};
@@ -34,13 +27,6 @@ local levelUpTexCoords = {
 		dot = { 0.64257813, 0.68359375, 0.18750000, 0.23046875 },
 		goldBG = { 0.56054688, 0.99609375, 0.24218750, 0.46679688 },
 		gLine = { 0.00195313, 0.81835938, 0.01953125, 0.03320313 },
-		gLineDelay = 1.5,
-	},
-	[LEVEL_UP_TYPE_GUILD] = {
-		dot = { 0.64257813, 0.68359375, 0.77734375, 0.8203125 },
-		goldBG = { 0.56054688, 0.99609375, 0.486328125, 0.7109375 },
-		gLine = { 0.00195313, 0.81835938, 0.96484375, 0.97851563 },
-		textTint = {0.11765, 1, 0},
 		gLineDelay = 1.5,
 	},
 	[LEVEL_UP_TYPE_PET] = {
@@ -103,6 +89,12 @@ local levelUpTexCoords = {
 		gLine = { 0.00195313, 0.81835938, 0.01953125, 0.03320313 },
 		gLineDelay = 1.5,
 	},
+	[TOAST_WORLD_QUESTS_UNLOCKED] = {
+		dot = { 0.64257813, 0.68359375, 0.18750000, 0.23046875 },
+		goldBG = { 0.56054688, 0.99609375, 0.24218750, 0.46679688 },
+		gLine = { 0.00195313, 0.81835938, 0.01953125, 0.03320313 },
+		gLineDelay = 0,
+	},
 }
 
 LEVEL_UP_TYPES = {
@@ -147,60 +139,14 @@ LEVEL_UP_TYPES = {
 										subText=LEVEL_UP_FEATURE,
 										link=LEVEL_UP_FEATURE2..LEVEL_UP_LFD_LINK
 									},
-
-	["Glyphs"]					=	{	icon="Interface\\Icons\\Inv_inscription_tradeskill01",
+									
+	["HonorTalentsUnlocked"] 	= 	{	icon="Interface\\Icons\\Ability_DualWield",
 										subIcon=SUBICON_TEXCOOR_LOCK,
-										text=GLYPHS,
+										text=PVP_TALENTS,
 										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_GLYPHSLOT_LINK
+										link=LEVEL_UP_FEATURE2..LEVEL_UP_HONOR_LINK
 									},
 
-	["GlyphSlots"]				= 	{	icon="Interface\\Icons\\Inv_inscription_tradeskill01",
-										subIcon=SUBICON_TEXCOOR_LOCK,
-										text=GLYPH_SLOTS,
-										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_GLYPHSLOT_LINK
-									},
-
-	["DualSpec"] 				=	{	icon="Interface\\Icons\\INV_Misc_Coin_01",
-										subIcon=SUBICON_TEXCOOR_LOCK,
-										text=LEVEL_UP_DUALSPEC,
-										subText=LEVEL_UP_FEATURE,
-										link=LEVEL_UP_FEATURE2..LEVEL_UP_DUAL_SPEC_LINK
-									},
-
-	["HeroicBurningCrusade"]	=	{	entryType = "heroicdungeon",
-										tier = 2,
-										icon="Interface\\Icons\\ExpansionIcon_BurningCrusade",
-										subIcon=SUBICON_TEXCOOR_LOCK,
-										text=EXPANSION_NAME1,
-										subText=LEVEL_UP_HEROIC,
-									},
-									
-	["HeroicWrathOfTheLichKing"]= 	{	entryType = "heroicdungeon",
-										tier = 3,
-										icon="Interface\\Icons\\ExpansionIcon_WrathoftheLichKing",
-										subIcon=SUBICON_TEXCOOR_LOCK,
-										text=EXPANSION_NAME2,
-										subText=LEVEL_UP_HEROIC,
-									},
-									
-	["HeroicCataclysm"]			=	{	entryType = "heroicdungeon",
-										tier = 4,
-										icon="Interface\\Icons\\ExpansionIcon_Cataclysm",
-										subIcon=SUBICON_TEXCOOR_LOCK,
-										text=EXPANSION_NAME3,
-										subText=LEVEL_UP_HEROIC,
-									},
-									
-	["HeroicMistsOfPandaria"]	= 	{ 	entryType = "heroicdungeon",
-										tier = 5,
-										icon="Interface\\Icons\\ExpansionIcon_MistsofPandaria",
-										subIcon=SUBICON_TEXCOOR_LOCK,
-										text=EXPANSION_NAME4,
-										subText=LEVEL_UP_HEROIC
-									},
-									
 ------ HACKS BELOW		
  	["Teleports"] 			= {	spellID=109424	},
 	["PortalsHorde"]		= {	spellID=109400	},
@@ -216,9 +162,6 @@ LEVEL_UP_TYPES = {
  	["PaliMountTauren2"] 	= {	spellID=69826	},
  	["PaliMountDraenei1"] 	= {	spellID=73629	},
  	["PaliMountDraenei2"] 	= {	spellID=73630	},
- 	
-	["Plate"]	 			= {	spellID=750, feature=true},
-	["Mail"] 				= {	spellID=8737, feature=true	},
 	
 	["TrackBeast"] 			= {	spellID=1494  },
 	["TrackHumanoid"] 		= {	spellID=19883  },
@@ -249,38 +192,30 @@ LEVEL_UP_CLASS_HACKS = {
 								[20] = {"LockMount1"},
 								[40] = {"LockMount2"},
 							},
-	["SHAMAN"] 		= {
-							--  Level  = {unlock}
-								[40] = {"Mail"},
-							},
-	["HUNTER"] 		= {
-							--  Level  = {unlock}
-								[40] = {"Mail"},
-							},
-	["WARRIOR"] 		= {
-							--  Level  = {unlock}
-								[40] = {"Plate"},
-							},
 	["PALADINHorde"] 		= {
 							--  Level  = {unlock}
 								[20] = {"PaliMountHorde1"},
-								[40] = {"PaliMountHorde2", "Plate"},
+								[40] = {"PaliMountHorde2"},
 							},
 	["PALADINAlliance"] 	= {
 							--  Level  = {unlock}
 								[20] = {"PaliMountAlliance1"},
-								[40] = {"PaliMountAlliance2", "Plate"},
+								[40] = {"PaliMountAlliance2"},
 							},
 	["PALADINTauren"]	= {
 							--  Level  = {unlock}
 								[20] = {"PaliMountTauren1"},
-								[40] = {"PaliMountTauren2", "Plate"},
+								[40] = {"PaliMountTauren2"},
 							},	
 	["PALADINDraenei"]	= {
 							--  Level  = {unlock}
 								[20] = {"PaliMountDraenei1"},
-								[40] = {"PaliMountDraenei2", "Plate"},
-							},	
+								[40] = {"PaliMountDraenei2"},
+							},
+	["DEMONHUNTER"]		= {
+							--  Level  = {unlock}
+								[99] = {"TalentsUnlocked"},
+							},
 }
 
 GARRISON_ABILITY_HACKS = {
@@ -295,7 +230,6 @@ LEVEL_UP_TRAP_LEVELS = {427, 77, 135}
 
 function LevelUpDisplay_OnLoad(self)
 	self:RegisterEvent("PLAYER_LEVEL_UP");
-	self:RegisterEvent("UNIT_GUILD_LEVEL");
 	self:RegisterEvent("UNIT_LEVEL");
 	--self:RegisterEvent("SCENARIO_UPDATE");	this is now handled from the ObjectiveTracker
 	self:RegisterEvent("PET_BATTLE_FINAL_ROUND"); -- display winner, start listening for additional results
@@ -308,6 +242,7 @@ function LevelUpDisplay_OnLoad(self)
 	self:RegisterEvent("PET_BATTLE_LOOT_RECEIVED");
 	self:RegisterEvent("GARRISON_BUILDING_ACTIVATED");
 	self:RegisterEvent("CHARACTER_UPGRADE_SPELL_TIER_SET");
+	self:RegisterEvent("QUEST_TURNED_IN");
 	self.currSpell = 0;
 	
 	self.PlayBanner = function(self, data)
@@ -327,8 +262,6 @@ function LevelUpDisplay_OnLoad(self)
 	end
 end
 
-
-
 function LevelUpDisplay_OnEvent(self, event, ...)
 	local arg1 = ...;
 	if event == "PLAYER_LEVEL_UP" then
@@ -337,25 +270,12 @@ function LevelUpDisplay_OnEvent(self, event, ...)
 		self.type = LEVEL_UP_TYPE_CHARACTER;
 		LevelUpDisplay_Show(self);
 		LevelUpDisplaySide:Hide();
-	elseif event == "UNIT_GUILD_LEVEL" then
-		local unit, level = ...;
-		if ( unit == "player" ) then
-			self.level = level;
-			self.type = LEVEL_UP_TYPE_GUILD;
-			LevelUpDisplay_Show(self);
-			LevelUpDisplaySide:Hide();
-		end
 	elseif event == "UNIT_LEVEL" and arg1 == "pet" then
 		if (UnitName("pet") ~= UNKNOWNOBJECT) then
 			self.level = UnitLevel("pet");
 			self.type = LEVEL_UP_TYPE_PET;
 			LevelUpDisplay_Show(self);
 			LevelUpDisplaySide:Hide();
-		end
-	elseif ( event == "ZONE_CHANGED_NEW_AREA" ) then
-		self:UnregisterEvent("ZONE_CHANGED_NEW_AREA");
-		if ( self.type or self.queuedType ) then
-			LevelUpDisplay_Show(self);
 		end
 	elseif ( event == "PET_BATTLE_FINAL_ROUND" ) then
 		self.type = TOAST_PET_BATTLE_WINNER;
@@ -387,13 +307,13 @@ function LevelUpDisplay_OnEvent(self, event, ...)
 		self.sound = warningSound;
 		LevelUpDisplay_Show(self);
 	elseif ( event == "CHALLENGE_MODE_NEW_RECORD" ) then
-		local mapID, recordTime, medal = ...;
+		local mapID, recordTime, level = ...;
 		self.type = TOAST_CHALLENGE_MODE_RECORD;
 		self.mapID = mapID;
 		self.recordTime = recordTime;
-		self.medal = medal;
+        self.level = level;
 		LevelUpDisplay_Show(self);
-		PlaySoundKitID(33338);
+		PlaySound(SOUNDKIT.UI_70_CHALLENGE_MODE_NEW_RECORD);
 	elseif ( event == "GARRISON_BUILDING_ACTIVATED" ) then
 		local _, buildingID = ...;
 		if (GARRISON_ABILITY_HACKS[buildingID]) then
@@ -407,6 +327,13 @@ function LevelUpDisplay_OnEvent(self, event, ...)
 	elseif ( event == "CHARACTER_UPGRADE_SPELL_TIER_SET") then
 		local tierIndex = ...;
 		LevelUpDisplay_AddSpellBucketUnlockEvent(self, tierIndex);
+	elseif ( event == "QUEST_TURNED_IN") then
+		local questID, xp, money = ...;
+		
+		if questID == WORLD_QUESTS_AVAILABLE_QUEST_ID then
+			self.type = TOAST_WORLD_QUESTS_UNLOCKED;
+			LevelUpDisplay_Show(self);
+		end
 	end
 end
 
@@ -418,6 +345,7 @@ function LevelUpDisplay_StopAllAnims(self)
 	self.challengeModeFrame.challengeComplete:Stop();
 	self.levelFrame.levelUp:Stop();
 	self.levelFrame.fastReveal:Stop();
+	self.levelFrame.immediateReveal:Stop();
 end
 
 function LevelUpDisplay_PlayScenario()
@@ -426,7 +354,7 @@ function LevelUpDisplay_PlayScenario()
 end
 
 function LevelUpDisplay_BuildCharacterList(self)
-	local name, icon, link = "","",nil;
+	local name, icon, link = "",nil,nil;
 	self.unlockList = {};
 
 	if LEVEL_UP_EVENTS[self.level] then
@@ -443,16 +371,15 @@ function LevelUpDisplay_BuildCharacterList(self)
 															};
 	end	
 
-	local GUILD_EVENT_TEXTURE_PATH = "Interface\\LFGFrame\\LFGIcon-";
 	local dungeons = {GetLevelUpInstances(self.level, false)};
 	for _,dungeon in pairs(dungeons) do
 		name, icon, link = GetDungeonInfo(dungeon);
 		if link then -- link can come back as nil if there's no Dungeon Journal entry
-			self.unlockList[#self.unlockList +1] = { entryType = "dungeon", text = name, subText = LEVEL_UP_DUNGEON, icon = GUILD_EVENT_TEXTURE_PATH..icon, subIcon = SUBICON_TEXCOOR_LOCK,
+			self.unlockList[#self.unlockList +1] = { entryType = "dungeon", text = name, subText = LEVEL_UP_DUNGEON, icon = icon, subIcon = SUBICON_TEXCOOR_LOCK,
 																		link = LEVEL_UP_DUNGEON2.." "..link
 																	};
 		else
-			self.unlockList[#self.unlockList +1] = { entryType = "dungeon", text = name, subText = LEVEL_UP_DUNGEON, icon = GUILD_EVENT_TEXTURE_PATH..icon, subIcon = SUBICON_TEXCOOR_LOCK,
+			self.unlockList[#self.unlockList +1] = { entryType = "dungeon", text = name, subText = LEVEL_UP_DUNGEON, icon = icon, subIcon = SUBICON_TEXCOOR_LOCK,
 																		link = LEVEL_UP_DUNGEON2.." "..name
 																	};
 		end
@@ -462,11 +389,11 @@ function LevelUpDisplay_BuildCharacterList(self)
 	for _,raid in pairs(raids) do
 		name, icon, link = GetDungeonInfo(raid);
 		if link then -- link can come back as nil if there's no Dungeon Journal entry
-			self.unlockList[#self.unlockList +1] = { entryType = "dungeon", text = name, subText = LEVEL_UP_RAID, icon = GUILD_EVENT_TEXTURE_PATH..icon, subIcon = SUBICON_TEXCOOR_LOCK,
+			self.unlockList[#self.unlockList +1] = { entryType = "dungeon", text = name, subText = LEVEL_UP_RAID, icon = icon, subIcon = SUBICON_TEXCOOR_LOCK,
 																		link = LEVEL_UP_RAID2.." "..link
 																	};
 		else
-			self.unlockList[#self.unlockList +1] = { entryType = "dungeon", text = name, subText = LEVEL_UP_RAID, icon = GUILD_EVENT_TEXTURE_PATH..icon, subIcon = SUBICON_TEXCOOR_LOCK,
+			self.unlockList[#self.unlockList +1] = { entryType = "dungeon", text = name, subText = LEVEL_UP_RAID, icon = icon, subIcon = SUBICON_TEXCOOR_LOCK,
 																		link = LEVEL_UP_RAID2.." "..name
 																	};
 		end
@@ -493,6 +420,8 @@ function LevelUpDisplay_BuildCharacterList(self)
 																			link=LEVEL_UP_ABILITY2.." "..GetSpellLink(LEVEL_UP_TYPES[spelltype].spellID)
 																		};
 				end
+			elseif LEVEL_UP_TYPES[spelltype] then
+				self.unlockList[#self.unlockList +1] = LEVEL_UP_TYPES[spelltype];
 			end
 		end	
 	end
@@ -505,13 +434,6 @@ function LevelUpDisplay_BuildCharacterList(self)
 																link=LEVEL_UP_FEATURE2.." "..GetSpellLink(feature)
 															};
 	end	
-	
-	local draenorTalent = GetCurrentLevelDraenorTalent(self.level);
-	if (draenorTalent) then
-		name, _, icon = GetSpellInfo(draenorTalent);
-		self.unlockList[#self.unlockList +1] = { entryType = "draenortalent", text = name, subText = LEVEL_UP_DRAENORTALENT, icon = icon, subIcon = SUBICON_TEXCOOR_BOOK, description = GetSpellDescription(draenorTalent),
-																link=LEVEL_UP_DRAENOR_TALENT2.." "..GetSpellLink(draenorTalent) };
-	end
 
 	self.currSpell = 1;
 end
@@ -559,21 +481,6 @@ function LevelUpDisplay_BuildEmptyList(self)
 	self.currSpell = 1;
 end
 
-function LevelUpDisplay_BuildGuildList(self)
-	self.unlockList = {};
-	
-	for i=1, GetNumGuildPerks() do
-		local name, spellID, iconTexture, level = GetGuildPerkInfo(i);
-		if ( level == self.level ) then
-			tinsert(self.unlockList, { text = name, subText = GUILD_LEVEL_UP_PERK, icon = iconTexture, subIcon = SUBICON_TEXCOOR_LOCK,
-												link = GUILD_LEVEL_UP_PERK2.." "..GetSpellLink(spellID)
-											});
-		end
-	end
-	
-	self.currSpell = 1;
-end
-
 function LevelUpDisplay_BuildGarrisonAbilityList(self)
 	self.unlockList = {};
 
@@ -607,6 +514,22 @@ function LevelUpDisplay_BuildPetBattleWinnerList(self)
 			self.winnerSoundKitID = 34091; --UI_PetBattle_PVP_Victory
 		end
 	end;
+	self.currSpell = 1;
+end
+
+function LevelUpDisplay_BuildWorldQuestBucketList(self)
+	self.unlockList = {};
+	table.insert(self.unlockList,
+			{	
+				entryType = "worldquest",
+				icon="Interface\\Icons\\icon_treasuremap",
+				subIcon=SUBICON_TEXCOOR_LOCK,
+				text=LEVEL_UP_WORLD_QUESTS,
+				subText=LEVEL_UP_FEATURE,
+				link=LEVEL_UP_FEATURE2.." "..LEVEL_UP_WORLD_QUEST_LINK,
+				instructionalText = LEVEL_UP_WORLD_QUESTS_INSTRUCTIONS,
+			}
+	);
 	self.currSpell = 1;
 end
 
@@ -778,12 +701,6 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 		return;
 	end
 
-	if ( not IsPlayerInWorld() ) then
-		-- this is pretty much the zoning-into-a-scenario case
-		self:RegisterEvent("ZONE_CHANGED_NEW_AREA");
-		return;
-	end
-
 	self:SetHeight(72);
 	self:Show();
 	ZoneTextFrame:Hide();	--LevelUpDisplay is more important than zoning text
@@ -792,6 +709,7 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 	self.challengeModeBits.MedalIcon:Hide();
 	self.challengeModeBits.BottomFiligree:Hide();	
 	local playAnim;
+	local scenarioType = 0;
 	if  self.currSpell == 0 then
 		local unlockList = beginUnlockList;
 		if ( not self.type ) then
@@ -801,40 +719,36 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 			self.queuedItems = nil;
 		end
 		if ( self.type == LEVEL_UP_TYPE_SCENARIO ) then
-			local name, currentStage, numStages, flags = C_Scenario.GetInfo();
-			if ( currentStage > 0 and currentStage <= numStages ) then
-				local stageName, stageDescription = C_Scenario.GetStepInfo();
-				if( bit.band(flags, SCENARIO_FLAG_SUPRESS_STAGE_TEXT) == SCENARIO_FLAG_SUPRESS_STAGE_TEXT) then
-					-- Bypass the Stage name portion...
-					self.scenarioFrame.level:SetText(stageName);
-					self.scenarioFrame.name:SetText("");
-				else
-					if ( currentStage == numStages ) then
-						self.scenarioFrame.level:SetText(SCENARIO_STAGE_FINAL);
+			local name, currentStage, numStages, flags, _;
+			name, currentStage, numStages, flags, _, _, _, _, _, scenarioType = C_Scenario.GetInfo();
+			if (not IsBoostTutorialScenario()) then
+				if ( currentStage > 0 and currentStage <= numStages ) then
+					local stageName, stageDescription = C_Scenario.GetStepInfo();
+					if( bit.band(flags, SCENARIO_FLAG_SUPRESS_STAGE_TEXT) == SCENARIO_FLAG_SUPRESS_STAGE_TEXT) then
+						-- Bypass the Stage name portion...
+						self.scenarioFrame.level:SetText(stageName);
+						self.scenarioFrame.name:SetText("");
 					else
-						self.scenarioFrame.level:SetFormattedText(SCENARIO_STAGE, currentStage);
+						if ( currentStage == numStages ) then
+							self.scenarioFrame.level:SetText(SCENARIO_STAGE_FINAL);
+						else
+							self.scenarioFrame.level:SetFormattedText(SCENARIO_STAGE, currentStage);
+						end
+						self.scenarioFrame.name:SetText(stageName);
 					end
-					self.scenarioFrame.name:SetText(stageName);
+					if (scenarioType == LE_SCENARIO_TYPE_LEGION_INVASION) then
+						playAnim = self.scenarioFrame.LegionInvasionNewStage;
+					else
+						playAnim = self.scenarioFrame.newStage;
+					end
+					self.scenarioFrame.description:SetText(stageDescription);
+					LevelUpDisplay:SetPoint("TOP", 0, -250);
 				end
-				self.scenarioFrame.description:SetText(stageDescription);
-				LevelUpDisplay:SetPoint("TOP", 0, -250);
-				playAnim = self.scenarioFrame.newStage;
 			end
 		elseif ( self.type == TOAST_CHALLENGE_MODE_RECORD ) then
-			local medal = self.medal;
-			if ( CHALLENGE_MEDAL_TEXTURES[medal] ) then
-				self.challengeModeFrame.MedalEarned:SetText(_G["CHALLENGE_MODE_MEDALNAME"..medal]);
-				self.challengeModeFrame.RecordTime:SetFormattedText(CHALLENGE_MODE_NEW_BEST, GetTimeStringFromSeconds(self.recordTime / 1000));
-				self.challengeModeBits.MedalFlare:Show();
-				self.challengeModeBits.MedalIcon:SetTexture(CHALLENGE_MEDAL_TEXTURES[medal]);
-				self.challengeModeBits.MedalIcon:Show();
-				self.challengeModeBits.BottomFiligree:Show();
-			else
-				-- no medal earned, still a record time for player
-				self.challengeModeFrame.MedalEarned:SetText(CHALLENGE_MODE_NEW_RECORD);
-				self.challengeModeFrame.RecordTime:SetText(GetTimeStringFromSeconds(self.recordTime / 1000));
-			end
-			PlaySound("UI_Challenges_NewRecord");
+			self.challengeModeFrame.LevelCompleted:SetFormattedText(CHALLENGE_MODE_POWER_LEVEL, self.level);
+			self.challengeModeFrame.RecordTime:SetFormattedText(CHALLENGE_MODE_NEW_BEST, GetTimeStringFromSeconds(self.recordTime / 1000));
+			PlaySound(SOUNDKIT.UI_CHALLENGES_NEW_RECORD);
 			LevelUpDisplay:SetPoint("TOP", 0, -190);
 			playAnim = self.challengeModeFrame.challengeComplete;
 		else
@@ -853,21 +767,16 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 				local petName = UnitName("pet");
 				self.levelFrame.reachedText:SetFormattedText(PET_LEVEL_UP_REACHED, petName or "");
 				self.levelFrame.levelText:SetFormattedText(LEVEL_GAINED,self.level);
-			elseif ( self.type == LEVEL_UP_TYPE_GUILD ) then
-				LevelUpDisplay_BuildGuildList(self);
-				local guildName = GetGuildInfo("player");
-				self.levelFrame.reachedText:SetFormattedText(GUILD_LEVEL_UP_YOU_REACHED, guildName);
-				self.levelFrame.levelText:SetFormattedText(LEVEL_GAINED,self.level);
 			elseif ( self.type == TOAST_PET_BATTLE_WINNER ) then
 				LevelUpDisplay_BuildPetBattleWinnerList(self);
 				self.levelFrame.singleline:SetText(self.winnerString);
-				PlaySoundKitID(self.winnerSoundKitID);
+				PlaySound(self.winnerSoundKitID);
 				playAnim = self.levelFrame.fastReveal;
 			elseif (self.type == TOAST_QUEST_BOSS_EMOTE ) then
 				LevelUpDisplay_BuildEmptyList(self);
 				self.levelFrame.blockText:SetText(self.bossText);
 				if (self.sound and self.sound == true) then
-					PlaySound("RaidBossEmoteWarning");
+					PlaySound(SOUNDKIT.RAID_BOSS_EMOTE_WARNING);
 				end
 				playAnim = self.levelFrame.fastReveal;
 			elseif (self.type == TOAST_PET_BATTLE_CAPTURE ) then
@@ -954,10 +863,15 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 				end
 			elseif (self.type == TOAST_GARRISON_ABILITY ) then
 				LevelUpDisplay_BuildGarrisonAbilityList(self);
+			elseif (self.type == TOAST_WORLD_QUESTS_UNLOCKED ) then
+				LevelUpDisplay_BuildWorldQuestBucketList(self);
+				playAnim = self.levelFrame.immediateReveal;
 			end
 		end
 
-		if ( playAnim ) then
+		if ( playAnim and scenarioType == LE_SCENARIO_TYPE_LEGION_INVASION) then
+			playAnim:Play();
+		elseif ( playAnim ) then
 			self.gLine:SetTexCoord(unpack(levelUpTexCoords[self.type].gLine));
 			self.gLine2:SetTexCoord(unpack(levelUpTexCoords[self.type].gLine));
 			if (levelUpTexCoords[self.type].tint) then
@@ -975,6 +889,7 @@ function LevelUpDisplay_StartDisplay(self, beginUnlockList)
 			self.gLine.grow.anim1:SetStartDelay(levelUpTexCoords[self.type].gLineDelay);
 			self.gLine2.grow.anim1:SetStartDelay(levelUpTexCoords[self.type].gLineDelay);
 			self.blackBg.grow.anim1:SetStartDelay(levelUpTexCoords[self.type].gLineDelay);
+
 			playAnim:Play();
 			if (levelUpTexCoords[self.type].subIcon) then
 				self.battlePetLevelFrame.subIcon:SetTexCoord(unpack(levelUpTexCoords[self.type].subIcon));
@@ -994,7 +909,6 @@ function LevelUpDisplay_AnimStep(self, fast)
 		self.currSpell = self.currSpell+1;
 
 		self.spellFrame:Hide();
-		self.DraenorTalentFrame:Hide();
 		self.spellFrame.name:SetText("");
 		self.spellFrame.flavorText:SetText("");
 		self.spellFrame.middleName:SetText("");
@@ -1008,11 +922,14 @@ function LevelUpDisplay_AnimStep(self, fast)
 		self.spellFrame.rarityIcon:Hide();
 		self.spellFrame.rarityValue:SetText("");
 		self.spellFrame.rarityValue:Hide();
+		self.spellFrame.instructionalText:SetText("");
 		
 		if (not spellInfo.entryType or
 			spellInfo.entryType == "spell" or
 			spellInfo.entryType == "dungeon" or
-			spellInfo.entryType == "heroicdungeon") then
+			spellInfo.entryType == "heroicdungeon" or
+			spellInfo.entryType == "worldquest"
+			) then
 			self.spellFrame.name:SetText(spellInfo.text);
 			self.spellFrame.flavorText:SetText(spellInfo.subText);
 			self.spellFrame.icon:Show();
@@ -1021,7 +938,11 @@ function LevelUpDisplay_AnimStep(self, fast)
 				self.spellFrame.subIcon:Show();
 				self.spellFrame.subIcon:SetTexCoord(unpack(spellInfo.subIcon));
 			end
+			if (spellInfo.instructionalText) then
+				self.spellFrame.instructionalText:SetText(spellInfo.instructionalText);
+			end
 			self.spellFrame:Show();
+			self.spellFrame.showAnim.anim2:SetStartDelay(spellInfo.entryType == "worldquest" and 5 or 1.8);
 			self.spellFrame.showAnim:Play();
 		elseif (spellInfo.entryType == "petlevelup") then
 			if (spellInfo.subIcon) then
@@ -1061,16 +982,6 @@ function LevelUpDisplay_AnimStep(self, fast)
 			self.spellFrame.subIconRight:SetTexCoord(0.719, 0.779, 0.117, 0.178)
 			self.spellFrame:Show();
 			self.spellFrame.showAnim:Play();
-		elseif ( spellInfo.entryType == "draenortalent" ) then
-			LevelUpDisplayBlackBg:Hide();
-			LevelUpDisplayGLine:Hide();
-			LevelUpDisplayGLine2:Hide();
-			self.DraenorTalentFrame.Icon:SetTexture(spellInfo.icon);
-			self.DraenorTalentFrame.Icon2:SetTexture(spellInfo.icon);
-			self.DraenorTalentFrame.spelltext:SetText(spellInfo.text);
-			self.DraenorTalentFrame.descriptiontext:SetText(spellInfo.description);
-			self.DraenorTalentFrame:Show();
-			self.DraenorTalentFrame.showAnim:Play();
 		elseif ( spellInfo.entryType == "spellbucket" ) then
 			local tierIndex = spellInfo.tierIndex;
 			if (tierIndex > 0) then
@@ -1199,11 +1110,6 @@ function LevelUpDisplaySide_OnShow(self)
 		local petName = self.arg1;
 		self.reachedText:SetFormattedText(PET_LEVEL_UP_REACHED, petName);
 		self.levelText:SetFormattedText(LEVEL_GAINED,self.level);
-	elseif ( self.type == LEVEL_UP_TYPE_GUILD ) then
-		LevelUpDisplay_BuildGuildList(self);
-		local guildName = GetGuildInfo("player");
-		self.reachedText:SetFormattedText(GUILD_LEVEL_UP_YOU_REACHED, guildName);
-		self.levelText:SetFormattedText(LEVEL_GAINED,self.level);
 	elseif ( self.type == LEVEL_UP_TYPE_SPELL_BUCKET ) then
 		LevelUpDisplay_BuildSpellBucketList(self);
 		self.reachedText:Hide();
@@ -1295,6 +1201,9 @@ end
 
 -- Chat print function 
 function LevelUpDisplay_ChatPrint(self, level, levelUpType, ...)
+	-- Certain situations don't display any level up text, set filters here.
+	local shouldDisplayBucketUnlocks = not IsBoostTutorialScenario();
+
 	local info;
 	local chatLevelUP = {level = level, type = levelUpType};
 	local levelstring;
@@ -1311,12 +1220,7 @@ function LevelUpDisplay_ChatPrint(self, level, levelUpType, ...)
 			levelstring = "";
 		end
 		info = ChatTypeInfo["SYSTEM"];
-	elseif ( levelUpType == LEVEL_UP_TYPE_GUILD ) then
-		LevelUpDisplay_BuildGuildList(chatLevelUP);
-		local guildName = GetGuildInfo("player");
-		levelstring = format(GUILD_LEVEL_UP, guildName, level, level);
-		info = ChatTypeInfo["GUILD"];
-	elseif ( levelUpType == LEVEL_UP_TYPE_SPELL_BUCKET ) then
+	elseif ( shouldDisplayBucketUnlocks and levelUpType == LEVEL_UP_TYPE_SPELL_BUCKET ) then
 		local allUnlocked, _, name = GetSpellsForCharacterUpgradeTier(level);
 		if (allUnlocked) then
 			local class = UnitClass("player");
@@ -1326,8 +1230,15 @@ function LevelUpDisplay_ChatPrint(self, level, levelUpType, ...)
 			levelstring = format(SPELL_BUCKET_LEVEL_UP, level, name or "");
 		end
 		info = ChatTypeInfo["SYSTEM"];
+	elseif ( levelUpType == TOAST_WORLD_QUESTS_UNLOCKED ) then
+		LevelUpDisplay_BuildWorldQuestBucketList(chatLevelUP);
+		info = ChatTypeInfo["SYSTEM"];
 	end
-	self:AddMessage(levelstring, info.r, info.g, info.b, info.id);
+
+	if (info and levelstring) then
+		self:AddMessage(levelstring, info.r, info.g, info.b, info.id);
+	end
+
 	if (chatLevelUP.unlockList) then
 		for _,skill in pairs(chatLevelUP.unlockList) do
 			if skill.entryType == "heroicdungeon" then
@@ -1340,78 +1251,12 @@ function LevelUpDisplay_ChatPrint(self, level, levelUpType, ...)
 	end
 end
 
-function LevelUpDraenorTalent_OnLoad(self)
-	self.beginLeft = 0;
-	self.beginRight = 0.43359375;
-
-	self.left = self.beginLeft;
-	self.right = self.beginRight;
-
-	self.beginWidth = 222;
-
-	self.leftWidth = self.beginWidth;
-	self.rightWidth = 0;
-
-	self.Icon2:SetVertexColor(1,1,1);
-	self.book2:SetVertexColor(1,1,1);
-end
-
-function LevelUpDraenorTalent_SpinnerUpdate(self, elapsed)
-	self = self:GetParent():GetParent();
-	-- Shifts 512 pixels every .57 seconds, 898.246 pixels every second
-	self.shift = 898.246 * elapsed;
-	self.move = self.shift / 512;
-
-	if (not self.reset) then
-		self.left = self.left + self.move;
-		self.right = self.right + self.move;
-
-		if (self.right > 1) then
-			local diff = self.right - 1;
-			self.right = 1;
-			self.left = self.left + diff;
-
-			self.reset = true;
-		end
-		self.SpinningPlateLeft:SetTexCoord(self.left, self.right, 0, 1);
-	else
-		self.rightWidth = self.rightWidth + self.shift;
-		self.leftWidth = self.leftWidth - self.shift;
-
-		self.SpinningPlateLeft:SetWidth(self.leftWidth);
-		self.SpinningPlateRight:SetWidth(self.rightWidth);
-
-		if (self.leftWidth <= 0) then
-			self.SpinningPlateRight:Hide();
-			self.SpinningPlateLeft:SetWidth(self.beginWidth);
-			self.SpinningPlateLeft:SetTexCoord(self.beginLeft, self.beginRight, 0, 1);
-
-			self.leftWidth = self.beginWidth;
-			self.rightWidth = 0;
-
-			self.left = self.beginLeft;
-			self.right = self.beginRight;
-
-			self.reset = false;
-		else
-			self.SpinningPlateRight:Show();
-			self.left = self.left + self.move;
-
-			self.SpinningPlateLeft:SetTexCoord(self.left, self.right, 0, 1);
-
-			local tLeft = 0; -- always 0, this is the reset one
-			local tRight = self.rightWidth / 512;
-			self.SpinningPlateRight:SetTexCoord(tLeft, tRight, 0, 1);
-		end
-	end
-end
-
 -- ************************************************************************************************************************************************************
 -- **** BOSS BANNER *******************************************************************************************************************************************
 -- ************************************************************************************************************************************************************
 
 local BB_EXPAND_TIME = 0.25;		-- time to expand per item
-local BB_EXPAND_HEIGHT = 47;		-- pixels to expand per item
+local BB_EXPAND_HEIGHT = 50;		-- pixels to expand per item
 local BB_MAX_LOOT = 7;
 
 local BB_STATE_BANNER_IN = 1;		-- banner is animating in
@@ -1434,7 +1279,7 @@ function BossBanner_AnimSwitch(self, entry)
 	if ( next(self.pendingLoot) ) then
 		-- we have loot
 		self.AnimSwitch:Play();
-		PlaySound("UI_Personal_Loot_Banner");
+		PlaySound(SOUNDKIT.UI_PERSONAL_LOOT_BANNER);
 		entry.duration = 0.5;
 	else
 		entry.duration = 0;
@@ -1478,25 +1323,38 @@ function BossBanner_AnimLootInsert(self, entry)
 end
 
 function BossBanner_ConfigureLootFrame(lootFrame, data)
-	local itemName, itemLink, itemRarity, _, _, _, _, _, _, itemTexture = GetItemInfo(data.itemLink);
+	local itemName, itemLink, itemRarity, _, _, _, _, _, _, itemTexture, _, _, _, _, _, setID = GetItemInfo(data.itemLink);
 	lootFrame.ItemName:SetText(itemName);
 	local rarityColor = ITEM_QUALITY_COLORS[itemRarity];
 	lootFrame.ItemName:SetTextColor(rarityColor.r, rarityColor.g, rarityColor.b);
 	lootFrame.Background:SetVertexColor(rarityColor.r, rarityColor.g, rarityColor.b);
 	lootFrame.Icon:SetTexture(itemTexture);
-	local borderRarityColor = BAG_ITEM_QUALITY_COLORS[itemRarity];
-	if ( borderRarityColor ) then
-		lootFrame.IconHitBox.Border:Show();
-		lootFrame.IconHitBox.Border:SetVertexColor(borderRarityColor.r, borderRarityColor.g, borderRarityColor.b);
-	else
-		lootFrame.IconHitBox.Border:Hide();
-	end
+
+	SetItemButtonQuality(lootFrame.IconHitBox, itemRarity, data.itemLink);
+
 	if ( data.quantity > 1 ) then
 		lootFrame.Count:Show();
 		lootFrame.Count:SetText(data.quantity);
 	else
 		lootFrame.Count:Hide();
 	end
+
+	if (setID) then
+		local setName = GetItemSetInfo(setID);
+		lootFrame.ItemName:ClearAllPoints();
+		lootFrame.ItemName:SetPoint("TOPLEFT", 56, -2);
+		lootFrame.SetName:SetText(BOSS_BANNER_LOOT_SET:format(setName));
+		lootFrame.SetName:Show();
+		lootFrame.PlayerName:ClearAllPoints();
+		lootFrame.PlayerName:SetPoint("TOPLEFT", lootFrame.SetName, "BOTTOMLEFT", 0, 0);
+	else
+		lootFrame.ItemName:ClearAllPoints();
+		lootFrame.ItemName:SetPoint("TOPLEFT", 56, -7);
+		lootFrame.SetName:Hide();
+		lootFrame.PlayerName:ClearAllPoints();
+		lootFrame.PlayerName:SetPoint("TOPLEFT", lootFrame.ItemName, "BOTTOMLEFT", 0, 0);
+	end
+
 	lootFrame.PlayerName:SetText(data.playerName);
 	local classColor = RAID_CLASS_COLORS[data.className];
 	lootFrame.PlayerName:SetTextColor(classColor.r, classColor.g, classColor.b);
@@ -1615,11 +1473,10 @@ function BossBanner_Play(self, data)
 				self.SubTitle:Show();
 			end
 			self.Title:Show();
-			self.SubTitle:Show();
 			self:Show();
 			self.encounterID = data.encounterID;			
 			BossBanner_BeginAnims(self);
-			PlaySound("UI_Raid_Boss_Defeated");
+			PlaySound(SOUNDKIT.UI_RAID_BOSS_DEFEATED);
 		elseif ( data.mode == "LOOT" ) then
 			self.BannerTop:SetAlpha(1);
 			self.BannerBottom:SetAlpha(1);
@@ -1634,7 +1491,7 @@ function BossBanner_Play(self, data)
 			self.SubTitle:Hide();
 			self:Show();
 			BossBanner_BeginAnims(self, BB_STATE_LOOT_EXPAND);
-			PlaySound("UI_Personal_Loot_Banner");
+			PlaySound(SOUNDKIT.UI_PERSONAL_LOOT_BANNER);
 		end
 	end
 end

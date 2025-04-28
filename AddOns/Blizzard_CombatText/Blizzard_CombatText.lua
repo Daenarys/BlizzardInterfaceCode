@@ -81,12 +81,6 @@ COMBAT_TEXT_TYPE_INFO["HEAL_CRIT_ABSORB"] = {r = 0.1, g = 1, b = 0.1, show = 1};
 COMBAT_TEXT_TYPE_INFO["HEAL_ABSORB"] = {r = 0.1, g = 1, b = 0.1, show = 1};
 COMBAT_TEXT_TYPE_INFO["ABSORB_ADDED"] = {r = 0.1, g = 1, b = 0.1, show = 1};
 
-COMBAT_TEXT_RUNE = {};
-COMBAT_TEXT_RUNE[1] = COMBAT_TEXT_RUNE_BLOOD;
-COMBAT_TEXT_RUNE[2] = COMBAT_TEXT_RUNE_UNHOLY;
-COMBAT_TEXT_RUNE[3] = COMBAT_TEXT_RUNE_FROST;
-COMBAT_TEXT_RUNE[4] = COMBAT_TEXT_RUNE_DEATH;
-
 function CombatText_OnLoad(self)
 	CombatText_UpdateDisplayedMessages();
 	CombatText.previousMana = {};
@@ -98,7 +92,7 @@ function CombatText_OnEvent(self, event, ...)
 		CombatText_ClearAnimationList();
 		return;
 	end
-	
+
 	local arg1, data, arg3, arg4 = ...;
 
 	-- Set up the messageType
@@ -134,7 +128,7 @@ function CombatText_OnEvent(self, event, ...)
 				CombatText.lowHealth = nil;
 			end
 		end
-		
+
 		-- Didn't meet any of the criteria so just return
 		if ( not messageType ) then
 			return;
@@ -142,7 +136,9 @@ function CombatText_OnEvent(self, event, ...)
 	elseif ( event == "UNIT_POWER" ) then
 		if ( arg1 == self.unit ) then
 			local powerType, powerToken = UnitPowerType(self.unit);
-			if ( powerToken == "MANA" and (UnitPower(self.unit) / UnitPowerMax(self.unit)) <= COMBAT_TEXT_LOW_MANA_THRESHOLD ) then
+			local maxPower = UnitPowerMax(self.unit);
+			local currentPower = UnitPower(self.unit);
+			if ( maxPower ~= 0 and powerToken == "MANA" and (currentPower / maxPower) <= COMBAT_TEXT_LOW_MANA_THRESHOLD ) then
 				if ( not CombatText.lowMana ) then
 					messageType = "MANA_LOW";
 					CombatText.lowMana = 1;
@@ -151,7 +147,7 @@ function CombatText_OnEvent(self, event, ...)
 				CombatText.lowMana = nil;
 			end
 		end
-		
+
 		-- Didn't meet any of the criteria so just return
 		if ( not messageType ) then
 			return;
@@ -207,7 +203,7 @@ function CombatText_OnEvent(self, event, ...)
 
 	local isStaggered = info.isStaggered;
 	if ( messageType == "" ) then
-	
+
 	elseif ( messageType == "DAMAGE_CRIT" or messageType == "SPELL_DAMAGE_CRIT" ) then
 		displayType = "crit";
 		message = "-"..BreakUpLargeNumbers(data);
@@ -251,31 +247,31 @@ function CombatText_OnEvent(self, event, ...)
 			message = "+"..BreakUpLargeNumbers(arg3).." "..format(ABSORB_TRAILER, arg4);
 		end
 	elseif ( messageType == "ENERGIZE" or messageType == "PERIODIC_ENERGIZE") then
-		local count =  tonumber(data) 
+		local count =  tonumber(data);
 		if (count > 0 ) then
 			data = "+"..BreakUpLargeNumbers(data);
+		else
+			return; --If we didnt actually gain anything, dont show it
 		end
 		if( arg3 == "MANA"
 			or arg3 == "RAGE"
 			or arg3 == "FOCUS"
 			or arg3 == "ENERGY"
 			or arg3 == "RUNIC_POWER"
-			or arg3 == "SOUL_SHARDS"
-			or arg3 == "CHI"
 			or arg3 == "DEMONIC_FURY") then
 			message = data.." ".._G[arg3];
 			info = PowerBarColor[arg3];
-		elseif ( arg3 == "HOLY_POWER" ) then
-			local numHolyPower = UnitPower( PaladinPowerBar:GetParent().unit, SPELL_POWER_HOLY_POWER );
-			message = "<"..numHolyPower.." ".._G[arg3]..">";
+		elseif ( arg3 == "HOLY_POWER"
+				or arg3 == "SOUL_SHARDS"
+				or arg3 == "CHI"
+				or arg3 == "COMBO_POINTS"
+				or arg3 == "ARCANE_CHARGES" ) then
+			local numPower = UnitPower( "player" , GetPowerEnumFromEnergizeString(arg3) );
+			message = "<"..numPower.." ".._G[arg3]..">";
 			info = PowerBarColor[arg3];
-		elseif ( arg3 == "ECLIPSE" ) then
-			if ( count < 0 ) then
-				message = "+"..abs(count).." "..BALANCE_NEGATIVE_ENERGY;
-				info = PowerBarColor[arg3].negative;
-			else
-				message = data.." "..BALANCE_POSITIVE_ENERGY;
-				info = PowerBarColor[arg3].positive;
+			--Display as crit if we're at max power
+			if ( UnitPower( "player" , GetPowerEnumFromEnergizeString(arg3)) == UnitPowerMax(self.unit, GetPowerEnumFromEnergizeString(arg3))) then
+				displayType = "crit";
 			end
 		end
 	elseif ( messageType == "FACTION" ) then
@@ -335,22 +331,7 @@ function CombatText_OnEvent(self, event, ...)
 		message = format(COMBAT_TEXT_COMBO_POINTS, data);
 	elseif ( messageType == "RUNE" ) then
 		if ( data == true ) then
-			local runeType = GetRuneType(arg1);
-			message = COMBAT_TEXT_RUNE[runeType];
-			-- Alex Brazie had me use these values. Feel free to correct them
-			if( runeType == 1 ) then 
-				info.r = .75;
-				info.g = 0;
-				info.b = 0;
-			elseif( runeType == 2 ) then
-				info.r = .75;
-				info.g = 1;
-				info.b = 0;
-			elseif (runeType == 3 ) then
-				info.r = 0;
-				info.g = 1;
-				info.b = 1;
-			end
+			message = COMBAT_TEXT_RUNE_DEATH;
 		else
 			message = nil;
 		end
@@ -360,7 +341,7 @@ function CombatText_OnEvent(self, event, ...)
 		else
 			message = "+"..BreakUpLargeNumbers(arg3).."("..COMBAT_TEXT_ABSORB..")";
 		end
-	else 
+	else
 		message = _G["COMBAT_TEXT_"..messageType];
 		if ( not message ) then
 			message = _G[messageType];
@@ -370,7 +351,32 @@ function CombatText_OnEvent(self, event, ...)
 	-- Add the message
 	if ( message ) then
 		CombatText_AddMessage(message, COMBAT_TEXT_SCROLL_FUNCTION, info.r, info.g, info.b, displayType, isStaggered);
-	end	
+	end
+end
+
+local powerEnumFromEnergizeStringLookup =
+{
+	MANA = Enum.PowerType.Mana,
+	RAGE = Enum.PowerType.Rage,
+	FOCUS = Enum.PowerType.Focus,
+	ENERGY = Enum.PowerType.Energy,
+	COMBO_POINTS = Enum.PowerType.ComboPoints,
+	RUNES = Enum.PowerType.Runes,
+	RUNIC_POWER = Enum.PowerType.RunicPower,
+	SOUL_SHARDS = Enum.PowerType.SoulShards,
+	LUNAR_POWER = Enum.PowerType.LunarPower,
+	HOLY_POWER = Enum.PowerType.HolyPower,
+	ALTERNATE = Enum.PowerType.Alternate,
+	MAELSTROM = Enum.PowerType.Maelstrom,
+	CHI = Enum.PowerType.Chi,
+	ARCANE_CHARGES = Enum.PowerType.ArcaneCharges,
+	FURY = Enum.PowerType.Fury,
+	PAIN = Enum.PowerType.Pain,
+	INSANITY = Enum.PowerType.Insanity,
+}
+
+function GetPowerEnumFromEnergizeString(power)
+	return powerEnumFromEnergizeStringLookup[power] or Enum.PowerType.NumPowerTypes;
 end
 
 function CombatText_OnUpdate(self, elapsed)
@@ -417,7 +423,7 @@ function CombatText_AddMessage(message, scrollFunction, r, g, b, displayType, is
 	if ( noStringsAvailable ) then
 		return;
 	end
-	
+
 	string:SetText(message);
 	string:SetTextColor(r, g, b);
 	string.scrollTime = 0;
@@ -426,7 +432,7 @@ function CombatText_AddMessage(message, scrollFunction, r, g, b, displayType, is
 	else
 		string.scrollFunction = scrollFunction;
 	end
-	
+
 	-- See which direction the message should flow
 	local yDir;
 	local lowestMessage;
@@ -526,7 +532,7 @@ function CombatText_GetAvailableString()
 		string = _G["CombatText"..i];
 		if ( not string:IsShown() ) then
 			return string;
-		end 
+		end
 	end
 	return CombatText_GetOldestString(), 1;
 end
@@ -607,8 +613,8 @@ function CombatText_UpdateDisplayedMessages()
 			endX = 0,
 			endY = 609 * COMBAT_TEXT_Y_SCALE
 		};
-		
-	elseif ( COMBAT_TEXT_FLOAT_MODE == "2" ) then	
+
+	elseif ( COMBAT_TEXT_FLOAT_MODE == "2" ) then
 		COMBAT_TEXT_SCROLL_FUNCTION = CombatText_StandardScroll;
 		COMBAT_TEXT_LOCATIONS = {
 			startX = 0,

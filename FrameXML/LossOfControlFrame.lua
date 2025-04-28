@@ -15,6 +15,7 @@ local timeLeftTimings = {
 local TEXT_OVERRIDE = {
 	[33786] = LOSS_OF_CONTROL_DISPLAY_CYCLONE,
 	[113506] = LOSS_OF_CONTROL_DISPLAY_CYCLONE,
+	[209753] = LOSS_OF_CONTROL_DISPLAY_CYCLONE,
 }
 
 local TIME_LEFT_FRAME_WIDTH = 200;
@@ -117,11 +118,11 @@ function LossOfControlFrame_SetUpDisplay(self, animate, locType, spellID, text, 
 		local timeLeftFrame = self.TimeLeft;
 		if ( displayType == DISPLAY_TYPE_ALERT ) then
 			timeRemaining = duration;
-			self.Cooldown:SetCooldown(0, 0);
+			CooldownFrame_Clear(self.Cooldown);
 		elseif ( not startTime ) then
-			self.Cooldown:SetCooldown(0, 0);
+			CooldownFrame_Clear(self.Cooldown);
 		else
-			self.Cooldown:SetCooldown(startTime, duration);
+			CooldownFrame_Set(self.Cooldown, startTime, duration, true);
 		end
 		LossOfControlTimeLeftFrame_SetTime(timeLeftFrame, timeRemaining);
 		-- align stuff
@@ -144,7 +145,7 @@ function LossOfControlFrame_SetUpDisplay(self, animate, locType, spellID, text, 
 			self.TimeLeft.SecondsText.scrollTime = 0;
 			self.Cooldown:Hide();
 			self.Anim:Play();
-			PlaySoundKitID(34468);
+			PlaySound(SOUNDKIT.UI_LOSS_OF_CONTROL_START);
 		end
 		self.priority = priority;
 		self.spellID = spellID;
@@ -165,7 +166,7 @@ function LossOfControlFrame_UpdateDisplay(self)
 			LossOfControlFrame_SetUpDisplay(self, false, locType, spellID, text, iconTexture, startTime, timeRemaining, duration, lockoutSchool, priority, displayType);
 		end
 		if ( not self.Anim:IsPlaying() and startTime ) then
-			self.Cooldown:SetCooldown(startTime, duration);
+			CooldownFrame_Set(self.Cooldown, startTime, duration, true, true);
 		end
 		LossOfControlTimeLeftFrame_SetTime(self.TimeLeft, timeRemaining);
 	else

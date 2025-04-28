@@ -10,9 +10,9 @@
 		<Scripts>
 			<OnClick>
 				if ( self:GetChecked() ) then
-					PlaySound("igMainMenuOptionCheckBoxOn");
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 				else
-					PlaySound("igMainMenuOptionCheckBoxOff");
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 				end
 				SetLookingForGuildSettings(self:GetID(), self:GetChecked());
 				LookingForGuildBrowseButton_Update();
@@ -320,7 +320,7 @@
 						self.texture:SetPoint("TOPLEFT", 0, 0);
 					</OnMouseUp>
 					<OnClick>
-						PlaySound("igMainMenuOptionCheckBoxOn");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 						CancelGuildMembershipRequest(self:GetParent().index);
 						RequestRecruitingGuildsList();
 					</OnClick>
@@ -406,7 +406,7 @@
 					<OnClick>
 						PanelTemplates_Tab_OnClick(self, LookingForGuildFrame);
 						LookingForGuildFrame_Update();
-						PlaySound("igMainMenuOptionCheckBoxOn");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -422,7 +422,7 @@
 					<OnClick>
 						PanelTemplates_Tab_OnClick(self, LookingForGuildFrame);
 						LookingForGuildFrame_Update();
-						PlaySound("igMainMenuOptionCheckBoxOn");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -438,7 +438,7 @@
 					<OnClick>
 						PanelTemplates_Tab_OnClick(self, LookingForGuildFrame);
 						LookingForGuildFrame_Update();
-						PlaySound("igMainMenuOptionCheckBoxOn");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -762,19 +762,9 @@
 									<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="6" y="-6"/>
 									<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="6"/>
 								</Anchors>
-								<Frames>
-									<Button name="$parentFocusButton" setAllPoints="true">
-										<Scripts>
-											<OnClick>
-												LookingForGuildCommentEditBox:SetFocus();
-											</OnClick>
-										</Scripts>
-									</Button>
-								</Frames>
 								<Scripts>
 									<OnLoad>
 										local scrollBar = _G[self:GetName().."ScrollBar"];
-										scrollBar:SetFrameLevel(_G[self:GetName().."FocusButton"]:GetFrameLevel() + 2);
 										scrollBar:ClearAllPoints();
 										scrollBar:SetPoint("TOPLEFT", self, "TOPRIGHT", -18, -10);
 										scrollBar:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT", -18, 8);
@@ -786,6 +776,9 @@
 										self.scrollBarHideable = 1;
 										scrollBar:Hide();
 									</OnLoad>
+									<OnMouseDown>
+										LookingForGuildCommentEditBox:SetFocus();
+									</OnMouseDown>
 								</Scripts>
 								<ScrollChild>
 									<EditBox name="LookingForGuildCommentEditBox" multiLine="true" letters="230" countInvisibleLetters="true" autoFocus="false">
@@ -1088,19 +1081,9 @@
 							<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="6" y="-6"/>
 							<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="6"/>
 						</Anchors>
-						<Frames>
-							<Button name="GuildFinderRequestMembershipEditBoxFocusButton" setAllPoints="true">
-								<Scripts>
-									<OnClick>
-										GuildFinderRequestMembershipEditBox:SetFocus();
-									</OnClick>
-								</Scripts>
-							</Button>
-						</Frames>
 						<Scripts>
 							<OnLoad>
 								local scrollBar = _G[self:GetName().."ScrollBar"];
-								scrollBar:SetFrameLevel(GuildFinderRequestMembershipEditBoxFocusButton:GetFrameLevel() + 2);
 								scrollBar:ClearAllPoints();
 								scrollBar:SetPoint("TOPLEFT", self, "TOPRIGHT", -18, -10);
 								scrollBar:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT", -18, 8);
@@ -1112,6 +1095,9 @@
 								self.scrollBarHideable = 1;
 								scrollBar:Hide();
 							</OnLoad>
+							<OnMouseDown>
+								GuildFinderRequestMembershipEditBox:SetFocus();
+							</OnMouseDown>
 						</Scripts>
 						<ScrollChild>
 							<EditBox name="GuildFinderRequestMembershipEditBox" multiLine="true" letters="230" countInvisibleLetters="true" autoFocus="false">
@@ -1134,12 +1120,6 @@
 									<OnTabPressed>
 										GuildFinderRequestMembershipEditBox:SetFocus();
 									</OnTabPressed>
-									<OnEditFocusGained>
-										GuildFinderRequestMembershipEditBoxFocusButton:Hide();
-									</OnEditFocusGained>
-									<OnEditFocusLost>
-										GuildFinderRequestMembershipEditBoxFocusButton:Show();
-									</OnEditFocusLost>
 									<OnTextChanged>
 										ScrollingEdit_OnTextChanged(self, self:GetParent());
 										if ( self:GetText() ~= "" ) then
@@ -1204,7 +1184,7 @@
 				self.hideOnEscape = true;
 			</OnLoad>
 			<OnHide>
-				PlaySound("igMainMenuClose");
+				PlaySound(SOUNDKIT.IG_MAINMENU_CLOSE);
 			</OnHide>
 		</Scripts>
 	</Frame>

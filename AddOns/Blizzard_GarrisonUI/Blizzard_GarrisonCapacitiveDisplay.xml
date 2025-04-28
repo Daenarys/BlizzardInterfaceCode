@@ -181,7 +181,8 @@
 								</Texture>
 							</Layer>
 							<Layer level="ARTWORK" textureSubLevel="1">
-								<FontString parentKey="ShipmentName" inherits="GameFontNormal">
+								<FontString parentKey="ShipmentName" inherits="GameFontNormal" justifyH="Left">
+									<Size x="240" y="16"/>
 									<Anchors>
 										<Anchor point="TOPLEFT" relativeKey="$parent.$parent.IconBG" relativePoint="TOPLEFT" x="6" y="-6"/>
 									</Anchors>
@@ -193,6 +194,13 @@
 								</FontString>
 							</Layer>
 						</Layers>
+						<Frames>
+							<Frame parentKey="Follower" inherits="GarrisonFollowerPortraitTemplate">
+								<Anchors>
+									<Anchor point="CENTER"/>
+								</Anchors>
+							</Frame>							
+						</Frames>
 						<Scripts>
 							<OnEnter>
 								if (self.itemId) then
@@ -215,8 +223,8 @@
 			<Frame parentKey="FinishedGlow" setAllPoints="true">
 				<Animations>
 					<AnimationGroup parentKey="FinishedAnim">
-						<Alpha change="1" duration="0.1" order="1" />
-						<Alpha startDelay="0.1" change="-1" duration="0.5" order="2" />
+						<Alpha fromAlpha="0" toAlpha="1" duration="0.1" order="1" />
+						<Alpha startDelay="0.1" fromAlpha="1" toAlpha="0" duration="0.5" order="2" />
 					</AnimationGroup>
 				</Animations>
 				<Layers>

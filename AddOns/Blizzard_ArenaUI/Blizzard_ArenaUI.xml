@@ -10,19 +10,19 @@
 				</Texture>		
 			</Layer>
 			<Layer level="ARTWORK">
-				<Texture name="$parentBorderShield" file="Interface\CastingBar\UI-CastingBar-Arena-Shield" hidden="true">
+				<Texture parentKey="BorderShield" file="Interface\CastingBar\UI-CastingBar-Arena-Shield" hidden="true">
 					<Size x="42" y="42"/>
 					<Anchors>
 						<Anchor point="LEFT" x="-25" y="0"/>
 					</Anchors>
 				</Texture>
-				<FontString name="$parentText" inherits="GameFontHighlightSmall">
+				<FontString parentKey="Text" inherits="GameFontHighlightSmall">
 					<Size x="80" y="16"/>
 					<Anchors>
 						<Anchor point="TOP" x="0" y="2"/>
 					</Anchors>
 				</FontString>
-				<Texture name="$parentIcon" hidden="true">
+				<Texture parentKey="Icon">
 					<Size x="16" y="16"/>
 					<Anchors>
 						<Anchor point="RIGHT" relativeTo="$parent" relativePoint="LEFT" x="-5" y="0"/>
@@ -30,13 +30,13 @@
 				</Texture>
 			</Layer>
 			<Layer level="OVERLAY">
-				<Texture name="$parentSpark" file="Interface\CastingBar\UI-CastingBar-Spark" alphaMode="ADD">
+				<Texture parentKey="Spark" file="Interface\CastingBar\UI-CastingBar-Spark" alphaMode="ADD">
 					<Size x="32" y="32"/>
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>
 				</Texture>
-				<Texture name="$parentFlash" alphaMode="ADD"> 
+				<Texture parentKey="Flash" alphaMode="ADD"> 
 				<!-- this needs to be here so the generic unit frame code will work right --> 
 					<Size x="256" y="64"/>
 					<Anchors>
@@ -46,19 +46,10 @@
 			</Layer>
 		</Layers>
 		<Scripts>
-			<OnLoad>
-				CastingBarFrame_OnLoad(self, "arena"..self:GetParent():GetID(), false, true);
-				_G[self:GetName().."Icon"]:Show();
-			</OnLoad>
-			<OnEvent>
-				CastingBarFrame_OnEvent(self, event, ...);
-			</OnEvent>
-			<OnUpdate>
-				CastingBarFrame_OnUpdate(self, elapsed);
-			</OnUpdate>
-			<OnShow>
-				CastingBarFrame_OnShow(self);
-			</OnShow>
+			<OnLoad function="CastingBarFrame_OnLoad" />
+			<OnEvent function="CastingBarFrame_OnEvent" />
+			<OnUpdate function="CastingBarFrame_OnUpdate" />
+			<OnShow function="CastingBarFrame_OnShow" />
 		</Scripts>
 		<BarTexture file="Interface\TargetingFrame\UI-StatusBar"/>
 		<BarColor r="1.0" g="0.7" b="0.0"/>
@@ -142,21 +133,11 @@
 			</Frame>
 		</Frames>
 		<Scripts>
-			<OnLoad>
-				ArenaEnemyPetFrame_OnLoad(self);
-			</OnLoad>
-			<OnShow>
-				UnitFrame_Update(self);
-			</OnShow>
-			<OnEvent>
-				ArenaEnemyPetFrame_OnEvent(self, event, ...);
-			</OnEvent>
-			<OnEnter>
-				UnitFrame_OnEnter(self, motion);
-			</OnEnter>
-			<OnLeave>
-				UnitFrame_OnLeave(self, motion);
-			</OnLeave>
+			<OnLoad function="ArenaEnemyPetFrame_OnLoad"/>
+			<OnShow function="UnitFrame_Update"/>
+			<OnEvent function="ArenaEnemyPetFrame_OnEvent"/>
+			<OnEnter function="UnitFrame_OnEnter"/>
+			<OnLeave function="UnitFrame_OnLeave"/>
 		</Scripts>
 	</Button>
 	<Button name="ArenaPrepFrameTemplate" frameStrata="LOW" toplevel="true" movable="true" hidden="true" inherits="SecureUnitButtonTemplate" virtual="true">
@@ -207,9 +188,29 @@
 										<Anchor point="CENTER" x="-20" y="3"/>
 									</Anchors>
 								</FontString>
+								<FontString name="$parentHealthBarTextLeft" inherits="TextStatusBarText">
+									<Anchors>
+										<Anchor point="LEFT" x="0" y="3"/>
+									</Anchors>
+								</FontString>
+								<FontString name="$parentHealthBarTextRight" inherits="TextStatusBarText">
+									<Anchors>
+										<Anchor point="RIGHT" x="-36" y="3"/>
+									</Anchors>
+								</FontString>
 								<FontString name="$parentManaBarText" inherits="TextStatusBarText">
 									<Anchors>
 										<Anchor point="CENTER" x="-20" y="-6"/>
+									</Anchors>
+								</FontString>
+								<FontString name="$parentManaBarTextLeft" inherits="TextStatusBarText">
+									<Anchors>
+										<Anchor point="LEFT" x="0" y="-8"/>
+									</Anchors>
+								</FontString>
+								<FontString name="$parentManaBarTextRight" inherits="TextStatusBarText">
+									<Anchors>
+										<Anchor point="RIGHT" x="-36" y="-8"/>
 									</Anchors>
 								</FontString>
 							</Layer>
@@ -260,8 +261,10 @@
 					<OnLoad>
 						TextStatusBar_Initialize(self);
 						self.textLockable = 1;
-						self.cvar = "partyStatusText";
+						self.cvar = "statusText";
 						self.cvarLabel = "STATUS_TEXT_PARTY";
+						self.LeftText = _G[self:GetName().."TextLeft"];
+						self.RightText = _G[self:GetName().."TextRight"];
 					</OnLoad>
 					<OnMouseUp>
 						self:GetParent():Click(button);
@@ -281,8 +284,10 @@
 					<OnLoad>
 						TextStatusBar_Initialize(self);
 						self.textLockable = 1;
-						self.cvar = "partyStatusText";
+						self.cvar = "statusText";
 						self.cvarLabel = "STATUS_TEXT_PARTY";
+						self.LeftText = _G[self:GetName().."TextLeft"];
+						self.RightText = _G[self:GetName().."TextRight"];
 					</OnLoad>
 					<OnMouseUp>
 						self:GetParent():Click(button);
@@ -291,7 +296,7 @@
 				<BarTexture file="Interface\TargetingFrame\UI-StatusBar"/>
 				<BarColor r="0" g="0" b="1.0"/>
 			</StatusBar>
-			<StatusBar name="$parentCastingBar" inherits="ArenaCastingBarFrameTemplate">
+			<StatusBar parentKey="CastingBar" name="$parentCastingBar" inherits="ArenaCastingBarFrameTemplate">
 				<Anchors>
 					<Anchor point="RIGHT" relativePoint="LEFT" x="-15" y="-3"/>
 				</Anchors>
@@ -333,36 +338,27 @@
 				</Frames>
 			</Frame>
 			<Button name="$parentPetFrame" inherits="ArenaEnemyPetFrameTemplate" parentKey="petFrame"/>
+			<Frame parentKey="CC">
+				<Size x="18" y="18"/>
+				<Anchors>
+					<Anchor point="RIGHT" relativePoint="LEFT" x="-12" y="-3"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="Icon" setAllPoints="true"/>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Cooldown name="$parentCooldown" parentKey="Cooldown" inherits="CooldownFrameTemplate" setAllPoints="true"/>
+				</Frames>
+			</Frame>
 		</Frames>
 		<Scripts>
-			<OnLoad>
-				local id = self:GetID();
-				self.debuffCountdown = 0; 
-				self.numDebuffs = 0;
-				self.noTextPrefix = 1;
-				local prefix = "ArenaEnemyFrame"..id;
-				UnitFrame_Initialize(self, "arena"..id,  _G[prefix.."Name"], nil,
-						_G[prefix.."HealthBar"], _G[prefix.."HealthBarText"], 
-						_G[prefix.."ManaBar"], _G[prefix.."ManaBarText"], nil, nil, nil,
-						_G[prefix.."MyHealPredictionBar"], _G[prefix.."OtherHealPredictionBar"],
-						_G[prefix.."TotalAbsorbBar"], _G[prefix.."TotalAbsorbBarOverlay"], _G[prefix.."OverAbsorbGlow"],
-						_G[prefix.."OverHealAbsorbGlow"], _G[prefix.."HealAbsorbBar"], _G[prefix.."HealAbsorbBarLeftShadow"],
-						_G[prefix.."HealAbsorbBarRightShadow"]);
-				SetTextStatusBarTextZeroText(_G[prefix.."HealthBar"], DEAD);
-				ArenaEnemyFrame_OnLoad(self);
-			</OnLoad>
-			<OnShow>
-				self:SetFrameLevel(2);
-			</OnShow>
-			<OnEvent>
-				ArenaEnemyFrame_OnEvent(self, event, ...);
-			</OnEvent>
-			<OnEnter>
-				UnitFrame_OnEnter(self);
-			</OnEnter>
-			<OnLeave>
-				UnitFrame_OnLeave(self);
-			</OnLeave>
+			<OnLoad function="ArenaEnemyFrame_OnLoad"/>
+			<OnShow function="ArenaEnemyFrame_OnShow"/>
+			<OnEvent function="ArenaEnemyFrame_OnEvent"/>
+			<OnEnter function="UnitFrame_OnEnter"/>
+			<OnLeave function="UnitFrame_OnLeave"/>
 		</Scripts>
 	</Button>
 	<Frame name="ArenaPrepFrames" hidden="true" parent="UIParent">
@@ -421,14 +417,14 @@
 				<Scripts>
 					<OnLoad>
 						self:RegisterEvent("SCRIPT_ARENA_PREP_OPPONENT_SPECIALIZATIONS");
-						UpdateArenaPrepBackground();
+						ArenaPrepFrames_UpdateBackground();
 					</OnLoad>
 					<OnShow>
 						self:SetFrameLevel(1);
 					</OnShow>
 					<OnEvent>
 						if ( event == "SCRIPT_ARENA_PREP_OPPONENT_SPECIALIZATIONS" ) then
-							UpdateArenaPrepBackground();
+							ArenaPrepFrames_UpdateBackground();
 							OpacityFrameSlider:SetValue(tonumber(GetCVar("partyBackgroundOpacity")));
 							ArenaPrepBackground_SetOpacity();
 						end

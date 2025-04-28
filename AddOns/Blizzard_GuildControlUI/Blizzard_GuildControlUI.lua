@@ -142,12 +142,7 @@ function GuildControlUI_BankTabPermissions_Update(self)
 			button:Show();
 			local ownedTab = button.owned;
 			ownedTab.tabName:SetText(name);	
-			local iconNumber = tonumber(icon);
-			if(iconNumber) then
-				ownedTab.tabIcon:SetToFileData(iconNumber);
-			else
-				ownedTab.tabIcon:SetTexture(icon);
-			end			
+			ownedTab.tabIcon:SetTexture(icon);
 			ownedTab.viewCB:SetChecked(isViewable);
 			ownedTab.infoCB:SetChecked(editText);
 			ownedTab.depositCB:SetChecked(canDeposit);
@@ -363,9 +358,9 @@ end
 
 function GuildControlUI_CheckClicked(self)
 	if ( self:GetChecked() ) then
-		PlaySound("igMainMenuOptionCheckBoxOff");
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 	else
-		PlaySound("igMainMenuOptionCheckBoxOn");
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	end
 	GuildControlUI.numSkipUpdates = GuildControlUI.numSkipUpdates + 1;
 	GuildControlSetRankFlag(self:GetID(), self:GetChecked());
@@ -389,7 +384,7 @@ function GuildControlUI_AddRankButton_OnClick()
 	if ( activeEditBox ) then
 		activeEditBox:ClearFocus();
 	end
-	PlaySound("igMainMenuOpen");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPEN);
 	GuildControlAddRank(GUILD_NEW_RANK);
 	CloseDropDownMenus();
 end

@@ -6,7 +6,7 @@
 			<TexCoords left="0.1" right="0.9" top="0.1" bottom="0.9"/>
 		</CheckedTexture>
 	</CheckButton>
-	
+
 	<Frame name="MovePadFrame" parent="UIParent" movable="true" toplevel="true" frameStrata="BACKGROUND">
 		<Size x="126" y="124" />
 		<Anchors>
@@ -85,30 +85,69 @@
 				</Anchors>
 				<Scripts>
 					<OnLoad>
-						self:RegisterForClicks("AnyDown", "AnyUp");
 						self.icon:SetTexture("Interface\\Buttons\\JumpUpArrow");
 						self.icon:SetTexCoord(0,1,0,1);
 						self.icon:SetSize(18,18);
 					</OnLoad>
 					<OnMouseDown>
-						self.jump = true;
 						if self:IsEnabled() then
 							self.icon:SetPoint("CENTER", -1, -1);
 						end
+
+						RunBinding("JUMP", "down");
 					</OnMouseDown>
 					<OnMouseUp>
-						self.jump = nil;
 						self.icon:SetPoint("CENTER", 0, 0);
+						RunBinding("JUMP", "up");
 					</OnMouseUp>
+				</Scripts>
+			</Button>
+			<CheckButton name="MovePadRotateLeft" inherits="MovePadCheckboxTemplate">
+				<Size x="38" y="38" />
+				<Anchors>
+					<Anchor point="RIGHT" relativeTo="MovePadForward" relativePoint="LEFT" x="0" y="-38"/>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self.icon:SetTexture("Interface\\Buttons\\UI-RotationLeft-Button-Up");
+						self.icon:SetTexCoord(0,1,0,1);
+						self.icon:SetSize(35,35);
+						self:RegisterForClicks("AnyUp");
+					</OnLoad>
 					<OnClick>
-						if ( self.jump ) then
-							JumpOrAscendStart();
+						if ( self:GetChecked() ) then
+							MovePadRotateRight:SetChecked(false);
+							TurnRightStop();
+							TurnLeftStart();
 						else
-							AscendStop();
+							TurnLeftStop();
 						end
 					</OnClick>
 				</Scripts>
-			</Button>
+			</CheckButton>
+			<CheckButton name="MovePadRotateRight" inherits="MovePadCheckboxTemplate">
+				<Size x="38" y="38" />
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="MovePadForward" relativePoint="RIGHT" x="0" y="-38"/>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
+						self.icon:SetTexture("Interface\\Buttons\\UI-RotationRight-Button-Up");
+						self.icon:SetTexCoord(0,1,0,1);
+						self.icon:SetSize(35,35);
+						self:RegisterForClicks("AnyUp");
+					</OnLoad>
+					<OnClick>
+						if ( self:GetChecked() ) then
+							MovePadRotateLeft:SetChecked(false);
+							TurnLeftStop();
+							TurnRightStart();
+						else
+							TurnRightStop();
+						end
+					</OnClick>
+				</Scripts>
+			</CheckButton>
 			<CheckButton name="MovePadBackward" inherits="MovePadCheckboxTemplate">
 				<Anchors>
 					<Anchor point="TOP" relativeTo="MovePadJump" relativePoint="BOTTOM" x="0" y="0"/>

@@ -17,24 +17,24 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<Texture name="$parentTop" file="Interface\PaperDollInfoFrame\UI-Character-ScrollBar">
+				<Texture name="$parentTop" parentKey="ScrollBarTop" file="Interface\PaperDollInfoFrame\UI-Character-ScrollBar">
 					<Size x="27" y="48"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" x="-4" y="17"/>
 					</Anchors>
 					<TexCoords left="0" right="0.484375" top="0" bottom=".20"/>
 				</Texture>
-				<Texture name="$parentBottom" file="Interface\PaperDollInfoFrame\UI-Character-ScrollBar">
+				<Texture name="$parentBottom" parentKey="ScrollBarBottom" file="Interface\PaperDollInfoFrame\UI-Character-ScrollBar">
 					<Size x="27" y="64"/>
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" x="-4" y="-15"/>
 					</Anchors>
 					<TexCoords left="0.515625" right="1.0" top="0.1440625" bottom="0.4140625"/>
 				</Texture>
-				<Texture name="$parentMiddle" file="Interface\PaperDollInfoFrame\UI-Character-ScrollBar">
+				<Texture name="$parentMiddle" parentKey="ScrollBarMiddle" file="Interface\PaperDollInfoFrame\UI-Character-ScrollBar">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentTop" relativePoint="BOTTOMLEFT"/>
-						<Anchor point="BOTTOMRIGHT" relativeTo="$parentBottom" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.ScrollBarTop" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.ScrollBarBottom" relativePoint="TOPRIGHT"/>
 					</Anchors>
 					<TexCoords left="0" right="0.484375" top="0.1640625" bottom="1"/>
 				</Texture>
@@ -178,7 +178,7 @@
 			<OnMouseWheel function="HybridScrollFrame_OnMouseWheel"/>
 		</Scripts>
 		<ScrollChild>
-			<Frame name="$parentScrollChild">
+			<Frame name="$parentScrollChild" parentKey="ScrollChild">
 				<Scripts>
 					<OnLoad function="HybridScrollFrameScrollChild_OnLoad"/>
 				</Scripts>
@@ -199,7 +199,7 @@
 	<!-- This is a scrollframe with no border and a black texture for a track -->
 	<ScrollFrame name="MinimalHybridScrollFrameTemplate" inherits="HybridScrollFrameTemplate" virtual="true">
 		<Frames>
-			<Slider name="$parentScrollBar" inherits="MinimalHybridScrollBarTemplate" parentKey="ScrollBar">
+			<Slider name="$parentScrollBar" inherits="MinimalHybridScrollBarTemplate">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="0" y="-17"/>
 					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="0" y="17"/>

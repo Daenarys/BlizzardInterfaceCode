@@ -12,18 +12,14 @@
 				<FontString parentKey="time" inherits="EventTraceTimeFont">
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
-						<Anchor point="TOPRIGHT" relativePoint="TOPLEFT">
-							<Offset x="72" y="0"/>
-						</Anchor>
+						<Anchor point="TOPRIGHT" relativePoint="TOPLEFT" x="72" y="0"/>
 						<Anchor point="BOTTOM"/>
 					</Anchors>
 				</FontString>
 				<FontString parentKey="event" inherits="GameFontHighlightSmallLeft">
 					<Anchors>
 						<Anchor point="TOPRIGHT"/>
-						<Anchor point="TOPLEFT">
-							<Offset x="80" y="0"/>
-						</Anchor>
+						<Anchor point="TOPLEFT" x="80" y="0"/>
 						<Anchor point="BOTTOM"/>
 					</Anchors>
 				</FontString>
@@ -56,7 +52,7 @@
 			<OnLeave function="EventTraceFrameEvent_OnLeave"/>
 			<OnClick function="EventTraceFrameEvent_OnClick"/>
 		</Scripts>
-		<HighlightTexture setAllPoints="true" alphaMode="ADD">  
+		<HighlightTexture setAllPoints="true" alphaMode="ADD">
 			<Color r=".8" g=".8" b="1" a="1"/>
 		</HighlightTexture>
 	</Button>
@@ -64,30 +60,20 @@
 	<Frame name="EventTraceFrame" parent="UIParent" movable="true" clampedToScreen="true" hidden="true" frameStrata="MEDIUM" toplevel="true">
 		<Size x="326" y="505"/>
 		<Anchors>
-			<Anchor point="LEFT">
-				<Offset x="64" y="0"/>
-			</Anchor>
+			<Anchor point="LEFT" x="64" y="0"/>
 		</Anchors>
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture name="$parentTitleBG" file="Interface\PaperDollInfoFrame\UI-GearManager-Title-Background">
 					<Anchors>
-						<Anchor point="TOPLEFT">
-							<Offset x="9" y="-6"/>
-						</Anchor>
-						<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT">
-							<Offset x="-28" y="-24"/>
-						</Anchor>
+						<Anchor point="TOPLEFT" x="9" y="-6"/>
+						<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-28" y="-24"/>
 					</Anchors>
 				</Texture>
 				<Texture name="$parentDialogBG" file="Interface\Tooltips\UI-Tooltip-Background">
 					<Anchors>
-						<Anchor point="TOPLEFT">
-							<Offset x="8" y="-24"/>
-						</Anchor>
-						<Anchor point="BOTTOMRIGHT">
-							<Offset x="-6" y="8"/>
-						</Anchor>
+						<Anchor point="TOPLEFT" x="8" y="-24"/>
+						<Anchor point="BOTTOMRIGHT" x="-6" y="8"/>
 					</Anchors>
 					<Color r="0" g="0" b="0" a=".75"/>
 				</Texture>
@@ -99,7 +85,7 @@
 						<Anchor point="TOPLEFT"/>
 					</Anchors>
 					<TexCoords left="0.501953125" right="0.625" top="0" bottom="1"/>
-				</Texture>			
+				</Texture>
 				<Texture name="$parentTopRight" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
 					<Size x="64" y="64"/>
 					<Anchors>
@@ -121,7 +107,7 @@
 						<Anchor point="BOTTOMLEFT"/>
 					</Anchors>
 					<TexCoords left="0.751953125" right="0.875" top="0" bottom="1"/>
-				</Texture>			
+				</Texture>
 				<Texture name="$parentBottomRight" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
 					<Size x="64" y="64"/>
 					<Anchors>
@@ -157,14 +143,10 @@
 			<Layer level="OVERLAY">
 				<FontString name="$parentTitle" inherits="GameFontNormal" text="EVENTS_LABEL">
 					<Anchors>
-						<Anchor point="TOPLEFT">
-							<Offset x="12" y="-8"/>
-						</Anchor>
-						<Anchor point="TOPRIGHT">
-							<Offset x="-32" y="-8"/>
-						</Anchor>
+						<Anchor point="TOPLEFT" x="12" y="-8"/>
+						<Anchor point="TOPRIGHT" x="-32" y="-8"/>
 					</Anchors>
-				</FontString>					
+				</FontString>
 			</Layer>
 		</Layers>
 		<Frames>
@@ -173,53 +155,21 @@
 					<AbsDimension x="32" y="32"/>
 				</Size>
 				<Anchors>
-					<Anchor point="TOPRIGHT">
-						<Offset x="2" y="1"/>
-					</Anchor>
+					<Anchor point="TOPRIGHT" x="2" y="1"/>
 				</Anchors>
 			</Button>
-			<Frame name="$parentTitleButton">
+			<Frame name="$parentTitleButton" inherits="TitleDragAreaTemplate">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentTitleBG"/>
 					<Anchor point="BOTTOMRIGHT" relativeTo="$parentTitleBG"/>
 				</Anchors>
-				<Frames>
-					<Frame name="$parentHighlight" setAllPoints="true" hidden="true">
-						<Layers>
-							<Layer level="OVERLAY">
-								<Texture file="Interface\Buttons\UI-ListBox-Highlight" setAllPoints="true">
-									<Color r="1" g="1" b="1" a="0.4"/>
-								</Texture>
-							</Layer>
-						</Layers>
-					</Frame>
-				</Frames>
-				<Scripts>
-					<OnLoad>
-						self:RegisterForDrag("LeftButton");
-					</OnLoad>
-					<OnDragStart>
-						local eventTraceFrame = _G["EventTraceFrame"];
-						eventTraceFrame.moving = true;
-						eventTraceFrame:StartMoving();
-					</OnDragStart>
-					<OnDragStop>
-						local eventTraceFrame = _G["EventTraceFrame"];
-						eventTraceFrame.moving = nil;
-						eventTraceFrame:StopMovingOrSizing();
-					</OnDragStop>
-				</Scripts>
 			</Frame>
 			<Slider name="$parentScroll">
 				<Size x="16" y="0"/>
 				<Anchors>
-					<Anchor point="TOPRIGHT">
-						<Offset x="-7" y="-28"/>
-					</Anchor>
-					<Anchor point="BOTTOMRIGHT">
-						<Offset x="-7" y="10"/>
-					</Anchor>
-				</Anchors>			
+					<Anchor point="TOPRIGHT" x="-7" y="-28"/>
+					<Anchor point="BOTTOMRIGHT" x="-7" y="10"/>
+				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
 						<Texture name="$parentBG" setAllPoints="true">
@@ -239,7 +189,7 @@
 					<TexCoords left="0.25" right="0.75" top="0.25" bottom="0.75"/>
 				</ThumbTexture>
 			</Slider>
-		</Frames>		
+		</Frames>
 		<Scripts>
 			<OnLoad function="EventTraceFrame_OnLoad"/>
 			<OnShow function="EventTraceFrame_OnShow"/>
@@ -249,129 +199,47 @@
 			<!-- <OnSizeChanged function="EventTraceFrame_OnSizeChanged"/> Set in EventTraceFrame_OnLoad -->
 		</Scripts>
 	</Frame>
-	<Frame name="ScriptErrorsFrame" inherits="UIPanelDialogTemplate" frameStrata="TOOLTIP" movable="true" clampedToScreen="true" hidden="true" toplevel="true">
-		<Size x="384" y="260"/>
-		<Anchors>
-			<Anchor point="CENTER"/>
-		</Anchors>
-		<Layers>
-			<Layer level="ARTWORK">
-				<FontString parentKey="indexLabel" font="GameFontNormalCenter">
-					<Size x="70" y="16"/>
-					<Anchors>
-						<Anchor point="BOTTOMLEFT">
-							<Offset x="208" y="16"/>
-						</Anchor>
-					</Anchors>
-				</FontString>
-			</Layer>
-		</Layers>
-		<Frames>
-			<Frame name="$parentTitleButton">
-				<Anchors>
-					<Anchor point="TOPLEFT" relativeTo="$parentTitleBG"/>
-					<Anchor point="BOTTOMRIGHT" relativeTo="$parentTitleBG"/>
-				</Anchors>
-				<Scripts>
-					<OnLoad>
-						self:RegisterForDrag("LeftButton");
-					</OnLoad>
-					<OnDragStart>
-						local frame = _G["ScriptErrorsFrame"];
-						frame.moving = true;
-						frame:StartMoving();
-					</OnDragStart>
-					<OnDragStop>
-						local frame = _G["ScriptErrorsFrame"];
-						frame.moving = nil;
-						frame:StopMovingOrSizing();
-					</OnDragStop>
-				</Scripts>
-			</Frame>		
-			<ScrollFrame name="$parentScrollFrame" inherits="UIPanelScrollFrameTemplate">
-				<Size x="343" y="194"/>
-				<Anchors>
-					<Anchor point="TOPLEFT">
-						<Offset x="12" y="-30"/>
-					</Anchor>
-				</Anchors>
-				<ScrollChild>
-					<EditBox name="$parentText" multiLine="true" letters="4000" autoFocus="false">
-						<Size x="343" y="194"/>
-						<Scripts>
-							<OnCursorChanged function="ScrollingEdit_OnCursorChanged"/>
-							<OnUpdate>
-								ScrollingEdit_OnUpdate(self, elapsed, self:GetParent());
-							</OnUpdate>
-							<OnEditFocusGained>
-								self:HighlightText(0);
-							</OnEditFocusGained>
-							<OnEscapePressed function="EditBox_ClearFocus"/>
-						</Scripts>
-						<FontString inherits="GameFontHighlightSmall"/>
-					</EditBox>
-				</ScrollChild>
-			</ScrollFrame>
-			<Button parentKey="previous" inherits="UIPanelButtonTemplate" text="PREVIOUS" id="2">
-				<Size x="96" y="24"/>
-				<Anchors>
-					<Anchor point="BOTTOMLEFT">
-						<Offset x="12" y="12"/>
-					</Anchor>
-				</Anchors>
-				<Scripts>
-					<OnClick function="ScriptErrorsFrameButton_OnClick"/>
-				</Scripts>
-			</Button>			
-			<Button parentKey="next" inherits="UIPanelButtonTemplate" text="NEXT" id="1">
-				<Size x="96" y="24"/>
-				<Anchors>
-					<Anchor point="BOTTOMLEFT">
-						<Offset x="112" y="12"/>
-					</Anchor>
-				</Anchors>
-				<Scripts>
-					<OnClick function="ScriptErrorsFrameButton_OnClick"/>
-				</Scripts>
-			</Button>
-			<Button parentKey="close" inherits="UIPanelButtonTemplate" text="CLOSE">
-				<Size x="96" y="24"/>
-				<Anchors>
-					<Anchor point="BOTTOMRIGHT">
-						<Offset x="-8" y="12"/>
-					</Anchor>
-				</Anchors>
-				<Scripts>
-					<OnClick function="HideParentPanel"/>
-				</Scripts>
-			</Button>
-		</Frames>
+
+	<GameTooltip name="FrameStackTooltip" frameStrata="TOOLTIP" hidden="true" inherits="GameTooltipTemplate">
 		<Scripts>
-			<OnLoad function="ScriptErrorsFrame_OnLoad"/>	
-			<OnShow function="ScriptErrorsFrame_OnShow"/>
-		</Scripts>
-	</Frame>
-	
-	<GameTooltip name="FrameStackTooltip" frameStrata="TOOLTIP" hidden="true" parent="WorldFrame" inherits="GameTooltipTemplate">
-		<Scripts>
-			<OnLoad function="DebugTooltip_OnLoad"/>
+			<OnLoad function="FrameStackTooltip_OnLoad"/>
 			<OnShow function="FrameStackTooltip_OnShow"/>
+			<OnHide function="FrameStackTooltip_OnHide"/>
 			<OnEnter function="FrameStackTooltip_OnEnter"/>
 			<OnUpdate function="FrameStackTooltip_OnUpdate"/>
+			<OnEvent function="FrameStackTooltip_OnEvent"/>
+			<OnTooltipCleared function="FrameStackTooltip_OnTooltipCleared"/>
+			<OnTooltipSetFramestack function="FrameStackTooltip_OnTooltipSetFrameStack"/>
 		</Scripts>
 	</GameTooltip>
-	
+
 	<GameTooltip name="EventTraceTooltip" frameStrata="TOOLTIP" hidden="true" parent="EventTraceFrame" inherits="GameTooltipTemplate">
 		<Scripts>
 			<OnLoad function="DebugTooltip_OnLoad"/>
 		</Scripts>
 	</GameTooltip>
 
-	<Frame name="FrameStackHighlight" frameStrata="TOOLTIP">
+	<Frame name="FrameHighlightTemplate" mixin="AnchorHighlightMixin" frameStrata="TOOLTIP" virtual="true">
 		<Layers>
 			<Layer level="ARTWORK">
-				<Texture name="$parentTexture"> 
+				<Texture>
 					<Color r="0.0" g="0.8" b="0.0" a=".4"/>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+	
+	<Frame name="FrameStackHighlight" inherits="FrameHighlightTemplate"/>
+	
+	<Frame name="FrameStackAnchorHighlightTemplate" parentArray="AnchorHighlights" virtual="true" enableMouse="false" frameStrata="TOOLTIP">
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture> 
+					<Color r="0.6" g="0.6" b="0.2" a=".4"/>
+				</Texture>
+				<Texture parentKey="AnchorPoint">
+					<Size x="4" y="4"/>
+					<Color r="1.0" g="0.0" b="0.0" a=".4"/>
 				</Texture>
 			</Layer>
 		</Layers>

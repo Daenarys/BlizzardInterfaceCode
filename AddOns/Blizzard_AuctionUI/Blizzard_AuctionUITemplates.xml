@@ -1,6 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\..\FrameXML\UI.xsd">
-	<Button name="AuctionClassButtonTemplate" virtual="true">
+	<Button name="AuctionClassButtonTemplate" parentArray="FilterButtons" virtual="true">
 		<Size>
 			<AbsDimension x="136" y="20"/>
 		</Size>
@@ -88,7 +88,7 @@
 			</Anchors>
 		</ButtonText>
 		<NormalFont style="GameFontHighlightSmall"/>
-		<NormalTexture name="$parentArrow" file="Interface\Buttons\UI-SortArrow">
+		<NormalTexture name="$parentArrow" file="Interface\Buttons\UI-SortArrow" parentKey="Arrow">
 			<Size>
 				<AbsDimension x="9" y="8"/>
 			</Size>
@@ -320,7 +320,7 @@
 					</Layer>
 					<Layer level="OVERLAY">
 						<Texture parentKey="IconBorder" file="Interface\Common\WhiteIconFrame" hidden="true">
-							<Size x="37" y="37"/>
+							<Size x="32" y="32"/>
 							<Anchors>
 								<Anchor point="CENTER"/>
 							</Anchors>
@@ -333,12 +333,7 @@
 						AuctionFrameItem_OnEnter(self, "list", self:GetParent():GetID() + FauxScrollFrame_GetOffset(BrowseScrollFrame));
 					</OnEnter>
 					<OnLeave>
-						local selected = GetSelectedAuctionItem("list");
-						if ( selected and ( selected == self:GetParent():GetID() + FauxScrollFrame_GetOffset(BrowseScrollFrame) ) ) then
-							<!-- Do nothing -->
-						else
-							self:GetParent():UnlockHighlight();
-						end
+						AuctionBrowseFrame_CheckUnlockHighlight(self, "list", FauxScrollFrame_GetOffset(BrowseScrollFrame));
 						GameTooltip_Hide();
 						ResetCursor();
 					</OnLeave>
@@ -404,12 +399,7 @@
 						GameTooltip:SetText(self.tooltip);
 					</OnEnter>
 					<OnLeave>
-						local selected = GetSelectedAuctionItem("list");
-						if ( selected and ( selected == self:GetParent():GetID() + FauxScrollFrame_GetOffset(BrowseScrollFrame) ) ) then
-							<!-- Do nothing -->
-						else
-							self:GetParent():UnlockHighlight();
-						end
+						AuctionBrowseFrame_CheckUnlockHighlight(self, "list", FauxScrollFrame_GetOffset(BrowseScrollFrame));
 						GameTooltip:Hide();
 					</OnLeave>
 				</Scripts>
@@ -508,6 +498,19 @@
 						</Layers>
 					</Frame>
 				</Frames>
+			</Frame>
+			<Frame parentKey="PriceTooltipFrame">
+				<Anchors>
+					<Anchor point="RIGHT" relativeTo="$parentMoneyFrame" x="-10"/>
+					<Anchor point="BOTTOM" relativeTo="$parent" y="4"/>
+					<Anchor point="LEFT" relativeTo="$parentBuyoutFrame"/>
+					<Anchor point="TOP" relativeTo="$parent" y="-2"/>
+				</Anchors>
+				<Scripts>
+					<OnLoad function="AuctionPriceTooltipFrame_OnLoad"/>
+					<OnEnter function="AuctionPriceTooltipFrame_OnEnter"/>
+					<OnLeave function="AuctionPriceTooltipFrame_OnLeave"/>
+				</Scripts>
 			</Frame>
 		</Frames>
 		<Scripts>
@@ -661,7 +664,7 @@
 					</Layer>
 					<Layer level="OVERLAY">
 						<Texture parentKey="IconBorder" file="Interface\Common\WhiteIconFrame" hidden="true">
-							<Size x="37" y="37"/>
+							<Size x="32" y="32"/>
 							<Anchors>
 								<Anchor point="CENTER"/>
 							</Anchors>
@@ -674,12 +677,7 @@
 						AuctionFrameItem_OnEnter(self, "bidder", self:GetParent():GetID() + FauxScrollFrame_GetOffset(BidScrollFrame));
 					</OnEnter>
 					<OnLeave>
-						local selected = GetSelectedAuctionItem("bidder");
-						if ( selected and ( selected == self:GetParent():GetID() + FauxScrollFrame_GetOffset(BidScrollFrame) ) ) then
-							<!-- Do nothing -->
-						else
-							self:GetParent():UnlockHighlight();
-						end
+						AuctionBrowseFrame_CheckUnlockHighlight(self, "bidder", FauxScrollFrame_GetOffset(BidScrollFrame));
 						GameTooltip_Hide();
 						ResetCursor();
 					</OnLeave>
@@ -745,12 +743,7 @@
 						GameTooltip:SetText(self.tooltip);
 					</OnEnter>
 					<OnLeave>
-						local selected = GetSelectedAuctionItem("bidder");
-						if ( selected and ( selected == self:GetParent():GetID() + FauxScrollFrame_GetOffset(BidScrollFrame) ) ) then
-							<!-- Do nothing -->
-						else
-							self:GetParent():UnlockHighlight();
-						end
+						AuctionBrowseFrame_CheckUnlockHighlight(self, "bidder", FauxScrollFrame_GetOffset(BidScrollFrame));
 						GameTooltip:Hide();
 					</OnLeave>
 				</Scripts>
@@ -913,7 +906,7 @@
 					</Layer>
 					<Layer level="OVERLAY">
 						<Texture parentKey="IconBorder" file="Interface\Common\WhiteIconFrame" hidden="true">
-							<Size x="37" y="37"/>
+							<Size x="32" y="32"/>
 							<Anchors>
 								<Anchor point="CENTER"/>
 							</Anchors>
@@ -926,12 +919,7 @@
 						AuctionFrameItem_OnEnter(self, "owner", self:GetParent():GetID() + GetEffectiveAuctionsScrollFrameOffset());
 					</OnEnter>
 					<OnLeave>
-						local selected = GetSelectedAuctionItem("owner");
-						if ( selected and ( selected == ( self:GetParent():GetID() + GetEffectiveAuctionsScrollFrameOffset() ) ) ) then
-							<!-- Do nothing -->
-						else
-							self:GetParent():UnlockHighlight();
-						end
+						AuctionBrowseFrame_CheckUnlockHighlight(self, "owner", GetEffectiveAuctionsScrollFrameOffset());
 						GameTooltip_Hide();
 						ResetCursor();
 					</OnLeave>
@@ -997,12 +985,7 @@
 						GameTooltip:SetText(self.tooltip);
 					</OnEnter>
 					<OnLeave>
-						local selected = GetSelectedAuctionItem("owner");
-						if ( selected and ( selected == ( self:GetParent():GetID() + GetEffectiveAuctionsScrollFrameOffset() ) ) ) then
-							<!-- Do nothing -->
-						else
-							self:GetParent():UnlockHighlight();
-						end
+						AuctionBrowseFrame_CheckUnlockHighlight(self, "owner", GetEffectiveAuctionsScrollFrameOffset());
 						GameTooltip:Hide();
 					</OnLeave>
 				</Scripts>

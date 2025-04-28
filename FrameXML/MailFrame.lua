@@ -1,6 +1,4 @@
 INBOXITEMS_TO_DISPLAY = 7;
-STATIONERY_ICON_ROW_HEIGHT = 36;
-STATIONERYITEMS_TO_DISPLAY = 5;
 PACKAGEITEMS_TO_DISPLAY = 4;
 ATTACHMENTS_MAX = 16;
 ATTACHMENTS_MAX_SEND = 12;
@@ -9,7 +7,6 @@ ATTACHMENTS_MAX_ROWS_SEND = 2;
 ATTACHMENTS_MAX_RECEIVE = 16;
 ATTACHMENTS_PER_ROW_RECEIVE = 7;
 ATTACHMENTS_MAX_ROWS_RECEIVE = 3;
-STATIONERY_PATH = "Interface\\Stationery\\";
 MAX_COD_AMOUNT = 10000;
 SEND_MAIL_TAB_LIST = {};
 SEND_MAIL_TAB_LIST[1] = "SendMailNameEditBox";
@@ -36,15 +33,18 @@ function MailFrame_OnLoad(self)
 	self:RegisterEvent("CLOSE_INBOX_ITEM");
 	self:RegisterEvent("MAIL_LOCK_SEND_ITEMS");
 	self:RegisterEvent("MAIL_UNLOCK_SEND_ITEMS");
+	self:RegisterEvent("TRIAL_STATUS_UPDATE");
 	-- Set previous and next fields
 	MoneyInputFrame_SetPreviousFocus(SendMailMoney, SendMailBodyEditBox);
 	MoneyInputFrame_SetNextFocus(SendMailMoney, SendMailNameEditBox);
 	MoneyFrame_SetMaxDisplayWidth(SendMailMoneyFrame, 160);
-	
-	if (GameLimitedMode_IsActive()) then
-		MailFrameTab2:Hide();
-		self.trialError:Show();
-	end
+	MailFrame_UpdateTrialState(self);
+end
+
+function MailFrame_UpdateTrialState(self)
+	local isTrialOrVeteran = GameLimitedMode_IsActive();
+	MailFrameTab2:SetShown(not isTrialOrVeteran);
+	self.trialError:SetShown(isTrialOrVeteran);
 end
 
 function MailFrame_OnEvent(self, event, ...)
@@ -72,7 +72,7 @@ function MailFrame_OnEvent(self, event, ...)
 		SendMailFrame_Update();
 	elseif ( event == "MAIL_SEND_SUCCESS" ) then
 		SendMailFrame_Reset();
-		PlaySound("igAbiliityPageTurn");
+		PlaySound(SOUNDKIT.IG_ABILITY_PAGE_TURN);
 		-- If open mail frame is open then switch the mail frame back to the inbox
 		if ( SendMailFrame.sendMode == "reply" ) then
 			MailFrameTab_OnClick(nil, 1);
@@ -91,8 +91,8 @@ function MailFrame_OnEvent(self, event, ...)
 		SendMailFrameLockSendMail:Hide();
 		StaticPopup_Hide("CONFIRM_MAIL_ITEM_UNREFUNDABLE");
 	elseif ( event == "CLOSE_INBOX_ITEM" ) then
-		local arg1 = ...;
-		if ( arg1 == InboxFrame.openMailID ) then
+		local mailID = ...;
+		if ( mailID == InboxFrame.openMailID ) then
 			HideUIPanel(OpenMailFrame);
 		end
 	elseif ( event == "MAIL_LOCK_SEND_ITEMS" ) then
@@ -104,6 +104,8 @@ function MailFrame_OnEvent(self, event, ...)
 	elseif ( event == "MAIL_UNLOCK_SEND_ITEMS") then
 		SendMailFrameLockSendMail:Hide();
 		StaticPopup_Hide("CONFIRM_MAIL_ITEM_UNREFUNDABLE");
+	elseif ( event == "TRIAL_STATUS_UPDATE" ) then
+		MailFrame_UpdateTrialState(self);
 	end
 end
 
@@ -143,7 +145,7 @@ function MailFrameTab_OnClick(self, tabID)
 		-- Set the send mode to dictate the flow after a mail is sent
 		SendMailFrame.sendMode = "send";
 	end
-	PlaySound("igSpellBookOpen");
+	PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN);
 end
 
 -- Inbox functions
@@ -167,7 +169,7 @@ function InboxFrame_Update()
 	for i=1, INBOXITEMS_TO_DISPLAY do
 		if ( index <= numItems ) then
 			-- Setup mail item
-			packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, itemCount, wasRead, x, y, z, isGM, firstItemQuantity = GetInboxHeaderInfo(index);
+			packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, itemCount, wasRead, x, y, z, isGM, firstItemQuantity, firstItemID = GetInboxHeaderInfo(index);
 			
 			-- Set icon
 			if ( packageIcon ) and ( not isGM ) then
@@ -187,6 +189,12 @@ function InboxFrame_Update()
 			button.hasItem = itemCount;
 			button.itemCount = itemCount;
 			SetItemButtonCount(button, firstItemQuantity);
+			if ( firstItemQuantity ) then
+				SetItemButtonQuality(button, select(3, GetItemInfo(firstItemID)), firstItemID);
+			else
+				button.IconBorder:Hide();
+			end
+			
 			buttonIcon = _G["MailItem"..i.."ButtonIcon"];
 			buttonIcon:SetTexture(icon);
 			subjectText = _G["MailItem"..i.."Subject"];
@@ -200,6 +208,7 @@ function InboxFrame_Update()
 				subjectText:SetTextColor(0.75, 0.75, 0.75);
 				_G["MailItem"..i.."ButtonSlot"]:SetVertexColor(0.5, 0.5, 0.5);
 				SetDesaturation(buttonIcon, true);
+				button.IconBorder:SetVertexColor(0.5, 0.5, 0.5);
 			else
 				senderText:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
 				subjectText:SetTextColor(HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
@@ -280,7 +289,7 @@ function InboxFrame_OnClick(self, index)
 		--OpenMailFrame:Show();
 		ShowUIPanel(OpenMailFrame);
 		OpenMailFrameInset:SetPoint("TOPLEFT", 4, -80);
-		PlaySound("igSpellBookOpen");
+		PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN);
 	else
 		InboxFrame.openMailID = 0;
 		HideUIPanel(OpenMailFrame);		
@@ -331,14 +340,14 @@ function InboxFrameItem_OnEnter(self)
 end
 
 function InboxNextPage()
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	InboxFrame.pageNum = InboxFrame.pageNum + 1;
 	InboxGetMoreMail();	
 	InboxFrame_Update();
 end
 
 function InboxPrevPage()
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	InboxFrame.pageNum = InboxFrame.pageNum - 1;
 	InboxGetMoreMail();	
 	InboxFrame_Update();
@@ -357,12 +366,12 @@ function OpenMailFrame_OnHide()
 	StaticPopup_Hide("DELETE_MAIL");
 	if ( not InboxFrame.openMailID ) then
 		InboxFrame_Update();
-		PlaySound("igSpellBookClose");
+		PlaySound(SOUNDKIT.IG_SPELLBOOK_CLOSE);
 		return;
 	end
 
 	-- Determine if this is an auction temp invoice
-	local bodyText, texture, isTakeable, isInvoice = GetInboxText(InboxFrame.openMailID);
+	local isInvoice = select(5, GetInboxText(InboxFrame.openMailID));
 	local isAuctionTempInvoice = false;
 	if ( isInvoice ) then
 		local invoiceType, itemName, playerName, bid, buyout, deposit, consignment, moneyDelay, etaHour, etaMin = GetInboxInvoiceInfo(InboxFrame.openMailID);
@@ -378,7 +387,7 @@ function OpenMailFrame_OnHide()
 	end
 	InboxFrame.openMailID = 0;
 	InboxFrame_Update();
-	PlaySound("igSpellBookClose");
+	PlaySound(SOUNDKIT.IG_SPELLBOOK_CLOSE);
 end
 
 function OpenMailFrame_UpdateButtonPositions(letterIsTakeable, textCreated, stationeryIcon, money)
@@ -417,23 +426,25 @@ function OpenMailFrame_UpdateButtonPositions(letterIsTakeable, textCreated, stat
 	end
 	-- items
 	for i=1, ATTACHMENTS_MAX_RECEIVE do
-		local name, itemTexture, count, quality, canUse = GetInboxItem(InboxFrame.openMailID, i);
-		local attachmentButton = _G["OpenMailAttachmentButton"..i];
-		if ( name ) then
+		local attachmentButton = OpenMailFrame.OpenMailAttachments[i];
+		if HasInboxItem(InboxFrame.openMailID, i) then
 			tinsert(OpenMailFrame.activeAttachmentButtons, attachmentButton);
 			rowAttachmentCount = rowAttachmentCount + 1;
 
-			SetItemButtonTexture(attachmentButton, itemTexture);
-			SetItemButtonCount(attachmentButton, count);
-
-			if (quality > LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
-				attachmentButton.IconBorder:Show();
-				attachmentButton.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
+			local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(InboxFrame.openMailID, i);
+			if name then
+				attachmentButton.name = name;
+				SetItemButtonTexture(attachmentButton, itemTexture);
+				SetItemButtonCount(attachmentButton, count);
+				SetItemButtonQuality(attachmentButton, quality, itemID);
 			else
-				attachmentButton.IconBorder:Hide();
+				attachmentButton.name = nil;
+				SetItemButtonTexture(attachmentButton, "Interface/Icons/INV_Misc_QuestionMark");
+				SetItemButtonCount(attachmentButton, 0);
+				SetItemButtonQuality(attachmentButton, nil);
 			end
 
-			if ( canUse ) then
+			if canUse then
 				SetItemButtonTextureVertexColor(attachmentButton, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 			else
 				SetItemButtonTextureVertexColor(attachmentButton, 1.0, 0.1, 0.1);
@@ -489,11 +500,11 @@ function OpenMail_Update()
 	OpenMailSender.Name:SetText(sender);
 	OpenMailSubject:SetText(subject);
 	-- Set Text
-	local bodyText, texture, isTakeable, isInvoice = GetInboxText(InboxFrame.openMailID);
+	local bodyText, stationeryID1, stationeryID2, isTakeable, isInvoice = GetInboxText(InboxFrame.openMailID);
 	OpenMailBodyText:SetText(bodyText, true);
-	if ( texture ) then
-		OpenStationeryBackgroundLeft:SetTexture(STATIONERY_PATH..texture.."1");
-		OpenStationeryBackgroundRight:SetTexture(STATIONERY_PATH..texture.."2");
+	if ( stationeryID1 and stationeryID2 ) then
+		OpenStationeryBackgroundLeft:SetTexture(stationeryID1);
+		OpenStationeryBackgroundRight:SetTexture(stationeryID2);
 	end
 
 	-- Is an invoice
@@ -665,13 +676,14 @@ function OpenMail_Update()
 		local cursorx = OpenMailFrame.activeAttachmentRowPositions[1].cursorxstart;
 		local cursorxend = OpenMailFrame.activeAttachmentRowPositions[1].cursorxend;
 		local cursory = itemRowCount - 1;
-		for i, attachmentButton in pairs(OpenMailFrame.activeAttachmentButtons) do
-			attachmentButton:SetPoint("TOPLEFT", "OpenMailFrame", "BOTTOMLEFT", indentx + (tabx * cursorx), indenty + icony + (taby * cursory));
-			if ( attachmentButton ~= OpenMailLetterButton and attachmentButton ~= OpenMailMoneyButton ) then
-				local name, itemTexture, count, quality, canUse = GetInboxItem(InboxFrame.openMailID, attachmentButton:GetID());
-				if ( name and cursory >= 0 ) then
-					if ( not firstAttachName ) then
-						firstAttachName = name;
+		for i, attachmentButton in ipairs(OpenMailFrame.activeAttachmentButtons) do
+			attachmentButton:SetPoint("TOPLEFT", OpenMailFrame, "BOTTOMLEFT", indentx + (tabx * cursorx), indenty + icony + (taby * cursory));
+			if attachmentButton ~= OpenMailLetterButton and attachmentButton ~= OpenMailMoneyButton then
+				if cursory >= 0 and HasInboxItem(InboxFrame.openMailID, attachmentButton:GetID()) then
+					if attachmentButton.name then
+						if not firstAttachName then
+							firstAttachName = attachmentButton.name;
+						end
 					end
 
 					attachmentButton:Enable();
@@ -725,8 +737,7 @@ function OpenMail_GetItemCounts(letterIsTakeable, textCreated, money)
 		itemRowCount = itemRowCount + 1;
 	end
 	for i=1, ATTACHMENTS_MAX_RECEIVE do
-		local name, itemTexture, count, quality, canUse = GetInboxItem(InboxFrame.openMailID, i);
-		if ( name ) then
+		if HasInboxItem(InboxFrame.openMailID, i) then
 			itemButtonCount = itemButtonCount + 1;
 			itemRowCount = itemRowCount + 1;
 		end
@@ -813,7 +824,7 @@ function OpenMailAttachment_OnClick(self, index)
 		TakeInboxItem(InboxFrame.openMailID, index);
 		OpenMailFrame.updateButtonPositions = false;
 	end
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 end
 
 -- SendMail functions
@@ -826,9 +837,8 @@ function SendMailMailButton_OnClick(self)
 	if ( SendMailSendMoneyButton:GetChecked() ) then
 		-- Send Money
 		if ( copper > 0 ) then
-			-- Open confirmation dialog
-			StaticPopup_Show("SEND_MONEY", SendMailNameEditBox:GetText());
-			return;
+			-- Confirmation is now done through the secure transfer system
+			SetSendMailMoney(copper)
 		end
 	else
 		-- Send C.O.D.
@@ -843,55 +853,54 @@ function SendMailFrame_SendMail()
 	SendMail(SendMailNameEditBox:GetText(), SendMailSubjectEditBox:GetText(), SendMailBodyEditBox:GetText());
 end
 
+function SendMailFrame_EnableSendMailButton()
+	SendMailMailButton:Enable();
+end
+
 function SendMailFrame_Update()
 	-- Update the item(s) being sent
 	local itemCount = 0;
 	local itemTitle;
-	local gap;
+	local gap = false;
 	local last = 0;
 	for i=1, ATTACHMENTS_MAX_SEND do
-		-- get info about the attachment
-		local itemName, itemTexture, stackCount, quality = GetSendMailItem(i);
-		-- set attachment texture info
-		_G["SendMailAttachment"..i]:SetNormalTexture(itemTexture);
-		-- set the stack count
-		if ( stackCount <= 1 ) then
-			_G["SendMailAttachment"..i.."Count"]:SetText("");
-		else
-			_G["SendMailAttachment"..i.."Count"]:SetText(stackCount);
-		end
+		local sendMailAttachmentButton = SendMailFrame.SendMailAttachments[i];
 
-		local attachmentButton = _G["SendMailAttachment"..i];
-		
-		if (quality > LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
-			attachmentButton.IconBorder:Show();
-			attachmentButton.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
-		else
-			attachmentButton.IconBorder:Hide();
-		end
-
-		-- determine what a name for the message in case it doesn't already have one
-		if ( itemName ) then
+		if HasSendMailItem(i) then
 			itemCount = itemCount + 1;
-			if ( not itemTitle ) then
-				if ( stackCount <= 1 ) then
+
+			local itemName, itemID, itemTexture, stackCount, quality = GetSendMailItem(i);
+			sendMailAttachmentButton:SetNormalTexture(itemTexture or "Interface\\Icons\\INV_Misc_QuestionMark");
+			SetItemButtonCount(sendMailAttachmentButton, stackCount or 0);
+			SetItemButtonQuality(sendMailAttachmentButton, quality, itemID);
+		
+			-- determine what a name for the message in case it doesn't already have one
+			if not itemTitle and itemName then
+				if stackCount <= 1 then
 					itemTitle = itemName;
 				else
 					itemTitle = itemName.." ("..stackCount..")";
 				end
 			end
-			if ((last + 1) ~= i) then
-				gap = 1;
+
+			if last + 1 ~= i then
+				gap = true;
 			end
 			last = i;
+		else
+			sendMailAttachmentButton:SetNormalTexture(nil);
+			SetItemButtonCount(sendMailAttachmentButton, 0);
+			SetItemButtonQuality(sendMailAttachmentButton, nil);
 		end
 	end
+
 	-- Enable or disable C.O.D. depending on whether or not there's an item to send
 	if ( itemCount > 0 ) then
 		SendMailCODButton:Enable();
 		SendMailCODButtonText:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
 
-		if ( SendMailSubjectEditBox:GetText() == "" or SendMailSubjectEditBox:GetText() == SendMailFrame.previousItem ) then
+		if SendMailSubjectEditBox:GetText() == "" or SendMailSubjectEditBox:GetText() == SendMailFrame.previousItem then
+			itemTitle = itemTitle or "";
 			SendMailSubjectEditBox:SetText(itemTitle);
 			SendMailFrame.previousItem = itemTitle;
 		end
@@ -961,13 +970,15 @@ function SendMailFrame_Update()
 	SendStationeryBackgroundLeft:SetTexCoord(0, 1.0, 0, min(scrollHeight, 256) / 256);
 	SendStationeryBackgroundRight:SetHeight(min(scrollHeight, 256));
 	SendStationeryBackgroundRight:SetTexCoord(0, 1.0, 0, min(scrollHeight, 256) / 256);
+	SendStationeryBackgroundLeft:SetTexture("Interface/Stationery/stationerytest1");
+	SendStationeryBackgroundRight:SetTexture("Interface/Stationery/stationerytest2");
 	
 	-- Set Items
 	for i=1, ATTACHMENTS_MAX_SEND do
 		if (cursory >= 0) then
-			_G["SendMailAttachment"..i]:Enable();
-			_G["SendMailAttachment"..i]:Show();
-			_G["SendMailAttachment"..i]:SetPoint("TOPLEFT", "SendMailFrame", "BOTTOMLEFT", indentx + (tabx * cursorx), indenty + (taby * cursory));
+			SendMailFrame.SendMailAttachments[i]:Enable();
+			SendMailFrame.SendMailAttachments[i]:Show();
+			SendMailFrame.SendMailAttachments[i]:SetPoint("TOPLEFT", "SendMailFrame", "BOTTOMLEFT", indentx + (tabx * cursorx), indenty + (taby * cursory));
 			
 			cursorx = cursorx + 1;
 			if (cursorx >= ATTACHMENTS_PER_ROW_SEND) then
@@ -975,11 +986,11 @@ function SendMailFrame_Update()
 				cursorx = 0;
 			end
 		else
-			_G["SendMailAttachment"..i]:Hide();
+			SendMailFrame.SendMailAttachments[i]:Hide();
 		end
 	end
 	for i=ATTACHMENTS_MAX_SEND+1, ATTACHMENTS_MAX do
-		_G["SendMailAttachment"..i]:Hide();
+		SendMailFrame.SendMailAttachments[i]:Hide();
 	end
 
 	SendMailFrame_CanSend();
@@ -990,9 +1001,7 @@ function SendMailFrame_Reset()
 	SendMailNameEditBox:SetFocus();
 	SendMailSubjectEditBox:SetText("");
 	SendMailBodyEditBox:SetText("");
-	StationeryPopupFrame.selectedIndex = nil;
 	SendMailFrame_Update();
-	StationeryPopupButton_OnClick(nil, 1);
 	MoneyInputFrame_ResetMoney(SendMailMoney);
 	SendMailRadioButton_OnClick(1);
 	SendMailFrame.maxRowsShown = 0;
@@ -1000,24 +1009,20 @@ end
 
 function SendMailFrame_CanSend()
 	local checks = 0;
-	local checksRequired = 3;
-	-- If has stationery
-	if ( StationeryPopupFrame.selectedIndex ~= nil ) then
-		checks = checks + 1;
-	end
-	-- and has a sendee
-	if ( strlen(SendMailNameEditBox:GetText()) > 0 ) then
+	local checksRequired = 2;
+	-- Has a sendee
+	if ( #SendMailNameEditBox:GetText() > 0 ) then
 		checks = checks + 1;
 	end
 	-- and has a subject
-	if ( strlen(SendMailSubjectEditBox:GetText()) > 0 ) then
+	if ( #SendMailSubjectEditBox:GetText() > 0 ) then
 		checks = checks + 1;
 	end
 	-- check c.o.d. amount
 	if ( SendMailCODButton:GetChecked() ) then
-		checksRequired = 4;
+		checksRequired = checksRequired + 1;
 		-- COD must be less than 10000 gold
-		if ( MoneyInputFrame_GetCopper(SendMailMoney) > MAX_COD_AMOUNT*COPPER_PER_GOLD ) then
+		if ( MoneyInputFrame_GetCopper(SendMailMoney) > MAX_COD_AMOUNT * COPPER_PER_GOLD ) then
 			if ( ENABLE_COLORBLIND_MODE ~= "1" ) then
 				SendMailErrorCoin:Show();
 			end
@@ -1046,71 +1051,7 @@ function SendMailRadioButton_OnClick(index)
 		SendMailCODButton:SetChecked(true);
 		SendMailMoneyText:SetText(COD_AMOUNT);
 	end
-	PlaySound("igMainMenuOptionCheckBoxOn");
-end
-
--- Stationery functions
-
-function StationeryPopupFrame_Update()
-	local numStationeries = GetNumStationeries();
-	local index = FauxScrollFrame_GetOffset(StationeryPopupScrollFrame) + 1;
-	local name, texture, cost;
-	local button;
-	for i=1, STATIONERYITEMS_TO_DISPLAY do
-		button = _G["StationeryPopupButton"..i];
-		if ( index <= numStationeries ) then
-			name, texture, cost = GetStationeryInfo(index);
-			_G["StationeryPopupButton"..i.."Name"]:SetText(name);
-			if ( cost ) then
-				MoneyFrame_Update("StationeryPopupButton"..i.."MoneyFrame", cost);
-				-- If player can't afford
-				if ( cost > GetMoney() ) then
-					button:Disable();
-					SetMoneyFrameColor("StationeryPopupButton"..i.."MoneyFrame", "red");
-				else
-					button:Enable();
-					SetMoneyFrameColor("StationeryPopupButton"..i.."MoneyFrame", "white");
-				end
-			else
-				-- Is a stationery in player's inventory or is free
-				MoneyFrame_Update("StationeryPopupButton"..i.."MoneyFrame", 0);
-			end
-			_G["StationeryPopupButton"..i.."Icon"]:SetTexture(texture);
-			button:Show();
-		else
-			_G["StationeryPopupButton"..i.."Name"]:SetText("");
-			MoneyFrame_Update("StationeryPopupButton"..i.."MoneyFrame", 0);
-			_G["StationeryPopupButton"..i.."Icon"]:SetTexture("");
-			button:Hide();
-		end
-		
-		if ( index == StationeryPopupFrame.selectedIndex ) then
-			button:SetChecked(true);
-		else
-			button:SetChecked(false);
-		end
-		button.index = index;
-		index = index + 1;
-	end
-
-	-- Scrollbar stuff
-	FauxScrollFrame_Update(StationeryPopupScrollFrame, numStationeries , STATIONERYITEMS_TO_DISPLAY, STATIONERY_ICON_ROW_HEIGHT );
-end
-
-function StationeryPopupButton_OnClick(self, index)
-	if ( not index ) then
-		index = self.index;
-	end
-	SelectStationery(index);
-	StationeryPopupFrame.selectedIndex = index;
-	SendMailFrame_CanSend()
-	-- Set the stationery texture
-	local texture = GetSelectedStationeryTexture();
-	if ( texture ) then
-		SendStationeryBackgroundLeft:SetTexture(STATIONERY_PATH..texture.."1");
-		SendStationeryBackgroundRight:SetTexture(STATIONERY_PATH..texture.."2");
-	end
-	StationeryPopupFrame_Update();
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 end
 
 function SendMailMoneyButton_OnClick()
@@ -1136,7 +1077,7 @@ end
 function SendMailAttachment_OnEnter(self)
 	local index = self:GetID();
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	if ( GetSendMailItem(index) ) then
+	if ( HasSendMailItem(index) ) then
 		local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetSendMailItem(index);
 		if(speciesID and speciesID > 0) then
 			BattlePetToolTip_Show(speciesID, level, breedQuality, maxHealth, power, speed, name);
@@ -1144,4 +1085,154 @@ function SendMailAttachment_OnEnter(self)
 	else
 		GameTooltip:SetText(ATTACHMENT_TEXT, 1.0, 1.0, 1.0);
 	end
+	self.UpdateTooltip = SendMailAttachment_OnEnter;
+end
+
+-----------------------------------------------------------------------------------------------
+---------------------------------------- Open All Mail ----------------------------------------
+-----------------------------------------------------------------------------------------------
+
+local OPEN_ALL_MAIL_MIN_DELAY = 0.15;
+
+OpenAllMailMixin = {};
+
+function OpenAllMailMixin:Reset()
+	self.mailIndex = 1;
+	self.attachmentIndex = ATTACHMENTS_MAX;
+	self.timeUntilNextRetrieval = nil;
+	self.blacklistedItemIDs = nil;
+end
+
+function OpenAllMailMixin:StartOpening()
+	self:Reset();
+	self:Disable();
+	self:SetText(OPEN_ALL_MAIL_BUTTON_OPENING);
+	self:RegisterEvent("MAIL_INBOX_UPDATE");
+	self:RegisterEvent("MAIL_FAILED");
+	self.numToOpen = GetInboxNumItems();
+	self:AdvanceAndProcessNextItem();
+end
+
+function OpenAllMailMixin:StopOpening()
+	self:Reset();
+	self:Enable();
+	self:SetText(OPEN_ALL_MAIL_BUTTON);
+	self:UnregisterEvent("MAIL_INBOX_UPDATE");
+	self:UnregisterEvent("MAIL_FAILED");
+end
+
+function OpenAllMailMixin:AdvanceToNextItem()
+	local foundAttachment = false;
+	while ( not foundAttachment ) do
+		local _, _, _, _, money, CODAmount, daysLeft, itemCount, _, _, _, _, isGM = GetInboxHeaderInfo(self.mailIndex);
+		local itemID = select(2, GetInboxItem(self.mailIndex, self.attachmentIndex));
+		local hasBlacklistedItem = self:IsItemBlacklisted(itemID);
+		local hasCOD = CODAmount and CODAmount > 0;
+		local hasMoneyOrItem = C_Mail.HasInboxMoney(self.mailIndex) or HasInboxItem(self.mailIndex, self.attachmentIndex);
+		if ( not hasBlacklistedItem and not hasCOD and hasMoneyOrItem ) then
+			foundAttachment = true;
+		else
+			self.attachmentIndex = self.attachmentIndex - 1;
+			if ( self.attachmentIndex == 0 ) then
+				break;
+			end
+		end
+	end
+	
+	if ( not foundAttachment ) then
+		self.mailIndex = self.mailIndex + 1;
+		self.attachmentIndex = ATTACHMENTS_MAX;
+		if ( self.mailIndex > GetInboxNumItems() ) then
+			return false;
+		end
+		
+		return self:AdvanceToNextItem();
+	end
+	
+	return true;
+end
+
+function OpenAllMailMixin:AdvanceAndProcessNextItem()
+	if ( CalculateTotalNumberOfFreeBagSlots() == 0 ) then
+		self:StopOpening();
+		return;
+	end
+	
+	if ( self:AdvanceToNextItem() ) then
+		self:ProcessNextItem();
+	else
+		self:StopOpening();
+	end
+end
+
+function OpenAllMailMixin:ProcessNextItem()
+	local _, _, _, _, money, CODAmount, daysLeft, itemCount, _, _, _, _, isGM = GetInboxHeaderInfo(self.mailIndex);
+	if ( isGM or (CODAmount and CODAmount > 0) ) then
+		self:AdvanceAndProcessNextItem();
+		return;
+	end
+	
+	if ( money > 0 ) then
+		TakeInboxMoney(self.mailIndex);
+		self.timeUntilNextRetrieval = OPEN_ALL_MAIL_MIN_DELAY;
+	elseif ( itemCount and itemCount > 0 ) then
+		TakeInboxItem(self.mailIndex, self.attachmentIndex);
+		self.timeUntilNextRetrieval = OPEN_ALL_MAIL_MIN_DELAY;
+	else
+		self:AdvanceAndProcessNextItem();
+	end
+end
+
+function OpenAllMailMixin:OnLoad()
+	self:Reset();
+end
+
+function OpenAllMailMixin:OnEvent(event, ...)
+	if event == "MAIL_INBOX_UPDATE" then
+		if ( self.numToOpen ~= GetInboxNumItems() ) then
+			self.mailIndex = 1;
+			self.attachmentIndex = ATTACHMENTS_MAX;
+		end
+	elseif ( event == "MAIL_FAILED" ) then
+		local itemID = ...;
+		if ( itemID ) then
+			self:AddBlacklistedItem(itemID);
+		end
+	end
+end
+
+function OpenAllMailMixin:OnUpdate(dt)
+	if ( self.timeUntilNextRetrieval ) then
+		self.timeUntilNextRetrieval = self.timeUntilNextRetrieval - dt;
+		
+		if ( self.timeUntilNextRetrieval <= 0 ) then
+			if ( not C_Mail.IsCommandPending() ) then
+				self.timeUntilNextRetrieval = nil;
+				self:AdvanceAndProcessNextItem();
+			else
+				-- Delay until the current mail command is done processing.
+				self.timeUntilNextRetrieval = OPEN_ALL_MAIL_MIN_DELAY;
+			end
+		end
+	end
+end
+
+function OpenAllMailMixin:OnClick()
+	self:StartOpening();
+end
+
+function OpenAllMailMixin:OnHide()
+	self:StopOpening();
+end
+
+function OpenAllMailMixin:AddBlacklistedItem(itemID)
+	if ( not self.blacklistedItemIDs ) then
+		self.blacklistedItemIDs = {};
+	end
+	
+	self.blacklistedItemIDs[itemID] = true;
+end
+
+function OpenAllMailMixin:IsItemBlacklisted(itemID)
+	return self.blacklistedItemIDs and self.blacklistedItemIDs[itemID];
 end

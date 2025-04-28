@@ -38,8 +38,11 @@
 					<Anchor point="CENTER" relativePoint="TOP" x="0" y="-42"/>
 				</Anchors>
 				<Scripts>
+					<OnShow>
+						self:SetEnabled(not IsKioskModeEnabled());
+					</OnShow>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						ToggleHelpFrame()
 					</OnClick>
 				</Scripts>
@@ -51,8 +54,10 @@
 				<Scripts>
 					<OnLoad>
 						self:RegisterEvent("STORE_STATUS_CHANGED");
+						self:RegisterEvent("TRIAL_STATUS_UPDATE");
 						GameMenuFrame_UpdateStoreButtonState(self);
 					</OnLoad>
+					<OnShow function="GameMenuFrame_UpdateStoreButtonState"/>
 					<OnEvent function="GameMenuFrame_UpdateStoreButtonState"/>
 					<OnEnter>
 						if ( self.disabledTooltip ) then
@@ -64,7 +69,7 @@
 					</OnEnter>
 					<OnLeave function="GameTooltip_Hide"/>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						ToggleStoreUI()
 					</OnClick>
 				</Scripts>
@@ -74,8 +79,11 @@
 					<Anchor point="TOP" relativeTo="GameMenuButtonStore" relativePoint="BOTTOM" x="0" y="-1"/>
 				</Anchors>
 				<Scripts>
+					<OnShow>
+						self:SetEnabled(not IsKioskModeEnabled());
+					</OnShow>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						HideUIPanel(GameMenuFrame);
 						SplashFrame_Open();
 					</OnClick>
@@ -87,14 +95,10 @@
 				</Anchors>
 				<Scripts>
 					<OnShow>
-						if (IsBlizzCon()) then
-							self:Disable();
-						else
-							self:Enable();
-						end
+						self:SetEnabled(not IsKioskModeEnabled());
 					</OnShow>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						ShowUIPanel(VideoOptionsFrame);
 						VideoOptionsFrame.lastFrame = GameMenuFrame;
 					</OnClick>
@@ -110,7 +114,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						ShowUIPanel(InterfaceOptionsFrame);
 						InterfaceOptionsFrame.lastFrame = GameMenuFrame;
 					</OnClick>
@@ -122,7 +126,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						KeyBindingFrame_LoadUI();
 						KeyBindingFrame.mode = 1;
 						ShowUIPanel(KeyBindingFrame);
@@ -135,7 +139,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						HideUIPanel(GameMenuFrame);
 						ShowMacroFrame();
 					</OnClick>
@@ -153,8 +157,11 @@
 							GameMenuButtonAddons:Show();
 						end
 					</OnLoad>
+					<OnShow>
+						self:SetEnabled(not IsKioskModeEnabled() and not ScriptsDisallowedForBeta());
+					</OnShow>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						HideUIPanel(GameMenuFrame);
 						ShowUIPanel(AddonList);
 					</OnClick>
@@ -173,7 +180,7 @@
 						end
 					</OnLoad>
 					<OnClick>
-						PlaySound("igMainMenuOption");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 						HideUIPanel(GameMenuFrame);
 						ShowUIPanel(RatingMenuFrame);
 					</OnClick>
@@ -199,7 +206,7 @@
 						end
 					</OnShow>
 					<OnClick>
-						PlaySound("igMainMenuLogout");
+						PlaySound(SOUNDKIT.IG_MAINMENU_LOGOUT);
 						Logout();
 						HideUIPanel(GameMenuFrame);
 					</OnClick>
@@ -211,14 +218,14 @@
 				</Anchors>
 				<Scripts>
 					<OnShow>
-						if ( not StaticPopup_Visible("CAMP") and not StaticPopup_Visible("QUIT") ) then
+						if ( not StaticPopup_Visible("CAMP") and not StaticPopup_Visible("QUIT") and not IsKioskModeEnabled() ) then
 							self:Enable();
 						else
 							self:Disable();
 						end
 					</OnShow>
 					<OnClick>
-						PlaySound("igMainMenuQuit");
+						PlaySound(SOUNDKIT.IG_MAINMENU_QUIT);
 						Quit();
 						HideUIPanel(GameMenuFrame);
 					</OnClick>
@@ -230,7 +237,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						PlaySound("igMainMenuContinue");
+						PlaySound(SOUNDKIT.IG_MAINMENU_CONTINUE);
 						HideUIPanel(GameMenuFrame);
 					</OnClick>
 				</Scripts>

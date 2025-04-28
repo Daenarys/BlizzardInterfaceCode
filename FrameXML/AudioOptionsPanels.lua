@@ -113,7 +113,7 @@ SoundPanelOptions = {
 	Sound_EnableSoundWhenGameIsInBG = { text = "ENABLE_BGSOUND" },
 	Sound_EnableReverb = { text = "ENABLE_REVERB" },
 	--Sound_EnableHardware = { text = "ENABLE_HARDWARE" },
-	Sound_EnableSoftwareHRTF = { text = "ENABLE_SOFTWARE_HRTF" },
+	Sound_EnablePositionalLowPassFilter = { text = "ENABLE_SOFTWARE_HRTF" },
 	Sound_EnableDSPEffects = { text = "ENABLE_DSP_EFFECTS" },
 	Sound_SFXVolume = { text = "SOUND_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
 	Sound_MusicVolume = { text = "MUSIC_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
@@ -231,7 +231,7 @@ function AudioOptionsSoundPanelSoundChannelsDropDown_OnLoad (self)
 		end
 end
 
-local soundChannelValues = { 24, 32, 64 };
+local soundChannelValues = { 24, 48, 64 };
 local soundChannelText = { "SOUND_CHANNELS_LOW", "SOUND_CHANNELS_MEDIUM", "SOUND_CHANNELS_HIGH" };
 function AudioOptionsSoundPanelSoundChannelsDropDown_Initialize(self)
 	local selectedValue = UIDropDownMenu_GetSelectedValue(self);
@@ -261,6 +261,69 @@ function AudioOptionsSoundPanelSoundChannelsDropDown_OnClick(self)
 	if ( dropdown.restart and prevValue ~= value ) then
 		AudioOptionsFrame_AudioRestart();
 	end
+end
+
+function AudioOptionsSoundPanelSoundCacheSizeDropDown_OnLoad (self)
+	self.cvar = "Sound_MaxCacheSizeInBytes";
+
+	local selected = BlizzardOptionsPanel_GetCVarSafe(self.cvar);
+	self.defaultValue = BlizzardOptionsPanel_GetCVarDefaultSafe(self.cvar);
+	self.value = selected;
+	self.newValue = selected;
+	self.restart = true;
+
+	UIDropDownMenu_SetWidth(self, 136);
+	UIDropDownMenu_Initialize(self, AudioOptionsSoundPanelSoundCacheSizeDropDown_Initialize);
+	UIDropDownMenu_SetSelectedValue(self, selected);
+
+	self.SetValue = 
+		function (self, value)
+			self.value = value;
+			BlizzardOptionsPanel_SetCVarSafe(self.cvar, value);
+			UIDropDownMenu_SetSelectedValue(self, value);
+		end
+	self.GetValue =
+		function (self)
+			return BlizzardOptionsPanel_GetCVarSafe(self.cvar);
+		end
+	self.RefreshValue =
+		function (self)
+			local selected = BlizzardOptionsPanel_GetCVarSafe(self.cvar);
+			self.value = selected;
+			self.newValue = selected;
+
+			UIDropDownMenu_Initialize(self, AudioOptionsSoundPanelSoundCacheSizeDropDown_Initialize);
+			UIDropDownMenu_SetSelectedValue(self, selected);
+		end
+end
+
+local soundCacheSizeValues = { 16777216, 67108864 }; --value in bytes, displayed in MB
+local soundCacheSizeText = { "SOUND_CACHE_SIZE_SMALL", "SOUND_CACHE_SIZE_LARGE" };
+function AudioOptionsSoundPanelSoundCacheSizeDropDown_Initialize(self)
+	local selectedValue = UIDropDownMenu_GetSelectedValue(self);
+	local info = UIDropDownMenu_CreateInfo();
+	
+	for i=1, #soundCacheSizeValues do
+		info.text = format(_G[soundCacheSizeText[i]], soundCacheSizeValues[i]/1024/1024); --convert to MB
+		info.value = soundCacheSizeValues[i];
+		if ( selectedValue and info.value == selectedValue ) then
+			info.checked = 1;
+		else
+			info.checked = nil;
+		end
+		info.func = AudioOptionsSoundPanelSoundCacheSizeDropDown_OnClick;
+		
+		UIDropDownMenu_AddButton(info);
+	end
+end
+
+function AudioOptionsSoundPanelSoundCacheSizeDropDown_OnClick(self)
+	local value = self.value;
+	local dropdown = AudioOptionsSoundPanelSoundCacheSizeDropDown;
+	UIDropDownMenu_SetSelectedValue(dropdown, value);
+
+	local prevValue = dropdown:GetValue();
+	dropdown:SetValue(value);
 end
 
 
@@ -316,10 +379,6 @@ end
 
 function AudioOptionsVoicePanel_OnEvent (self, event, ...)
 	if ( event == "PLAYER_ENTERING_WORLD" ) then
-		if ( IsVoiceChatAllowedByServer() ) then
-			OptionsFrame_AddCategory(VideoOptionsFrame, self);
-			BlizzardOptionsPanel_OnEvent(self, event, ...);
-		end
 		self:UnregisterEvent(event);
 	end
 end
@@ -336,9 +395,6 @@ function AudioOptionsVoicePanel_OnHide (self)
 	if ( VoiceChatTalkers_CanHide() ) then
 		VoiceChatTalkers_FadeOut();
 	end
-
-	VoiceChat_StopPlayingLoopbackSound();
-	VoiceChat_StopRecordingLoopbackSound();
 end
 
 function AudioOptionsVoicePanelEnableVoice_UpdateControls (value)
@@ -407,8 +463,6 @@ function AudioOptionsVoicePanel_DisableMicrophoneControls ()
 	UIDropDownMenu_DisableDropDown(AudioOptionsVoicePanelInputDeviceDropDown);
 	RecordLoopbackSoundButton:Disable();
 	PlayLoopbackSoundButton:Disable();
-	VoiceChat_StopRecordingLoopbackSound();
-	VoiceChat_StopPlayingLoopbackSound();
 
 	for index in pairs(AudioOptionsVoicePanelFrameMicrophoneList) do
 		_G[index]:SetVertexColor(GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
@@ -752,10 +806,10 @@ function AudioOptionsVoicePanelChatModeDropDown_OnLoad (self)
 
 	self.cvar = "VoiceChatMode";
 
-	local voiceChatMode = BlizzardOptionsPanel_GetCVarSafe(self.cvar);
+	local voiceChatMode = 0;
 
 	self.tooltip = _G["OPTION_TOOLTIP_VOICE_TYPE"..(voiceChatMode+1)];
-	self.defaultValue = BlizzardOptionsPanel_GetCVarDefaultSafe(self.cvar);
+	self.defaultValue = 0;
 	self.value = voiceChatMode;
 	self.newValue = voiceChatMode;
 	self.restart = true;

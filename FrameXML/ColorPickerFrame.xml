@@ -71,7 +71,7 @@
 						if ( ColorPickerFrame.cancelFunc ) then
 							ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues);
 						end
-						PlaySound("igMainMenuOptionCheckBoxOn");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -90,7 +90,7 @@
 						if ( ColorPickerFrame.opacityFunc ) then
 							ColorPickerFrame.opacityFunc();
 						end
-						PlaySound("igMainMenuOptionCheckBoxOn");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -171,7 +171,7 @@
 				end
 			</OnShow>
 			<OnColorSelect>
-				ColorSwatch:SetTexture(r, g, b);
+				ColorSwatch:SetColorTexture(r, g, b);
 				if ( self.func ) then
 					self.func();
 				end

@@ -7,8 +7,8 @@ function SetItemRef(link, text, button, chatFrame)
 		else
 			namelink = strsub(link, 8);
 		end
-		
-		local name, lineid, chatType, chatTarget = strsplit(":", namelink);
+
+		local name, lineID, chatType, chatTarget = strsplit(":", namelink);
 		if ( name and (strlen(name) > 0) ) then
 			if ( IsModifiedClick("CHATLINK") ) then
 				local staticPopup;
@@ -52,9 +52,9 @@ function SetItemRef(link, text, button, chatFrame)
 				else
 					SendWho(WHO_TAG_EXACT..name);
 				end
-				
+
 			elseif ( button == "RightButton" and (not isGMLink) ) then
-				FriendsFrame_ShowDropdown(name, 1, lineid, chatType, chatFrame);
+				FriendsFrame_ShowDropdown(name, 1, lineID, chatType, chatFrame);
 			else
 				ChatFrame_SendTell(name, chatFrame);
 			end
@@ -62,8 +62,8 @@ function SetItemRef(link, text, button, chatFrame)
 		return;
 	elseif ( strsub(link, 1, 8) == "BNplayer" ) then
 		local namelink = strsub(link, 10);
-		
-		local name, bnetIDAccount, lineid, chatType, chatTarget = strsplit(":", namelink);
+
+		local name, bnetIDAccount, lineID, chatType, chatTarget = strsplit(":", namelink);
 		if ( name and (strlen(name) > 0) ) then
 			if ( IsModifiedClick("CHATLINK") ) then
 				--[[
@@ -128,7 +128,7 @@ function SetItemRef(link, text, button, chatFrame)
 		elseif ( button == "LeftButton" ) then
 			local chanLink = strsub(link, 9);
 			local chatType, chatTarget = strsplit(":", chanLink);
-			
+
 			if ( strupper(chatType) == "CHANNEL" ) then
 				if ( GetChannelName(tonumber(chatTarget))~=0 ) then
 					ChatFrame_OpenChat("/"..chatTarget, chatFrame);
@@ -159,11 +159,17 @@ function SetItemRef(link, text, button, chatFrame)
 	elseif ( strsub(link, 1, 3) == "lfd" ) then
 		ToggleLFDParentFrame();
 		return;
-	elseif ( strsub(link, 1, 9) == "glyphpane" ) then
-		ToggleGlyphFrame();
+	elseif ( strsub(link, 1, 8) == "specpane" ) then
+		ToggleTalentFrame(SPECIALIZATION_TAB);
 		return;
 	elseif ( strsub(link, 1, 10) == "talentpane" ) then
-		ToggleTalentFrame();
+		ToggleTalentFrame(TALENTS_TAB);
+		return;
+	elseif ( strsub(link, 1, 11) == "honortalent" ) then
+		ToggleTalentFrame(PVP_TALENTS_TAB);
+		return;
+	elseif ( strsub(link, 1, 10) == "worldquest" ) then
+		ShowUIPanel(WorldMapFrame);
 		return;
 	elseif ( strsub(link, 1, 7) == "journal" ) then
 		if ( not HandleModifiedItemClick(GetFixedLink(text)) ) then
@@ -193,7 +199,7 @@ function SetItemRef(link, text, button, chatFrame)
 	elseif ( strsub(link, 1, 9) == "battlepet" ) then
 		local _, speciesID, level, breedQuality, maxHealth, power, speed, battlePetID = strsplit(":", link);
 		if ( IsModifiedClick() ) then
-			local fixedLink = GetFixedLink(text);
+			local fixedLink = GetFixedLink(text, tonumber(breedQuality));
 			HandleModifiedItemClick(fixedLink);
 		else
 			FloatingBattlePet_Toggle(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), string.gsub(string.gsub(text, "^(.*)%[", ""), "%](.*)$", ""), battlePetID);
@@ -209,21 +215,24 @@ function SetItemRef(link, text, button, chatFrame)
 		end
 		return;
 	elseif ( strsub(link, 1, 12) == "garrfollower" ) then
-		local _, garrisonFollowerID, quality, level, itemLevel, ability1, ability2, ability3, ability4, trait1, trait2, trait3, trait4 = strsplit(":", link);
+		local _, garrisonFollowerID, quality, level, itemLevel, ability1, ability2, ability3, ability4, trait1, trait2, trait3, trait4, spec1 = strsplit(":", link);
 		if ( IsModifiedClick() ) then
-			local fixedLink = GetFixedLink(text);
+			local fixedLink = GetFixedLink(text, tonumber(quality));
 			HandleModifiedItemClick(fixedLink);
 		else
-			FloatingGarrisonFollower_Toggle(tonumber(garrisonFollowerID), tonumber(quality), tonumber(level), tonumber(itemLevel), tonumber(ability1), tonumber(ability2), tonumber(ability3), tonumber(ability4), tonumber(trait1), tonumber(trait2), tonumber(trait3), tonumber(trait4));
+			FloatingGarrisonFollower_Toggle(tonumber(garrisonFollowerID), tonumber(quality), tonumber(level), tonumber(itemLevel), tonumber(spec1), tonumber(ability1), tonumber(ability2), tonumber(ability3), tonumber(ability4), tonumber(trait1), tonumber(trait2), tonumber(trait3), tonumber(trait4));
 		end
 		return;
 	elseif ( strsub(link, 1, 11) == "garrmission" ) then
 		local _, garrMissionID = strsplit(":", link);
-		if ( IsModifiedClick() ) then
-			local fixedLink = GetFixedLink(text);
-			HandleModifiedItemClick(fixedLink);
-		else
-			FloatingGarrisonMission_Toggle(tonumber(garrMissionID));
+		local garrMissionID, garrMissionDBID = link:match("garrmission:(%d+):([0-9a-fA-F]+)")
+		if (garrMissionID and garrMissionDBID and strlen(garrMissionDBID) == 16) then
+			if ( IsModifiedClick() ) then
+				local fixedLink = GetFixedLink(text);
+				HandleModifiedItemClick(fixedLink);
+			else
+				FloatingGarrisonMission_Toggle(tonumber(garrMissionID), "0x"..(garrMissionDBID:upper()));
+			end
 		end
 		return;
 	elseif ( strsub(link, 1, 5) == "death" ) then
@@ -245,6 +254,57 @@ function SetItemRef(link, text, button, chatFrame)
 		SocialFrame_LoadUI();
 		Social_ShowItem(itemID, creationContext, StringToBoolean(earned));
 		return;
+	elseif ( strsub(link, 1, 16) == "transmogillusion" ) then
+		local fixedLink = GetFixedLink(text);
+		if ( not HandleModifiedItemClick(fixedLink) ) then
+			DressUpTransmogLink(link);
+		end
+		return;
+	elseif ( strsub(link, 1, 18) == "transmogappearance" ) then
+		if ( IsModifiedClick("CHATLINK") ) then
+			local _, sourceID = strsplit(":", link);
+			local itemLink = select(6, C_TransmogCollection.GetAppearanceSourceInfo(sourceID));
+			HandleModifiedItemClick(itemLink);
+		else
+			if ( not CollectionsJournal ) then
+				CollectionsJournal_LoadUI();
+			end
+			if ( CollectionsJournal ) then
+				WardrobeCollectionFrame_OpenTransmogLink(link);
+			end
+		end
+		return;
+	elseif ( strsub(link, 1, 11) == "transmogset" ) then
+		if ( not CollectionsJournal ) then
+			CollectionsJournal_LoadUI();
+		end
+		if ( CollectionsJournal ) then
+			WardrobeCollectionFrame_OpenTransmogLink(link);
+		end
+		return;
+	elseif ( strsub(link, 1, 3) == "api" ) then
+		APIDocumentation_LoadUI();
+
+		local command = APIDocumentation.Commands.Default;
+		if button == "RightButton" then
+			command = APIDocumentation.Commands.CopyAPI;
+		elseif IsModifiedClick("CHATLINK") then
+			command = APIDocumentation.Commands.OpenDump;
+		end
+
+		APIDocumentation:HandleAPILink(link, command);
+		return;
+	elseif ( strsub(link, 1, 13) == "storecategory" ) then
+		local _, category = strsplit(":", link);
+		if category == "token" then
+			StoreFrame_SetTokenCategory();
+			ToggleStoreUI();
+		elseif category == "games" then
+			StoreFrame_OpenGamesCategory();
+		elseif category == "services" then
+			StoreFrame_SetServicesCategory();
+			ToggleStoreUI();
+		end
 	end
 
 	if ( IsModifiedClick() ) then
@@ -259,10 +319,12 @@ function SetItemRef(link, text, button, chatFrame)
 	end
 end
 
-function GetFixedLink(text)
+function GetFixedLink(text, quality)
 	local startLink = strfind(text, "|H");
 	if ( not strfind(text, "|c") ) then
-		if ( strsub(text, startLink + 2, startLink + 6) == "quest" ) then
+		if ( quality ) then
+			return (gsub(text, "(|H.+|h.+|h)", ITEM_QUALITY_COLORS[quality].hex.."%1|r", 1));
+		elseif ( strsub(text, startLink + 2, startLink + 6) == "quest" ) then
 			--We'll always color it yellow. We really need to fix this for Cata. (It will appear the correct color in the chat log)
 			return (gsub(text, "(|H.+|h.+|h)", "|cffffff00%1|r", 1));
 		elseif ( strsub(text, startLink + 2, startLink + 12) == "achievement" ) then
@@ -281,18 +343,56 @@ function GetFixedLink(text)
 			return (gsub(text, "(|H.+|h.+|h)", "|cff4e96f7%1|r", 1));
 		elseif ( strsub(text, startLink + 2, startLink + 10) == "battlepet" ) then
 			return (gsub(text, "(|H.+|h.+|h)", "|cffffd200%1|r", 1)); -- s_defaultColorString (yellow)
+		elseif ( strsub(text, startLink + 2, startLink + 12) == "garrmission" ) then
+			return (gsub(text, "(|H.+|h.+|h)", "|cffffff00%1|r", 1));
+		elseif ( strsub(text, startLink + 2, startLink + 17) == "transmogillusion" ) then
+			return (gsub(text, "(|H.+|h.+|h)", "|cffff80ff%1|r", 1));
+		elseif ( strsub(text, startLink + 2, startLink + 19) == "transmogappearance" ) then
+			return (gsub(text, "(|H.+|h.+|h)", "|cffff80ff%1|r", 1));
+		elseif ( strsub(text, startLink + 2, startLink + 12) == "transmogset" ) then
+			return (gsub(text, "(|H.+|h.+|h)", "|cffff80ff%1|r", 1));
 		end
 	end
 	--Nothing to change.
 	return text;
 end
 
+local function FormatLink(linkType, linkDisplayText, ...)
+	local linkFormatTable = { ("|H%s"):format(linkType), ... };
+	return table.concat(linkFormatTable, ":") .. ("|h%s|h"):format(linkDisplayText);
+end
+
 function GetBattlePetAbilityHyperlink(abilityID, maxHealth, power, speed)
 	local id, name = C_PetBattles.GetAbilityInfoByID(abilityID);
-	if ( name ) then
-		return format("|cff4e96f7|HbattlePetAbil:%d:%d:%d:%d|h[%s]|h|r", abilityID, maxHealth or 100, power or 0, speed or 0, name);
-	else
+	if not name then
 		GMError("Attempt to link ability when we don't have record.");
 		return "";
 	end
+
+	return ("|cff4e96f7%s|r"):format(FormatLink("battlePetAbil", name, abilityID, maxHealth or 100, power or 0, speed or 0));
+end
+
+function GetPlayerLink(characterName, linkDisplayText, lineID, chatType, chatTarget)
+	-- Use simplified link if possible
+	if lineID or chatType or chatTarget then
+		return FormatLink("player", linkDisplayText, characterName, lineID or 0, chatType or 0, chatTarget or "");
+	else
+		return FormatLink("player", linkDisplayText, characterName);
+	end
+end
+
+function GetGMLink(gmName, linkDisplayText, lineID)
+	if lineID then
+		return FormatLink("playerGM", linkDisplayText, gmName, lineID or 0);
+	else
+		return FormatLink("playerGM", linkDisplayText, gmName);
+	end
+end
+
+function GetBNPlayerLink(name, linkDisplayText, bnetIDAccount, lineID, chatType, chatTarget)
+	return FormatLink("BNplayer", linkDisplayText, name, bnetIDAccount, lineID or 0, chatType, chatTarget);
+end
+
+function SplitLink(link)
+	return link:match("^|H(.+)|h(.*)|h$");
 end

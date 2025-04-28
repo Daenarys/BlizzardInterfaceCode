@@ -42,7 +42,9 @@ function VideoOptionsFrameOkay_OnClick (self, button, down, apply)
 end
 
 function VideoOptionsFrameCancel_OnClick (self, button)
-	OptionsFrameCancel_OnClick(VideoOptionsFrame);
+	if ( VideoOptionsFrameApply:IsEnabled() ) then
+		OptionsFrameCancel_OnClick(VideoOptionsFrame);
+	end
 	VideoOptionsFrame_Toggle();
 end
 
@@ -53,11 +55,11 @@ function VideoOptionsFrameDefault_OnClick (self, button)
 end
 
 function VideoOptionsFrameReset_OnClick_Reset(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	GlueDialog_Show("RESET_SERVER_SETTINGS");
 end
 
 function VideoOptionsFrameReset_OnClick_Cancel(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	GlueDialog_Show("CANCEL_RESET_SETTINGS");
 end

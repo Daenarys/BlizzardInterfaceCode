@@ -11,9 +11,9 @@
 		<Scripts>
 			<OnClick>
 				if ( self:GetChecked() ) then
-					PlaySound("igMainMenuOptionCheckBoxOn");
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 				else
-					PlaySound("igMainMenuOptionCheckBoxOff");
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 				end
 				AudioOptionsPanel_CheckButton_OnClick(self);
 			</OnClick>
@@ -274,7 +274,7 @@
 				<Scripts>
 					<OnLoad>
 						self.type = CONTROLTYPE_CHECKBOX;
-						self.cvar = "Sound_EnableSoftwareHRTF";
+						self.cvar = "Sound_EnablePositionalLowPassFilter";
 						self.restart = true;
 						BlizzardOptionsPanel_RegisterControl(self, self:GetParent());
 					</OnLoad>
@@ -296,7 +296,7 @@
 				</Scripts>
 			</CheckButton>				
 			<Frame name="$parentHardware" inherits="OptionsBoxTemplate">
-				<Size x="186" y="108"/>
+				<Size x="186" y="152"/>
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentPlayback" relativePoint="TOPRIGHT">
 						<Offset x="8" y="0"/>
@@ -377,7 +377,41 @@
 						GlueTooltip:Hide();
 					</OnLeave>
 				</Scripts>
-			</Frame>		
+			</Frame>
+			<Frame name="$parentSoundCacheSizeDropDown" inherits="GlueDropDownMenuTemplate">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentSoundChannelsDropDown" relativePoint="BOTTOMLEFT">
+						<Offset x="0" y="-12"/>
+					</Anchor>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<FontString name="$parentLabel" inherits="OptionsFontSmall" text="SOUND_CACHESIZE">
+							<Anchors>
+								<Anchor point="BOTTOM" relativePoint="TOP">
+									<Offset>
+										<AbsDimension x="0" y="2"/>
+									</Offset>
+								</Anchor>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self.type = CONTROLTYPE_DROPDOWN;
+						BlizzardOptionsPanel_RegisterControl(self, self:GetParent());
+						AudioOptionsSoundPanelSoundCacheSizeDropDown_OnLoad(self);
+					</OnLoad>
+					<OnEnter>
+						GlueTooltip:SetOwner(self);
+						GlueTooltip:SetText(OPTION_TOOLTIP_SOUND_CACHE_SIZE, nil, nil, nil, nil, true);
+					</OnEnter>
+					<OnLeave>
+						GlueTooltip:Hide();
+					</OnLeave>
+				</Scripts>
+			</Frame>
 			<!--<CheckButton name="$parentUseHardware" inherits="AudioOptionsSmallCheckButtonTemplate">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="$parentSoundChannelsDropDown" relativePoint="BOTTOMLEFT">
@@ -447,7 +481,7 @@
 						BlizzardOptionsPanel_SetCVarSafe(self.cvar, value);
 						self.label:SetText(tostring(ceil(value * 100)).."%");
 						if (self:IsVisible()) then
-							PlaySound("igMainMenuOptionCheckBoxOn");
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 						end
 					</OnValueChanged>
 					<OnEnter>
@@ -508,7 +542,7 @@
 						self.value = value;
 						BlizzardOptionsPanel_SetCVarSafe(self.cvar, value);
 						if (self:IsVisible()) then
-							PlaySound("igMainMenuOptionCheckBoxOn", "SFX");
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON, "SFX");
 						end
 					</OnValueChanged>
 					<OnEnter>
@@ -562,7 +596,7 @@
 						self.value = value;
 						BlizzardOptionsPanel_SetCVarSafe(self.cvar, value);
 						if (self:IsVisible()) then
-							PlaySound("igMainMenuOptionCheckBoxOn", "Music");
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON, "Music");
 						end
 					</OnValueChanged>
 					<OnEnter>
@@ -616,7 +650,7 @@
 						self.value = value;
 						BlizzardOptionsPanel_SetCVarSafe(self.cvar, value);
 						if (self:IsVisible()) then
-							PlaySound("igMainMenuOptionCheckBoxOn", "Ambience");
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON, "Ambience");
 						end
 					</OnValueChanged>
 					<OnEnter>
@@ -670,7 +704,7 @@
 						self.value = value;
 						BlizzardOptionsPanel_SetCVarSafe(self.cvar, value);
 						if (self:IsVisible()) then
-							PlaySound("igMainMenuOptionCheckBoxOn", "Dialog");
+							PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON, "Dialog");
 						end
 					</OnValueChanged>
 					<OnEnter>

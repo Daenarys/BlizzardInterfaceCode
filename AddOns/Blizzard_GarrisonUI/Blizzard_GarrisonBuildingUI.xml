@@ -71,19 +71,19 @@
 				</Texture>
 				<Texture atlas="Garr_InfoBox-CornerShadow" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativepoint="TOPRIGHT"/>
+						<Anchor point="BOTTOMLEFT" relativePoint="TOPRIGHT"/>
 					</Anchors>
 					<TexCoords left="1.0" right="0.0" top="0.0" bottom="1.0"/>
 				</Texture>
 				<Texture atlas="Garr_InfoBox-CornerShadow" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPRIGHT" relativepoint="BOTTOMLEFT"/>
+						<Anchor point="TOPRIGHT" relativePoint="BOTTOMLEFT"/>
 					</Anchors>
 					<TexCoords left="0.0" right="1.0" top="1.0" bottom="0.0"/>
 				</Texture>
 				<Texture atlas="Garr_InfoBox-CornerShadow" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativepoint="BOTTOMRIGHT"/>
+						<Anchor point="TOPLEFT" relativePoint="BOTTOMRIGHT"/>
 					</Anchors>
 					<TexCoords left="1.0" right="0.0" top="1.0" bottom="0.0"/>
 				</Texture>
@@ -654,6 +654,7 @@
 					</OnLoad>
 					<OnShow function="GarrisonBuildingFollowerList_OnShow"/>
 					<OnHide function="GarrisonBuildingFollowerList_OnHide"/>
+					<OnEvent method="OnEvent"/>
 				</Scripts>
 			</Frame>
 			<Frame parentKey="InfoBox" inherits="GarrisonInfoBoxFiligreeTemplate">
@@ -664,11 +665,11 @@
 				
 				<Animations>
 					<AnimationGroup parentKey="UpgradeAnim">
-						<Alpha childKey="UpgradeGlow" change="1.0" duration="0.9" order="1"/>
-						<Alpha childKey="UpgradeGlow" change="-1.0" duration="0.9" order="2"/>
-						<Alpha childKey="UpgradeGlow" change="1.0" duration="0.9" order="3"/>
-						<Alpha childKey="UpgradeGlow" change="-1.0" duration="0.9" order="4"/>
-						<Alpha childKey="UpgradeGlow" change="1.0" duration="0.9" order="5"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="0" toAlpha="1" duration="0.9" order="1"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="1" toAlpha="0" duration="0.9" order="2"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="0" toAlpha="1" duration="0.9" order="3"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="1" toAlpha="0" duration="0.9" order="4"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="0" toAlpha="1" duration="0.9" order="5"/>
 						<Scripts>
 							<OnPlay>
 								self:GetParent().UpgradeGlow:SetAlpha(0);
@@ -993,7 +994,7 @@
 										self.texture:SetPoint("TOPLEFT", 0, 0);
 									</OnMouseUp>
 									<OnClick>
-										PlaySound("UI_Garrison_CommandTable_UnassignFollower");
+										PlaySound(SOUNDKIT.UI_GARRISON_COMMAND_TABLE_UNASSIGN_FOLLOWER);
 										C_Garrison.RemoveFollowerFromBuilding(GarrisonBuildingFrame.InfoBox.ID);
 									</OnClick>
 								</Scripts>
@@ -1076,11 +1077,11 @@
 				
 				<Animations>
 					<AnimationGroup parentKey="UpgradeAnim">
-						<Alpha childKey="UpgradeGlow" change="1.0" duration="0.9" order="1"/>
-						<Alpha childKey="UpgradeGlow" change="-1.0" duration="0.9" order="2"/>
-						<Alpha childKey="UpgradeGlow" change="1.0" duration="0.9" order="3"/>
-						<Alpha childKey="UpgradeGlow" change="-1.0" duration="0.9" order="4"/>
-						<Alpha childKey="UpgradeGlow" change="1.0" duration="0.9" order="5"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="0" toAlpha="1" duration="0.9" order="1"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="1" toAlpha="0" duration="0.9" order="2"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="0" toAlpha="1" duration="0.9" order="3"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="1" toAlpha="0" duration="0.9" order="4"/>
+						<Alpha childKey="UpgradeGlow" fromAlpha="0" toAlpha="1" duration="0.9" order="5"/>
 						<Scripts>
 							<OnPlay>
 								self:GetParent().UpgradeGlow:SetAlpha(0);

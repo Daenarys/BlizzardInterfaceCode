@@ -168,7 +168,7 @@ end
 
 function HelpFrame_OnShow(self)
 	UpdateMicroButtons();
-	PlaySound("igCharacterInfoOpen");
+	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
 	GetGMStatus();
 	-- hearthstone button events
 	local button = HelpFrameCharacterStuckHearthstone;
@@ -181,7 +181,7 @@ function HelpFrame_OnShow(self)
 end
 
 function HelpFrame_OnHide(self)
-	PlaySound("igCharacterInfoClose");
+	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
 	UpdateMicroButtons();
 	-- hearthstone button events
 	local button = HelpFrameCharacterStuckHearthstone;
@@ -379,45 +379,22 @@ function HelpFrame_SetButtonEnabled(button, enabled)
 	end
 end
 
-function HelpFrame_ShowReportPlayerNameDialog(target)
-	local frame = ReportPlayerNameDialog;
-	if ( type(target) == "string" ) then
-		SetPendingReportTarget(target);
-		target = "pending";
-	end
-	frame.target = target;
-	frame.reportType = nil;
-	frame.CommentFrame.EditBox:SetText("");
-	frame.CommentFrame.EditBox.InformationText:Show();
-	HelpFrame_UpdateReportPlayerNameDialog();
-	StaticPopupSpecial_Show(frame);
+function HelpFrame_SetReportPlayerByUnitTag(frame, unitTag)
+	SetPendingReportTarget(unitTag);
+	frame.target = "pending";
 end
 
-function HelpFrame_SetReportPlayerNameSelection(reportType)
-	local frame = ReportPlayerNameDialog;
-	frame.reportType = reportType;
-	HelpFrame_UpdateReportPlayerNameDialog();
+function HelpFrame_SetReportPlayerByLineID(frame, lineID)
+	frame.target = "pending";
 end
 
-function HelpFrame_UpdateReportPlayerNameDialog()
-	local frame = ReportPlayerNameDialog;
-	frame.playerNameCheckButton:SetChecked(frame.reportType == PLAYER_REPORT_TYPE_BAD_PLAYER_NAME);
-	frame.guildNameCheckButton:SetChecked(frame.reportType == PLAYER_REPORT_TYPE_BAD_GUILD_NAME);
-
-	if ( frame.reportType ) then
-		frame.reportButton:Enable();
-	else
-		frame.reportButton:Disable();
-	end
+function HelpFrame_SetReportPlayerByBattlefieldScoreIndex(frame, battlefieldScoreIndex)
+	BattlefieldSetPendingReportTarget(battlefieldScoreIndex);
+	frame.target = "pending";
 end
 
-function HelpFrame_ShowReportCheatingDialog(target)
+function HelpFrame_ShowReportCheatingDialog()
 	local frame = ReportCheatingDialog;
-	if ( type(target) == "string" ) then
-		SetPendingReportTarget(target);
-		target = "pending";
-	end
-	frame.target = target;
 	frame.CommentFrame.EditBox:SetText("");
 	frame.CommentFrame.EditBox.InformationText:Show();
 	StaticPopupSpecial_Show(frame);
@@ -435,7 +412,7 @@ function HelpFrameStuckHearthstone_Update(self)
 	local hearthstoneID = PlayerHasHearthstone();
 	local cooldown = self.Cooldown;
 	local start, duration, enable = GetItemCooldown(hearthstoneID or 0);
-	CooldownFrame_SetTimer(cooldown, start, duration, enable);
+	CooldownFrame_Set(cooldown, start, duration, enable);
 	if (not hearthstoneID or duration > 0 and enable == 0) then
 		self.IconTexture:SetVertexColor(0.4, 0.4, 0.4);
 	else
@@ -463,7 +440,7 @@ end
 --
 
 function AccountSecurityOpenTicket_OnClick(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if ( HelpBrowser:HasConnection() ) then
 		local data = HelpFrameNavTbl[self:GetID()];
 		if ( not data.noSelection ) then
@@ -566,23 +543,6 @@ function HelpOpenTicketButton_OnUpdate(self, elapsed)
 	end
 end
 
-function HelpOpenTicketButton_Move()
-	local anchor = HelpMicroButton;
-	if ( C_StorePublic.IsEnabled() ) then
-		anchor = MainMenuMicroButton;
-	end
-
-	if ( HelpOpenTicketButton ) then
-		HelpOpenTicketButton:SetParent(anchor);
-		HelpOpenTicketButton:SetPoint("CENTER", anchor, "TOPRIGHT", -3, -26);
-	end
-
-	if ( HelpOpenWebTicketButton ) then
-		HelpOpenWebTicketButton:SetParent(anchor);
-		HelpOpenWebTicketButton:SetPoint("CENTER", anchor, "TOPRIGHT", -3, -26);
-	end
-end
-
 function HelpOpenTicketButton_OnEvent(self, event, ...)
 	if ( event == "UPDATE_TICKET" ) then
 		local category, ticketDescription, ticketOpenTime, oldestTicketTime, updateTime, assignedToGM, openedByGM, waitTimeOverrideMessage, waitTimeOverrideMinutes = ...;
@@ -642,8 +602,6 @@ function HelpOpenTicketButton_OnEvent(self, event, ...)
 				self:Hide();
 			end
 		end
-	elseif ( event == "STORE_STATUS_CHANGED" ) then
-		HelpOpenTicketButton_Move();
 	end
 end
 
@@ -781,13 +739,11 @@ end
 
 
 function TicketStatusFrame_OnShow(self)
-	BuffFrame:SetPoint("TOPRIGHT", self:GetParent(), "TOPRIGHT", -205, (-self:GetHeight()));
+	UIParent_UpdateTopFramePositions();
 end
 
 function TicketStatusFrame_OnHide(self)
-	if( not GMChatStatusFrame or not GMChatStatusFrame:IsShown() ) then
-		BuffFrame:SetPoint("TOPRIGHT", "UIParent", "TOPRIGHT", -205, -13);
-	end
+	UIParent_UpdateTopFramePositions();
 end
 
 
@@ -1264,7 +1220,7 @@ end
 
 
 function KnowledgeBase_ArticleOnClick(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 
 	local buttonData = {
 		name = self.articleHeader,
@@ -1321,7 +1277,7 @@ end
 
 local hasResized = false;
 function HelpBrowser_ToggleTooltip(button, browser)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if (BrowserSettingsTooltip:IsShown()) then
 		BrowserSettingsTooltip:Hide();
 		BrowserSettingsTooltip.browser = nil;

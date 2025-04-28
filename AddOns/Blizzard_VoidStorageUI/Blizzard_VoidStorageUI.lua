@@ -33,7 +33,7 @@ function VoidStorageFrame_OnLoad(self)
 	VoidStorageBorderFrame.Bg:SetTexture(nil);
 	local button, lastButton, texture;
 	-- create deposit buttons
-	VoidStorageDepositFrame.Bg:SetTexture(0.1451, 0.0941, 0.1373, 0.8);
+	VoidStorageDepositFrame.Bg:SetColorTexture(0.1451, 0.0941, 0.1373, 0.8);
 	lastButton = VoidStorageDepositButton1;
 	lastButton.buttonType = BUTTON_TYPE_DEPOSIT;
 	lastButton.slot = 1;
@@ -49,7 +49,7 @@ function VoidStorageFrame_OnLoad(self)
 		lastButton.slot = i;
 	end
 	-- create withdraw buttons
-	VoidStorageWithdrawFrame.Bg:SetTexture(0.1451, 0.0941, 0.1373, 0.8);
+	VoidStorageWithdrawFrame.Bg:SetColorTexture(0.1451, 0.0941, 0.1373, 0.8);
 	lastButton = VoidStorageWithdrawButton1;
 	lastButton.buttonType = BUTTON_TYPE_WITHDRAW;
 	lastButton.slot = 1;
@@ -142,7 +142,7 @@ function VoidStorageFrame_OnEvent(self, event, ...)
 end
 
 function VoidStorageFrame_OnShow(self)
-	PlaySound("UI_EtherealWindow_Open");
+	PlaySound(SOUNDKIT.UI_ETHEREAL_WINDOW_OPEN);
 	SetUpSideDressUpFrame(self, 726, 906, "TOPLEFT", "TOPRIGHT", -2, -15);
 	VoidStorageFrame_Update();
 end
@@ -214,7 +214,7 @@ function VoidStorageFrame_Update()
 end
 
 function VoidStorageFrame_OnHide(self)
-	PlaySound("UI_EtherealWindow_Close");
+	PlaySound(SOUNDKIT.UI_ETHEREAL_WINDOW_CLOSE);
 	StaticPopup_Hide("VOID_DEPOSIT_CONFIRM");
 	CloseVoidStorageFrame();
 	CloseSideDressUpFrame(self);
@@ -223,7 +223,7 @@ end
 function VoidStorageFrame_SetUpBlockingFrame(frame)
 	if ( not VoidStorageBorderFrameMouseBlockFrame:IsShown() ) then
 		VoidStorageBorderFrame.Bg:Show();
-		VoidStorageBorderFrame.Bg:SetTexture(0, 0, 0, 0.5);
+		VoidStorageBorderFrame.Bg:SetColorTexture(0, 0, 0, 0.5);
 		VoidStorageBorderFrame:SetFrameLevel(100);
 		VoidStorageBorderFrameMouseBlockFrame:Show();
 	end
@@ -251,12 +251,8 @@ function VoidStorage_ItemsUpdate(doDeposit, doContents)
 			local itemID, textureName, quality = GetVoidTransferDepositInfo(i);
 			button = _G["VoidStorageDepositButton"..i];
 			button.icon:SetTexture(textureName);
-			if (quality and quality > LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
-				button.IconBorder:Show();
-				button.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
-			else
-				button.IconBorder:Hide();
-			end
+			SetItemButtonQuality(button, quality, itemID);
+
 			if ( itemID ) then
 				button.hasItem = true;
 			else
@@ -270,12 +266,7 @@ function VoidStorage_ItemsUpdate(doDeposit, doContents)
 			local itemID, textureName, quality = GetVoidTransferWithdrawalInfo(i);
 			button = _G["VoidStorageWithdrawButton"..i];
 			button.icon:SetTexture(textureName);
-			if (quality and quality > LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
-				button.IconBorder:Show();
-				button.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
-			else
-				button.IconBorder:Hide();
-			end
+			SetItemButtonQuality(button, quality, itemID);
 			if ( itemID ) then
 				button.hasItem = true;
 			else
@@ -315,12 +306,7 @@ function VoidStorage_ItemsUpdate(doDeposit, doContents)
 				button.searchOverlay:Hide();
 			end
 
-			if (quality and quality > LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
-				button.IconBorder:Show();
-				button.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
-			else
-				button.IconBorder:Hide();
-			end
+			SetItemButtonQuality(button, quality, itemID);
 		end
 	end
 	if ( VoidStorageFrame.mousedOverButton ) then

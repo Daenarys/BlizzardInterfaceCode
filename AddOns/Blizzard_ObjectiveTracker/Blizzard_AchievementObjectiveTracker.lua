@@ -124,7 +124,7 @@ function ACHIEVEMENT_TRACKER_MODULE:Update()
 						-- Do not display this one
 					elseif ( numShownCriteria == MAX_CRITERIA_PER_ACHIEVEMENT and numCriteria > (MAX_CRITERIA_PER_ACHIEVEMENT + 1) ) then
 						-- We ran out of space to display incomplete criteria >_<
-						ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, "Extra", "...", nil, nil, true);
+						ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, "Extra", "...", nil, nil, OBJECTIVE_DASH_STYLE_HIDE);
 						numShownCriteria = numShownCriteria + 1;
 					else
 						if ( description and bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR ) then
@@ -141,7 +141,7 @@ function ACHIEVEMENT_TRACKER_MODULE:Update()
 								_, criteriaString = GetAchievementInfo(assetID);
 							end
 						end
-						local line = ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, criteriaIndex, criteriaString, nil, nil, nil, colorStyle);
+						local line = ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, criteriaIndex, criteriaString, nil, nil, OBJECTIVE_DASH_STYLE_SHOW, colorStyle);
 						numShownCriteria = numShownCriteria + 1;
 						-- timer bar
 						if ( duration and elapsed and elapsed < duration ) then
@@ -153,21 +153,29 @@ function ACHIEVEMENT_TRACKER_MODULE:Update()
 				end
 			else
 				-- single criteria type of achievement
-				local colorStyle = IsAchievementEligible(achievementID) and OBJECTIVE_TRACKER_COLOR["Normal"] or OBJECTIVE_TRACKER_COLOR["Failed"];
-				local line = ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, 1, description, nil, nil, nil, colorStyle);
 				-- check if we're supposed to show a timer bar for this
 				local timerShown = false;
+				local timerFailed = false;
+				local timerCriteriaDuration = 0;
+				local timerCriteriaStartTime = 0;
 				for timedCriteriaID, timedCriteria in next, TIMED_CRITERIA do
 					if ( timedCriteria.achievementID == achievementID ) then
 						local elapsed = GetTime() - timedCriteria.startTime;
 						if ( elapsed <= timedCriteria.duration ) then
-							ACHIEVEMENT_TRACKER_MODULE:AddTimerBar(block, line, timedCriteria.duration, timedCriteria.startTime);
+							timerCriteriaDuration = timedCriteria.duration;
+							timerCriteriaStartTime = timedCriteria.startTime;
 							timerShown = true;
+						else
+							timerFailed = true;
 						end
 						break;
 					end
 				end
-				if ( not timerShown and line.TimerBar ) then
+				local colorStyle = (not timerFailed and IsAchievementEligible(achievementID)) and OBJECTIVE_TRACKER_COLOR["Normal"] or OBJECTIVE_TRACKER_COLOR["Failed"];
+				local line = ACHIEVEMENT_TRACKER_MODULE:AddObjective(block, 1, description, nil, nil, OBJECTIVE_DASH_STYLE_SHOW, colorStyle);
+				if ( timerShown ) then
+					ACHIEVEMENT_TRACKER_MODULE:AddTimerBar(block, line, timerCriteriaDuration, timerCriteriaStartTime);
+				elseif ( line.TimerBar ) then
 					ACHIEVEMENT_TRACKER_MODULE:FreeTimerBar(block, line);
 				end
 			end
@@ -189,8 +197,6 @@ end
 function AchievementObjectiveTracker_OnAchievementUpdate(achievementID, criteriaID, elapsed, duration)
 	if ( not elapsed or not duration ) then
 		-- Don't do anything
-	elseif ( elapsed >= duration ) then
-		TIMED_CRITERIA[criteriaID] = nil;
 	else
 		-- we're already handling timer bars for achievements with visible criteria
 		-- we use this system to handle timer bars for the rest
@@ -205,5 +211,7 @@ function AchievementObjectiveTracker_OnAchievementUpdate(achievementID, criteria
 	end
 	if ( IsTrackedAchievement(achievementID) ) then
 		ObjectiveTracker_Update(OBJECTIVE_TRACKER_UPDATE_ACHIEVEMENT);
+	else
+		TIMED_CRITERIA[criteriaID] = nil;
 	end
 end

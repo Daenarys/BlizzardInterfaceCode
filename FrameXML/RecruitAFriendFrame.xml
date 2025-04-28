@@ -192,7 +192,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						PlaySound("igMainMenuOptionCheckBoxOn");
+						PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 						self:GetParent():Hide();
 					</OnClick>
 				</Scripts>
@@ -503,19 +503,9 @@
 							<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="6" y="-6"/>
 							<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="6"/>
 						</Anchors>
-						<Frames>
-							<Button name="$parentFocusButton" setAllPoints="true">
-								<Scripts>
-									<OnClick>
-										RecruitAFriendNoteEditBox:SetFocus();
-									</OnClick>
-								</Scripts>
-							</Button>
-						</Frames>
 						<Scripts>
 							<OnLoad>
 								local scrollBar = _G[self:GetName().."ScrollBar"];
-								scrollBar:SetFrameLevel(_G[self:GetName().."FocusButton"]:GetFrameLevel() + 2);
 								scrollBar:ClearAllPoints();
 								scrollBar:SetPoint("TOPLEFT", self, "TOPRIGHT", -18, -10);
 								scrollBar:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT", -18, 8);
@@ -527,6 +517,9 @@
 								self.scrollBarHideable = 1;
 								scrollBar:Hide();
 							</OnLoad>
+							<OnMouseDown>
+								RecruitAFriendNoteEditBox:SetFocus();
+							</OnMouseDown>
 						</Scripts>
 						<ScrollChild>
 							<EditBox name="RecruitAFriendNoteEditBox" multiLine="true" letters="127" countInvisibleLetters="true" autoFocus="false">
@@ -590,7 +583,7 @@
 			<OnEvent function="RecruitAFriend_OnEvent"/>
 			<OnShow function="RecruitAFriend_OnShow"/>
 			<OnHide>
-				PlaySound("igMainMenuClose");
+				PlaySound(SOUNDKIT.IG_MAINMENU_CLOSE);
 			</OnHide>
 		</Scripts>
 	</Frame>
@@ -661,7 +654,7 @@
 		</Frames>
 		<Scripts>
 			<OnHide>
-				PlaySound("igCharacterInfoClose");
+				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
 			</OnHide>
 		</Scripts>
 	</Frame>

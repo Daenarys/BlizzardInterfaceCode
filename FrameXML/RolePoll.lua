@@ -12,7 +12,8 @@ end
 
 function RolePollPopup_Show(self)
 	--First, update what roles are usable
-	PlaySound("ReadyCheck");
+	PlaySound(SOUNDKIT.READY_CHECK);
+	FlashClientIcon();
 	local canBeTank, canBeHealer, canBeDamager = UnitGetAvailableRoles("player");
 	if ( canBeTank ) then
 		RolePollPopupRoleButton_Enable(RolePollPopupRoleButtonTank);
@@ -72,10 +73,10 @@ end
 
 function RolePollPopupRoleButtonCheckButton_OnClick(self, button)
 	if ( self:GetChecked() ) then
-		PlaySound("igMainMenuOptionCheckBoxOn");
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 		RolePollPopup.role = self:GetParent().role;
 	else
-		PlaySound("igMainMenuOptionCheckBoxOff");
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 		RolePollPopup.role = "NONE";
 	end
 
@@ -83,7 +84,7 @@ function RolePollPopupRoleButtonCheckButton_OnClick(self, button)
 end
 
 function RolePollPopupAccept_OnClick(self, button)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	UnitSetRole("player", self:GetParent().role);
 	StaticPopupSpecial_Hide(self:GetParent());
 end

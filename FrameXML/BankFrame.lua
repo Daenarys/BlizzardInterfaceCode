@@ -77,7 +77,7 @@ function BankFrameItemButton_Update (button)
 	local texture = button.icon;
 	local inventoryID = button:GetInventorySlot();
 	local textureName = GetInventoryItemTexture("player",inventoryID);
-	local _, _, _, quality, _, _, _, isFiltered = GetContainerItemInfo(container, buttonID);
+	local _, _, _, quality, _, _, _, isFiltered, _, itemID = GetContainerItemInfo(container, buttonID);
 	local slotName = button:GetName();
 	local id;
 	local slotTextureName;
@@ -118,13 +118,8 @@ function BankFrameItemButton_Update (button)
 	else
 		button.searchOverlay:Hide();
 	end
-	
-	if (quality and quality > LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
-		button.IconBorder:Show();
-		button.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
-	else
-		button.IconBorder:Hide();
-	end
+
+	SetItemButtonQuality(button, quality, itemID);
 
 	BankFrameItemButton_UpdateLocked(button);
 	BankFrame_UpdateCooldown(container, button);
@@ -140,7 +135,7 @@ function BankFrame_UpdateCooldown(container, button)
 	else
 		start, duration, enable = GetContainerItemCooldown(container, button:GetID());
 	end
-	CooldownFrame_SetTimer(cooldown, start, duration, enable);
+	CooldownFrame_Set(cooldown, start, duration, enable);
 	if ( duration > 0 and enable == 0 ) then
 		SetItemButtonTextureVertexColor(button, 0.4, 0.4, 0.4);
 	end
@@ -289,7 +284,7 @@ function BankFrame_OnEvent (self, event, ...)
 end
 
 function BankFrame_OnShow (self)
-	PlaySound("igMainMenuOpen");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPEN);
 
 	self:RegisterEvent("ITEM_LOCK_CHANGED");
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED");
@@ -325,7 +320,7 @@ function BankFrame_OnShow (self)
 end
 
 function BankFrame_OnHide (self)
-	PlaySound("igMainMenuClose");
+	PlaySound(SOUNDKIT.IG_MAINMENU_CLOSE);
 
 	self:UnregisterEvent("ITEM_LOCK_CHANGED");
 	self:UnregisterEvent("PLAYERBANKSLOTS_CHANGED");
@@ -359,9 +354,9 @@ function BankFrameItemButtonGeneric_OnModifiedClick (self, button)
 	if ( HandleModifiedItemClick(GetContainerItemLink(container, self:GetID())) ) then
 		return;
 	end
-	if ( IsModifiedClick("SPLITSTACK") ) then
+	if ( not CursorHasItem() and IsModifiedClick("SPLITSTACK") ) then
 		local texture, itemCount, locked = GetContainerItemInfo(container, self:GetID());
-		if ( not locked and itemCount > 1) then
+		if ( not locked and itemCount and itemCount > 1) then
 			OpenStackSplitFrame(self.count, self, "BOTTOMLEFT", "TOPLEFT");
 		end
 		return;
@@ -403,7 +398,7 @@ function BankFrameItemButtonBag_Pickup (self)
 end
 
 function BankFrame_TabOnClick(self)
-	PlaySound("igCharacterInfoTab");
+	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB);
 	BankFrame_ShowPanel(BANK_PANELS[self:GetID()].name);
 end
 
@@ -455,7 +450,7 @@ end
 function BankFrame_AutoSortButtonOnClick()
 	local self = BankFrame;
 
-	PlaySound("UI_BagSorting_01");
+	PlaySound(SOUNDKIT.UI_BAG_SORTING_01);
 	if (self.activeTabIndex == 1) then
 		SortBankBags();
 	elseif (self.activeTabIndex == 2) then

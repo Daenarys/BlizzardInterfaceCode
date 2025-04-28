@@ -119,95 +119,6 @@
 		</Member>
 	</FontFamily>
 
-	<FontFamily name="SystemFont_Med2" virtual="true">
-		<Member alphabet="roman">
-			<Font font="Fonts\FRIZQT__.TTF" height="13"/>
-		</Member>
-		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="13" spacing="3"/>
-		</Member>
-		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARKai_T.ttf" height="14"/>
-		</Member>
-		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\bKAI00M.TTF" height="14"/>
-		</Member>
-		<Member alphabet="russian">
-			<Font font="Fonts\FRIZQT___CYR.TTF" height="13"/>
-		</Member>
-	</FontFamily>
-
-	<FontFamily name="SystemFont_Med3" virtual="true">
-		<Member alphabet="roman">
-			<Font font="Fonts\FRIZQT__.TTF" height="14"/>
-		</Member>
-		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="13"/>
-		</Member>
-		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARKai_T.ttf" height="13"/>
-		</Member>
-		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\bKAI00M.TTF" height="13"/>
-		</Member>
-		<Member alphabet="russian">
-			<Font font="Fonts\FRIZQT___CYR.TTF" height="14"/>
-		</Member>
-	</FontFamily>
-
-	<FontFamily name="SystemFont_Shadow_Med3" virtual="true">
-		<Member alphabet="roman">
-			<Font font="Fonts\FRIZQT__.TTF" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARKai_T.ttf" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\bKAI00M.TTF" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="russian">
-			<Font font="Fonts\FRIZQT___CYR.TTF" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-	</FontFamily>
-
 	<FontFamily name="SystemFont_Huge1" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.TTF" height="20"/>
@@ -285,19 +196,19 @@
 			<Font font="Fonts\FRIZQT__.TTF" height ="32" outline="THICK"/>
 		</Member>
 		<Member alphabet="korean">
-			<Font font="Fonts\K_Pagetext.TTF" height="102" outline="THICK"/>
+			<Font font="Fonts\K_Pagetext.TTF" height="32" outline="THICK"/>
 		</Member>
 		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARKai_T.ttf" height="112" outline="THICK"/>
+			<Font font="Fonts\ARKai_T.ttf" height="32" outline="THICK"/>
 		</Member>
 		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\blei00d.TTF" height="112" outline="THICK"/>
+			<Font font="Fonts\blei00d.TTF" height="32" outline="THICK"/>
 		</Member>
 		<Member alphabet="russian">
 			<Font font="Fonts\FRIZQT___CYR.TTF" height="32" outline="THICK"/>
 		</Member>
 	</FontFamily>
-	
+
 	<!-- This font is used as a way to localize numbers (in some locations.) -->
 	<FontFamily name="NumberFont_GameNormal" virtual="true">
 		<Member alphabet="roman">
@@ -338,59 +249,6 @@
 		</Member>
 	</FontFamily>
 
-	<FontFamily name="NumberFont_Shadow_Small" virtual="true">
-		<Member alphabet="roman">
-			<Font font="Fonts\ARIALN.TTF" height="12">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="12">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARHei.ttf" height="12">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\bHEI01B.TTF" height="12">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="russian">
-			<Font font="Fonts\ARIALN.TTF" height="12">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-	</FontFamily>
-
 	<FontFamily name="NumberFont_OutlineThick_Mono_Small" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\ARIALN.TTF" height="12" outline="THICK" monochrome="true"/>
@@ -406,59 +264,6 @@
 		</Member>
 		<Member alphabet="russian">
 			<Font font="Fonts\ARIALN.TTF" height="12" outline="THICK" monochrome="true"/>
-		</Member>
-	</FontFamily>
-
-	<FontFamily name="NumberFont_Shadow_Med" virtual="true">
-		<Member alphabet="roman">
-			<Font font="Fonts\ARIALN.TTF" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="13" spacing="3">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARHei.ttf" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\bHEI01B.TTF" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
-		</Member>
-		<Member alphabet="russian">
-			<Font font="Fonts\ARIALN.TTF" height="14">
-				<Shadow>
-					<Offset>
-						<AbsDimension x="1" y="-1"/>
-					</Offset>
-					<Color r="0" g="0" b="0"/>
-				</Shadow>
-			</Font>
 		</Member>
 	</FontFamily>
 
@@ -534,21 +339,31 @@
 		</Member>
 	</FontFamily>
 
-	<FontFamily name="QuestFont_Huge" virtual="true">
+	<FontFamily name="Fancy22Font" virtual="true">
 		<Member alphabet="roman">
-			<Font font="Fonts\MORPHEUS.ttf" height="18"/>
+			<Font font="Fonts\MORPHEUS.ttf" height="22">
+				<Color r="1" g=".82" b="0"/>
+			</Font>
 		</Member>
 		<Member alphabet="korean">
-			<Font font="Fonts\K_Pagetext.ttf" height="17"/>
+			<Font font="Fonts\K_Pagetext.ttf" height="20">
+				<Color r="1" g=".82" b="0"/>
+			</Font>
 		</Member>
 		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARKai_T.ttf" height="17"/>
+			<Font font="Fonts\ARKai_T.ttf" height="20">
+				<Color r="1" g=".82" b="0"/>
+			</Font>
 		</Member>
 		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\blei00d.ttf" height="17"/>
+			<Font font="Fonts\blei00d.ttf" height="20">
+				<Color r="1" g=".82" b="0"/>
+			</Font>
 		</Member>
 		<Member alphabet="russian">
-			<Font font="Fonts\MORPHEUS_CYR.TTF" height="18"/>
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="22">
+				<Color r="1" g=".82" b="0"/>
+			</Font>
 		</Member>
 	</FontFamily>
 
@@ -693,6 +508,149 @@
 		</Member>
 	</FontFamily>
 
+	<FontFamily name="Game11Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="11"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="11"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="11"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="11"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="11"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game12Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="12"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="12"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="12"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="12"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="12"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game13Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="13"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="13"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="13"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="13"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="13"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game13FontShadow" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="13">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="13">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="13">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="13">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="13">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game15Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="15"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="15"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="15"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="15"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="15"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game16Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="16"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="16"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="16"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="16"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="16"/>
+		</Member>
+	</FontFamily>
+
 	<FontFamily name="Game18Font" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.ttf" height="18"/>
@@ -711,7 +669,24 @@
 		</Member>
 	</FontFamily>
 
-	
+	<FontFamily name="Game20Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="20"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="20"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="20"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="20"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="20"/>
+		</Member>
+	</FontFamily>
+
 	<FontFamily name="Game24Font" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.ttf" height="24"/>
@@ -748,25 +723,6 @@
 		</Member>
 	</FontFamily>
 
-	<FontFamily name="Game30Font" virtual="true">
-		<Member alphabet="roman">
-			<Font font="Fonts\FRIZQT__.TTF" height="30"/>
-		</Member>
-		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="30"/>
-		</Member>
-		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARKai_T.TTF" height="30"/>
-		</Member>
-		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\blei00d.TTF" height="30"/>
-		</Member>
-		<Member alphabet="russian">
-			<Font font="Fonts\FRIZQT___CYR.TTF" height="30"/>
-		</Member>
-	</FontFamily>
-
-
 	<FontFamily name="Game32Font" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.ttf" height="32"/>
@@ -784,7 +740,7 @@
 			<Font font="Fonts\MORPHEUS_CYR.ttf" height="32"/>
 		</Member>
 	</FontFamily>
-	
+
 	<FontFamily name="Game36Font" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.ttf" height="36"/>
@@ -800,6 +756,24 @@
 		</Member>
 		<Member alphabet="russian">
 			<Font font="Fonts\MORPHEUS_CYR.ttf" height="36"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game46Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="46"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="46"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="46"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="46"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="46"/>
 		</Member>
 	</FontFamily>
 	
@@ -820,7 +794,61 @@
 			<Font font="Fonts\MORPHEUS_CYR.ttf" height="48"/>
 		</Member>
 	</FontFamily>
-	
+
+	<FontFamily name="Game48FontShadow" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="48">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+			</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="48">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="48">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="48">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\FRIZQT___CYR.ttf" height="48">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+	</FontFamily>
+
+
 	<FontFamily name="Game60Font" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.ttf" height="60"/>
@@ -838,7 +866,7 @@
 			<Font font="Fonts\MORPHEUS_CYR.ttf" height="60"/>
 		</Member>
 	</FontFamily>
-	
+
 	<FontFamily name="Game72Font" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\FRIZQT__.ttf" height="72"/>
@@ -854,6 +882,96 @@
 		</Member>
 		<Member alphabet="russian">
 			<Font font="Fonts\MORPHEUS_CYR.ttf" height="72"/>
+		</Member>
+	</FontFamily>
+	
+	<FontFamily name="Game120Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="120"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="120"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="120"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="120"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="120"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game11Font_o1" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="11" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="11" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="11" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="11" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="11" outline="NORMAL"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game12Font_o1" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="12" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="12" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="12" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="12" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="12" outline="NORMAL"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game13Font_o1" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.ttf" height="13" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="13" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="13" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="13" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.ttf" height="13" outline="NORMAL"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Game15Font_o1" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.TTF" height="15" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\2002.TTF" height="15" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="15" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF"  height="15" outline="NORMAL"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\FRIZQT___CYR.TTF" height="15" outline="NORMAL"/>
 		</Member>
 	</FontFamily>
 
@@ -881,6 +999,34 @@
 		<Member alphabet="russian">
 			<Font font="Fonts\MORPHEUS_CYR.ttf" height="30">
 				<Color r="1" g=".82" b="0"/>
+			</Font>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="DestinyFontMed" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.ttf" height="14">
+				<Color r="0.1" g="0.1" b="0.1"/>
+			</Font>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.ttf" height="14">
+				<Color r="0.1" g="0.1" b="0.1"/>
+			</Font>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="14">
+				<Color r="0.1" g="0.1" b="0.1"/>
+			</Font>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.ttf" height="14">
+				<Color r="0.1" g="0.1" b="0.1"/>
+			</Font>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="14">
+				<Color r="0.1" g="0.1" b="0.1"/>
 			</Font>
 		</Member>
 	</FontFamily>
@@ -1088,42 +1234,6 @@
 		</Member>
 		<Member alphabet="traditionalchinese">
 			<Font font="Fonts\blei00d.TTF" height="10"/>
-		</Member>
-		<Member alphabet="russian">
-			<Font font="Fonts\FRIZQT___CYR.TTF" height="10"/>
-		</Member>
-	</FontFamily>
-
-	<FontFamily name="Tooltip_Med" virtual="true">
-		<Member alphabet="roman">
-			<Font font="Fonts\FRIZQT__.TTF" height="12"/>
-		</Member>
-		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="13"/>
-		</Member>
-		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARHei.ttf" height="13"/>
-		</Member>
-		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\bHEI00M.TTF" height="13"/>
-		</Member>
-		<Member alphabet="russian">
-			<Font font="Fonts\FRIZQT___CYR.TTF" height="12"/>
-		</Member>
-	</FontFamily>
-
-	<FontFamily name="Tooltip_Small" virtual="true">
-		<Member alphabet="roman">
-			<Font font="Fonts\FRIZQT__.TTF" height="10"/>
-		</Member>
-		<Member alphabet="korean">
-			<Font font="Fonts\2002.TTF" height="13"/>
-		</Member>
-		<Member alphabet="simplifiedchinese">
-			<Font font="Fonts\ARHei.ttf" height="12"/>
-		</Member>
-		<Member alphabet="traditionalchinese">
-			<Font font="Fonts\bHEI00M.TTF" height="12"/>
 		</Member>
 		<Member alphabet="russian">
 			<Font font="Fonts\FRIZQT___CYR.TTF" height="10"/>
@@ -1494,6 +1604,42 @@
 		</Member>
 	</FontFamily>
 
+	<FontFamily name="Fancy12Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="12"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="12"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="12"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="12"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="12"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Fancy14Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="14"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="14"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="14"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="14"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="14"/>
+		</Member>
+	</FontFamily>
+
 	<FontFamily name="Fancy16Font" virtual="true">
 		<Member alphabet="roman">
 			<Font font="Fonts\MORPHEUS.TTF" height="16"/>
@@ -1509,6 +1655,397 @@
 		</Member>
 		<Member alphabet="russian">
 			<Font font="Fonts\MORPHEUS_CYR.TTF" height="16"/>
+		</Member>
+	</FontFamily>
+
+		<FontFamily name="Fancy18Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="18"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="18"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="18"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="18"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="18"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Fancy20Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="20"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="20"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="20"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="20"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="20"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Fancy24Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="24"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="24"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="24"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="24"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="24"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Fancy27Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="27"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="27"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="27"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="27"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="27"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Fancy30Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="30"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="30"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="30"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="30"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="30"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Fancy32Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="32"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="32"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="32"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="32"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="32"/>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="Fancy48Font" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\MORPHEUS.TTF" height="48"/>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\K_Pagetext.TTF" height="48"/>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.TTF" height="48"/>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="48"/>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\MORPHEUS_CYR.TTF" height="48"/>
+		</Member>
+	</FontFamily>
+
+  <FontFamily name="SystemFont_NamePlateFixed" virtual="true">
+    <Member alphabet="roman">
+      <Font font="Fonts\FRIZQT__.TTF" height="14" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+    <Member alphabet="korean">
+      <Font font="Fonts\2002.TTF" height="14" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+    <Member alphabet="simplifiedchinese">
+      <Font font="Fonts\ARKai_T.ttf" height="14" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+    <Member alphabet="traditionalchinese">
+      <Font font="Fonts\blei00d.TTF" height="14" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+    <Member alphabet="russian">
+      <Font font="Fonts\FRIZQT___CYR.TTF" height="14" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+  </FontFamily>
+
+  <FontFamily name="SystemFont_LargeNamePlateFixed" virtual="true">
+    <Member alphabet="roman">
+      <Font font="Fonts\FRIZQT__.TTF" height="20" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+    <Member alphabet="korean">
+      <Font font="Fonts\2002.TTF" height="20" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+    <Member alphabet="simplifiedchinese">
+      <Font font="Fonts\ARKai_T.ttf" height="20" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+    <Member alphabet="traditionalchinese">
+      <Font font="Fonts\blei00d.TTF" height="20" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+    <Member alphabet="russian">
+      <Font font="Fonts\FRIZQT___CYR.TTF" height="20" filter="false" fixedSize="true">
+        <Shadow>
+          <Offset>
+            <AbsDimension x="1" y="-1"/>
+          </Offset>
+          <Color r="0" g="0" b="0"/>
+        </Shadow>
+      </Font>
+    </Member>
+  </FontFamily>
+
+  <FontFamily name="SystemFont_NamePlate" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.TTF" height="9">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\2002.TTF" height="9">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="9">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="9">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\FRIZQT___CYR.TTF" height="9">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="SystemFont_LargeNamePlate" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.TTF" height="12">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="0.64" y="-0.64"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\2002.TTF" height="12">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="12">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="12">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\FRIZQT___CYR.TTF" height="12">
+				<Shadow>
+					<Offset>
+            <AbsDimension x="0.64" y="-0.64"/>
+          </Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+	</FontFamily>
+
+	<FontFamily name="SystemFont_NamePlateCastBar" virtual="true">
+		<Member alphabet="roman">
+			<Font font="Fonts\FRIZQT__.TTF" height="10" filter="false" fixedSize="true" outline="NORMAL">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="korean">
+			<Font font="Fonts\2002.TTF" height="10" filter="false" fixedSize="true">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="simplifiedchinese">
+			<Font font="Fonts\ARKai_T.ttf" height="10" filter="false" fixedSize="true">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="traditionalchinese">
+			<Font font="Fonts\blei00d.TTF" height="10" filter="false" fixedSize="true">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
+		</Member>
+		<Member alphabet="russian">
+			<Font font="Fonts\FRIZQT___CYR.TTF" height="10" filter="false" fixedSize="true">
+				<Shadow>
+					<Offset>
+						<AbsDimension x="1" y="-1"/>
+					</Offset>
+					<Color r="0" g="0" b="0"/>
+				</Shadow>
+			</Font>
 		</Member>
 	</FontFamily>
 </Ui>

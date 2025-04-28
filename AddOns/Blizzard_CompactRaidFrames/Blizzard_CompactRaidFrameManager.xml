@@ -14,7 +14,7 @@
 		<Size x="58" y="24"/>
 		<Scripts>
 			<OnClick>
-				PlaySound("igMainMenuOptionCheckBoxOn");
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 				CompactRaidFrameManager_ToggleRoleFilter(self.role);
 			</OnClick>
 		</Scripts>
@@ -23,7 +23,7 @@
 		<Size x="41" y="24"/>
 		<Scripts>
 			<OnClick>
-				PlaySound("igMainMenuOptionCheckBoxOn");
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 				CompactRaidFrameManager_ToggleGroupFilter(self:GetID());
 			</OnClick>
 		</Scripts>
@@ -45,7 +45,7 @@
 				tex:SetPoint("CENTER", self, "CENTER", 0, 0);
 			</OnLoad>
 			<OnClick>
-				PlaySound("igMainMenuOptionCheckBoxOn");
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 				SetRaidTarget("target", self:GetID());
 			</OnClick>
 			<OnMouseDown>
@@ -59,7 +59,7 @@
 		</Scripts>
 		<NormalTexture file="Interface\TargetingFrame\UI-RaidTargetingIcons"/>
 	</Button>
-	<Frame name="CompactRaidFrameManager" enableMouse="true" frameStrata="LOW" hidden="true" parent="UIParent">
+	<Frame name="CompactRaidFrameManager" enableMouse="true" frameStrata="LOW" hidden="true" toplevel="true" parent="UIParent">
 		<Size x="200" y="140"/>
 		<Anchors>
 			<Anchor point="TOPLEFT" relativeTo="UIParent" relativePoint="TOPLEFT" x="7" y="-140"/>
@@ -127,7 +127,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame name="$parentContainerResizeFrame" frameStrata="LOW" resizable="true" movable="true" dontSavePosition="true" clampedToScreen="true"  parentKey="containerResizeFrame">
+			<Frame name="$parentContainerResizeFrame" frameStrata="LOW" resizable="true" movable="true" dontSavePosition="true" clampedToScreen="true" parentKey="containerResizeFrame">
 				<Size x="300" y="200"/>
 				<Layers>
 					<Layer level="BORDER">
@@ -277,15 +277,12 @@
 						local tex = self:GetNormalTexture();
 						tex:SetAllPoints();
 					</OnMouseUp>
-					<OnShow>
-						self:SetFrameLevel(self:GetParent().displayFrame:GetFrameLevel() + 2);
-					</OnShow>
 				</Scripts>
 				<NormalTexture file="Interface\RaidFrame\RaidPanel-Toggle">
 					<TexCoords left="0" right="0.5" top="0" bottom="1"/>
 				</NormalTexture>
 			</Button>
-			<Frame name="$parentDisplayFrame" parentKey="displayFrame" setAllPoints="true">
+			<Frame name="$parentDisplayFrame" parentKey="displayFrame" flattenRenderLayers="true" setAllPoints="true">
 				<Layers>
 					<Layer level="BACKGROUND">
 						<Texture name="$parentHeaderBackground">
@@ -325,7 +322,7 @@
 						<Scripts>
 							<OnClick>
 								InterfaceOptionsFrame_OpenToCategory(COMPACT_UNIT_FRAME_PROFILES_LABEL);
-								PlaySound("igMainMenuOption");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 								--ToggleRaidFrame();
 							</OnClick>
 						</Scripts>
@@ -434,7 +431,7 @@
 						<Size x="85" y="20"/>
 						<Scripts>
 							<OnClick>
-								PlaySound("igMainMenuOptionCheckBoxOn");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 								SetRaidProfileOption(GetActiveRaidProfile(), "locked", self.lockMode);
 								CompactRaidFrameManager_SetSetting("Locked", self.lockMode);
 							</OnClick>
@@ -444,7 +441,7 @@
 						<Size x="85" y="20"/>
 						<Scripts>
 							<OnClick>
-								PlaySound("igMainMenuOptionCheckBoxOn");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 								SetRaidProfileOption(GetActiveRaidProfile(), "shown", self.shownMode);
 								CompactRaidFrameManager_SetSetting("IsShown", self.shownMode);
 							</OnClick>
@@ -454,7 +451,7 @@
 						<Size x="169" y="20"/>
 						<Scripts>
 							<OnClick>
-								PlaySound("igMainMenuOptionCheckBoxOn");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 								ConvertToRaid();
 							</OnClick>
 						</Scripts>
@@ -528,7 +525,7 @@
 								</Anchors>
 								<Scripts>
 									<OnClick>
-										PlaySound("igMainMenuOptionCheckBoxOn");
+										PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 										InitiateRolePoll();
 									</OnClick>
 								</Scripts>
@@ -540,7 +537,7 @@
 								</Anchors>
 								<Scripts>
 									<OnClick>
-										PlaySound("igMainMenuOptionCheckBoxOn");
+										PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 										DoReadyCheck();
 									</OnClick>
 								</Scripts>
@@ -561,7 +558,7 @@
 								</Frames>
 								<Scripts>
 									<OnClick>
-										PlaySound("igMainMenuOptionCheckBoxOn");
+										PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 										ToggleDropDownMenu(1, nil, self.dropDown, self:GetName(), 0, 0);
 									</OnClick>
 								</Scripts>
@@ -596,7 +593,7 @@
 								end
 							</OnEvent>
 							<OnClick>
-								PlaySound("igMainMenuOptionCheckBoxOn");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 								SetEveryoneIsAssistant(self:GetChecked());	
 							</OnClick>
 							<OnEnter>

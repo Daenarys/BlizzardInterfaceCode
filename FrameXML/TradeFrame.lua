@@ -10,6 +10,8 @@ function TradeFrame_OnLoad(self)
 	self:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED");
 	self:RegisterEvent("TRADE_ACCEPT_UPDATE");
 	self:RegisterEvent("TRADE_POTENTIAL_BIND_ENCHANT");
+	self:RegisterEvent("TRADE_POTENTIAL_REMOVE_TRANSMOG");
+	self:RegisterEvent("GET_ITEM_INFO_RECEIVED");
 	TradeFrameInset:SetPoint("TOPLEFT", 4, -440);
 	TradeRecipientItemsInsetBg:SetAlpha(0.1);
 	TradeRecipientMoneyInsetBg:SetAlpha(0);
@@ -34,9 +36,12 @@ function TradeFrame_OnEvent(self, event, ...)
 
 		TradeFrameTradeButton_Enable();
 		TradeFrame_Update();
+	elseif ( event == "GET_ITEM_INFO_RECEIVED" ) then
+		TradeFrame_Update();
 	elseif ( event == "TRADE_CLOSED" ) then
 		HideUIPanel(self);
 		StaticPopup_Hide("TRADE_POTENTIAL_BIND_ENCHANT");
+		StaticPopup_Hide("TRADE_POTENTIAL_REMOVE_TRANSMOG");
 	elseif ( event == "TRADE_TARGET_ITEM_CHANGED" ) then
 		TradeFrame_UpdateTargetItem(arg1);
 	elseif ( event == "TRADE_PLAYER_ITEM_CHANGED" ) then
@@ -51,6 +56,8 @@ function TradeFrame_OnEvent(self, event, ...)
 		else
 			StaticPopup_Hide("TRADE_POTENTIAL_BIND_ENCHANT");
 		end
+	elseif ( event == "TRADE_POTENTIAL_REMOVE_TRANSMOG" ) then
+		StaticPopup_Show("TRADE_POTENTIAL_REMOVE_TRANSMOG", arg1, nil, arg2);
 	end
 end
 
@@ -70,7 +77,7 @@ function TradeFrame_Update()
 end
 
 function TradeFrame_UpdatePlayerItem(id)
-	local name, texture, numItems, isUsable, enchantment = GetTradePlayerItemInfo(id);
+	local name, texture, numItems, quality, enchantment, canLoseTransmog = GetTradePlayerItemInfo(id);
 	local buttonText = _G["TradePlayerItem"..id.."Name"];
 	
 	-- See if its the enchant slot
@@ -86,15 +93,28 @@ function TradeFrame_UpdatePlayerItem(id)
 		end
 	else
 		buttonText:SetText(name);
+		if ( quality ) then
+			buttonText:SetTextColor(GetItemQualityColor(quality));
+		else
+			buttonText:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		end
 	end
 	local tradeItemButton = _G["TradePlayerItem"..id.."ItemButton"];
 	SetItemButtonTexture(tradeItemButton, texture);
 	SetItemButtonCount(tradeItemButton, numItems);
+	SetItemButtonQuality(tradeItemButton, quality, GetTradePlayerItemLink(id));
 	if ( texture ) then
 		tradeItemButton.hasItem = 1;
 	else
 		tradeItemButton.hasItem = nil;
+		if ( GameTooltip:IsOwned(tradeItemButton) ) then
+			GameTooltip:Hide();
+		end
 	end
+	local _, dialog = StaticPopup_Visible("TRADE_POTENTIAL_REMOVE_TRANSMOG");
+	if ( dialog and dialog.data == id and not canLoseTransmog ) then
+		StaticPopup_Hide("TRADE_POTENTIAL_REMOVE_TRANSMOG");
+	end	
 end
 
 function TradeFrame_UpdateTargetItem(id)
@@ -114,6 +134,7 @@ function TradeFrame_UpdateTargetItem(id)
 		
 	else
 		buttonText:SetText(name);
+		buttonText:SetTextColor(ITEM_QUALITY_COLORS[quality].r, ITEM_QUALITY_COLORS[quality].g, ITEM_QUALITY_COLORS[quality].b);
 	end
 	local tradeItemButton = _G["TradeRecipientItem"..id.."ItemButton"];
 	local tradeItem = _G["TradeRecipientItem"..id];
@@ -128,6 +149,10 @@ function TradeFrame_UpdateTargetItem(id)
 		SetItemButtonNameFrameVertexColor(tradeItem, 0.9, 0, 0);
 		SetItemButtonSlotVertexColor(tradeItem, 1.0, 0, 0);
 	end
+	if ( not texture and GameTooltip:IsOwned(tradeItemButton) ) then
+		GameTooltip:Hide();
+	end
+	SetItemButtonQuality(tradeItemButton, quality, GetTradeTargetItemLink(id));
 end
 
 function TradeFrame_SetAcceptState(playerState, targetState)

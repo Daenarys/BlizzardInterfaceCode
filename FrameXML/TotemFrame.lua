@@ -9,7 +9,7 @@ function TotemFrame_OnLoad(self)
 	if ( class == "DEATHKNIGHT" ) then
 		self:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 65, -55);
 	elseif ( class == "WARLOCK" ) then
-		TotemFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 28, -75);
+		TotemFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 28, -85);
 	end
 end
 
@@ -44,6 +44,12 @@ function TotemFrame_Update()
 		TotemFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 28, -75);
 	elseif ( class == "MAGE" ) then
 		TotemFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 50, -75);
+	elseif ( class == "SHAMAN" ) then
+		if ( GetSpecialization() == 3) then
+			TotemFrame:SetPoint("TOPLEFT", PlayerFrame, "BOTTOMLEFT", 99, 38);
+		else
+			TotemFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 99, -78);
+		end
 	elseif ( hasPet  and class ~= "SHAMAN" and class ~= "WARLOCK" ) then
 		TotemFrame:Hide();
 		return;
@@ -118,8 +124,11 @@ function TotemFrame_OnEvent(self, event, ...)
 end
 
 function TotemButton_OnClick(self, mouseButton)
-	if ( mouseButton == "RightButton" and self.slot > 0 ) then
-		DestroyTotem(self.slot);
+	local cannotDismiss = GetTotemCannotDismiss(self.slot)
+	if ( not cannotDismiss ) then
+		if ( mouseButton == "RightButton" and self.slot > 0 ) then
+			DestroyTotem(self.slot);
+		end
 	end
 end
 
@@ -143,7 +152,7 @@ function TotemButton_Update(button, startTime, duration, icon)
 	if ( duration > 0 ) then
 		buttonIcon:SetTexture(icon);
 		buttonIcon:Show();
-		CooldownFrame_SetTimer(buttonCooldown, startTime, duration, 1);
+		CooldownFrame_Set(buttonCooldown, startTime, duration, true);
 		buttonCooldown:Show();
 		button:SetScript("OnUpdate", TotemButton_OnUpdate);
 		button:Show();
@@ -159,7 +168,11 @@ end
 function TotemFrame_AdjustPetFrame()
 	local _, class = UnitClass("player");
 	if ( class == "WARLOCK" ) then
-		if ( PetFrame and PetFrame:IsShown() and TotemFrameTotem2:IsShown() ) then
+		if ( PetFrame:IsShown() and TotemFrameTotem4:IsShown() ) then
+			PetFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 156, -90);
+		elseif ( PetFrame:IsShown() and TotemFrameTotem3:IsShown() ) then
+			PetFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 126, -90);
+		elseif ( PetFrame:IsShown() and TotemFrameTotem2:IsShown() ) then
 			PetFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 93, -90);
 		else
 			PetFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPLEFT", 60, -90);

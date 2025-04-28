@@ -9,16 +9,7 @@ function AccountLogin_OnLoad(self)
 	self.UI.PasswordEditBox:SetBackdropBorderColor(backdropColor[1], backdropColor[2], backdropColor[3]);
 	self.UI.PasswordEditBox:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
 
-	self:SetCamera(0);
-	self:SetSequence(0);
-
-	local expansionLevel = GetClientDisplayExpansionLevel();
-	local lowResBG = EXPANSION_LOW_RES_BG[expansionLevel];
-	local highResBG = EXPANSION_HIGH_RES_BG[expansionLevel];
-	local background = GetLoginScreenBackground(highResBG, lowResBG);
-
-	self:SetModel(background, 1);
-
+	SetLoginScreenModel(LoginBackgroundModel);
 	AccountLogin_UpdateSavedData(self);
 
 	self:RegisterEvent("SCREEN_FIRST_DISPLAYED");
@@ -73,7 +64,7 @@ function AccountLogin_CheckLoginState(self)
 end
 
 function AccountLogin_OnShow(self)
-	self.UI.GameLogo:SetTexture(EXPANSION_LOGOS[GetClientDisplayExpansionLevel()]);
+	SetExpansionLogo(self.UI.GameLogo, GetClientDisplayExpansionLevel());
 	self.UI.AccountEditBox:SetText("");
 	AccountLogin_UpdateSavedData(self);
 
@@ -83,6 +74,7 @@ end
 
 function AccountLogin_Update()
 	local showButtonsAndStuff = true;
+    local shouldCheckSystemReqs = true;
 	if ( SHOW_KOREAN_RATINGS ) then
 		KoreanRatings:Show();
 		showButtonsAndStuff = false;
@@ -93,11 +85,19 @@ function AccountLogin_Update()
 	if ( C_Login.IsLauncherLogin() ) then
 		ServerAlert_Disable(ServerAlertFrame);
 		showButtonsAndStuff = false;
+        shouldCheckSystemReqs = false;
 	else
 		ServerAlert_Enable(ServerAlertFrame);
 	end
+
+	--Cached login
+	CachedLoginFrameContainer_Update(AccountLogin.UI.CachedLoginFrameContainer);
+
 	for _, region in pairs(AccountLogin.UI.NormalLoginRegions) do
 		region:SetShown(showButtonsAndStuff);
+	end
+	if (HIDE_SAVE_ACCOUNT_NAME_CHECKBUTTON) then
+		AccountLogin.UI.SaveAccountNameCheckButton:Hide();
 	end
 	if ( AccountLogin.UI.AccountsDropDown.active ) then
 		AccountLogin.UI.AccountsDropDown:SetShown(showButtonsAndStuff);
@@ -126,25 +126,64 @@ function AccountLogin_UpdateSavedData(self)
 	AccountLoginDropDown_SetupList();
 end
 
-function AccountLogin_CachedLogin()
-	PlaySound("gsLogin");
+function CachedLoginFrameContainer_Update(self)
+	local cachedLogins = C_Login.GetCachedCredentials();
+	if ( cachedLogins ) then
+		if ( not self.Frames ) then
+			self.Frames = {};
+		end
+		local frames = self.Frames;
+		for i=1, #cachedLogins do
+			local frame = frames[i];
+			if ( not frame ) then
+				frame = CreateFrame("FRAME", nil, self, "CachedLoginFrameTemplate");
+				if ( i == 1 ) then
+					frame:SetPoint("TOPRIGHT", self, "TOPRIGHT", -5, -25);
+				else
+					frame:SetPoint("TOP", frames[i-1], "BOTTOM", 0, 5);
+				end
+			end
 
-	local username = AccountLogin.UI.AccountEditBox:GetText();
-	C_Login.CachedLogin(string.gsub(username, "||", "|"));
+			frame.account = cachedLogins[i];
+			frame.LoginButton:SetText(frame.account);
+			frame:Show();
+		end
+
+		for i=#cachedLogins + 1, #frames do
+			frames[i]:Hide();
+		end
+	elseif ( self.Frames ) then
+		for i=1, #self.Frames do
+			self.Frames[i]:Hide();
+		end
+	end
+end
+
+function CachedLoginButton_OnClick(self)
+	PlaySound(SOUNDKIT.GS_LOGIN);
+
+	local account = self:GetParent().account;
+	C_Login.CachedLogin(account);
 	if ( AccountLoginDropDown:IsShown() ) then
 		C_Login.SelectGameAccount(GlueDropDownMenu_GetSelectedValue(AccountLoginDropDown));
 	end
 
 	AccountLogin.UI.PasswordEditBox:SetText("");
 	if ( AccountLogin.UI.SaveAccountNameCheckButton:GetChecked() ) then
-		SetSavedAccountName(AccountLogin.UI.AccountEditBox:GetText());
+		SetSavedAccountName(account);
 	else
 		SetUsesToken(false);
 	end
 end
 
+function CachedLoginDeleteButton_OnClick(self)
+	local account = self:GetParent().account;
+	C_Login.DeleteCachedCredentials(account);
+	CachedLoginFrameContainer_Update(AccountLogin.UI.CachedLoginFrameContainer);
+end
+
 function AccountLogin_Login()
-	PlaySound("gsLogin");
+	PlaySound(SOUNDKIT.GS_LOGIN);
 
 	if ( AccountLogin.UI.AccountEditBox:GetText() == "" ) then
 		GlueDialog_Show("OKAY", LOGIN_ENTER_NAME);
@@ -422,15 +461,22 @@ function AccountLogin_OnTimerFinished()
 end
 
 function AccountLogin_CanAutoLogin()
-	return not SHOW_KOREAN_RATINGS and C_Login.IsLauncherLogin() and not C_Login.AttemptedLauncherLogin() and AccountLogin:IsVisible();
+	return not SHOW_KOREAN_RATINGS and ((C_Login.IsLauncherLogin() and not C_Login.AttemptedLauncherLogin()) or GetKioskLoginInfo()) and AccountLogin:IsVisible();
 end
 
 function AccountLogin_CheckAutoLogin()
 	if ( AccountLogin_CanAutoLogin() ) then
 		if ( AccountLogin.timerFinished ) then
-			C_Login.SetAttemptedLauncherLogin();
-			if ( not C_Login.LauncherLogin() ) then
-				C_Login.CancelLauncherLogin();
+			local accountName, password, realmAddr = GetKioskLoginInfo();
+			if (accountName and password) then
+				SetKioskAutoRealmAddress(realmAddr);
+				AccountLogin.UI.PasswordEditBox:SetText(password);
+				C_Login.Login(accountName, AccountLogin.UI.PasswordEditBox);
+			else
+				C_Login.SetAttemptedLauncherLogin();
+				if ( not C_Login.LauncherLogin() ) then
+					C_Login.CancelLauncherLogin();
+				end
 			end
 		elseif ( not AccountLogin.timerStarted ) then
 			GlueDialog_Show("CANCEL", LOGIN_STATE_CONNECTING);
@@ -446,12 +492,12 @@ end
 -- =============================================================
 
 function AccountLogin_ManageAccount()
-	PlaySound("gsLoginNewAccount");
+	PlaySound(SOUNDKIT.GS_LOGIN_NEW_ACCOUNT);
 	LaunchURL(AUTH_NO_TIME_URL);
 end
 
 function AccountLogin_LaunchCommunitySite()
-	PlaySound("gsLoginNewAccount");
+	PlaySound(SOUNDKIT.GS_LOGIN_NEW_ACCOUNT);
 	LaunchURL(COMMUNITY_URL);
 end
 
