@@ -2,6 +2,8 @@ MAX_RAID_FINDER_COOLDOWN_NAMES = 8;
 
 function RaidFinderFrame_OnLoad(self)
 	self:RegisterEvent("LFG_LOCK_INFO_RECEIVED");
+	self:RegisterEvent("AJ_RAID_ACTION");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 end
 
 function RaidFinderFrame_OnEvent(self, event, ...)
@@ -12,6 +14,14 @@ function RaidFinderFrame_OnEvent(self, event, ...)
 			--UIDropDownMenu_SetSelectedValue(RaidFinderQueueFrameSelectionDropDown, RaidFinderQueueFrame.raid);
 		end
 		RaidFinderFrame_UpdateAvailability();
+	elseif ( event == "AJ_RAID_ACTION" ) then
+		local raidID = ...;
+		PVEFrame_ShowFrame("GroupFinderFrame", RaidFinderFrame);
+		RaidFinderQueueFrame_SetRaid(raidID);
+	elseif ( event == "GROUP_ROSTER_UPDATE" ) then
+		if ( self:IsVisible() ) then
+			RaidFinderQueueFrame_UpdateRoles();
+		end
 	end
 end
 
@@ -162,38 +172,46 @@ function RaidFinderQueueFrameSelectionDropDown_SetUp(self)
 	end
 end
 
+local function isRaidFinderDungeonDisplayable(id)
+	local name, typeID, subtypeID, minLevel, maxLevel, _, _, _, expansionLevel = GetLFGDungeonInfo(id);
+	local myLevel = UnitLevel("player");
+	return myLevel >= minLevel and myLevel <= maxLevel and EXPANSION_LEVEL >= expansionLevel;
+end
+
 function RaidFinderQueueFrameSelectionDropDown_Initialize(self)
 	local info = UIDropDownMenu_CreateInfo();
 	
 	-- If we ever change this logic, we also need to change the logic in RaidFinderFrame_UpdateAvailability
 	for i=1, GetNumRFDungeons() do
 		local id, name = GetRFDungeonInfo(i);
-		local isAvailable, isAvailableToPlayer = IsLFGDungeonJoinable(id);
-		if ( isAvailable or isAvailableToPlayer or isRaidFinderDungeonDisplayable(id) ) then
-			if ( isAvailable ) then
-				info.text = name; --Note that the dropdown text may be manually changed in RaidFinderQueueFrame_SetRaid
-				info.value = id;
-				info.isTitle = nil;
-				info.func = RaidFinderQueueFrameSelectionDropDownButton_OnClick;
-				info.disabled = nil;
-				info.checked = (RaidFinderQueueFrame.raid == info.value);
-				info.tooltipWhileDisabled = nil;
-				info.tooltipOnButton = nil;
-				info.tooltipTitle = nil;
-				info.tooltipText = nil;
-				UIDropDownMenu_AddButton(info);
-			else
-				info.text = name; --Note that the dropdown text may be manually changed in RaidFinderQueueFrame_SetRaid
-				info.value = id;
-				info.isTitle = nil;
-				info.func = nil;
-				info.disabled = 1;
-				info.checked = nil;
-				info.tooltipWhileDisabled = 1;
-				info.tooltipOnButton = 1;
-				info.tooltipTitle = YOU_MAY_NOT_QUEUE_FOR_THIS;
-				info.tooltipText = LFGConstructDeclinedMessage(id);
-				UIDropDownMenu_AddButton(info);
+		local isAvailable, isAvailableToPlayer, hideIfUnmet = IsLFGDungeonJoinable(id);
+		if( not hideIfUnmet or isAvailable ) then
+			if ( isAvailable or isAvailableToPlayer or isRaidFinderDungeonDisplayable(id) ) then
+				if ( isAvailable ) then
+					info.text = name; --Note that the dropdown text may be manually changed in RaidFinderQueueFrame_SetRaid
+					info.value = id;
+					info.isTitle = nil;
+					info.func = RaidFinderQueueFrameSelectionDropDownButton_OnClick;
+					info.disabled = nil;
+					info.checked = (RaidFinderQueueFrame.raid == info.value);
+					info.tooltipWhileDisabled = nil;
+					info.tooltipOnButton = nil;
+					info.tooltipTitle = nil;
+					info.tooltipText = nil;
+					UIDropDownMenu_AddButton(info);
+				else
+					info.text = name; --Note that the dropdown text may be manually changed in RaidFinderQueueFrame_SetRaid
+					info.value = id;
+					info.isTitle = nil;
+					info.func = nil;
+					info.disabled = 1;
+					info.checked = nil;
+					info.tooltipWhileDisabled = 1;
+					info.tooltipOnButton = 1;
+					info.tooltipTitle = YOU_MAY_NOT_QUEUE_FOR_THIS;
+					info.tooltipText = LFGConstructDeclinedMessage(id);
+					UIDropDownMenu_AddButton(info);
+				end
 			end
 		end
 	end
@@ -227,49 +245,71 @@ function RaidFinderQueueFrame_Join()
 	end
 end
 
-function RaidFinderQueueFrame_UpdateRoleIncentives()
+function RaidFinderQueueFrame_UpdateRoles()
 	local dungeonID = RaidFinderQueueFrame.raid;
 	LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonTank, nil);
 	LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonHealer, nil);
 	LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonDPS, nil);
 	
 	if ( type(dungeonID) == "number" ) then
-		for i=1, LFG_ROLE_NUM_SHORTAGE_TYPES do
-			local eligible, forTank, forHealer, forDamage, itemCount, money, xp = GetLFGRoleShortageRewards(dungeonID, i);
-			if ( eligible and (itemCount ~= 0 or money ~= 0 or xp ~= 0) ) then	--Only show the icon if there is actually a reward.
-				if ( forTank ) then
-					LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonTank, i);
-				end
-				if ( forHealer ) then
-					LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonHealer, i);
-				end
-				if ( forDamage ) then
-					LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonDPS, i);
+		if ( not IsInGroup(LE_PARTY_CATEGORY_HOME) ) then
+			for i=1, LFG_ROLE_NUM_SHORTAGE_TYPES do
+				local eligible, forTank, forHealer, forDamage, itemCount, money, xp = GetLFGRoleShortageRewards(dungeonID, i);
+				if ( eligible and (itemCount ~= 0 or money ~= 0 or xp ~= 0) ) then	--Only show the icon if there is actually a reward.
+					if ( forTank ) then
+						LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonTank, i);
+					end
+					if ( forHealer ) then
+						LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonHealer, i);
+					end
+					if ( forDamage ) then
+						LFG_SetRoleIconIncentive(RaidFinderQueueFrameRoleButtonDPS, i);
+					end
 				end
 			end
 		end
+		
+		local tankLocked, healerLocked, dpsLocked = GetLFDRoleRestrictions(dungeonID);
+		RaidFinder_UpdateRoleButton(RaidFinderQueueFrameRoleButtonTank, tankLocked);
+		RaidFinder_UpdateRoleButton(RaidFinderQueueFrameRoleButtonHealer, healerLocked);
+		RaidFinder_UpdateRoleButton(RaidFinderQueueFrameRoleButtonDPS, dpsLocked);
+	end
+end
+
+function RaidFinder_UpdateRoleButton( button, locked )
+	if( button.permDisabled )then
+		return;
+	end
+	
+	if( locked ) then
+		button.lockedIndicator:Show();
+		button.checkButton:Hide();
+	else
+		button.lockedIndicator:Hide();
+		button.checkButton:Show();
 	end
 end
 
 function RaidFinderFrameRoleCheckButton_OnClick(self)
 	RaidFinderQueueFrame_SetRoles();
-	RaidFinderQueueFrame_UpdateRoleIncentives();
+	RaidFinderQueueFrame_UpdateRoles();
 end
 
 function RaidFinderQueueFrame_SetRoles()
-	SetLFGRoles(RaidFinderQueueFrameRoleButtonLeader.checkButton:GetChecked(), 
-		RaidFinderQueueFrameRoleButtonTank.checkButton:GetChecked(),
-		RaidFinderQueueFrameRoleButtonHealer.checkButton:GetChecked(),
-		RaidFinderQueueFrameRoleButtonDPS.checkButton:GetChecked());
+	SetLFGRoles(LFGRole_GetChecked(RaidFinderQueueFrameRoleButtonLeader),
+		LFGRole_GetChecked(RaidFinderQueueFrameRoleButtonTank),
+		LFGRole_GetChecked(RaidFinderQueueFrameRoleButtonHealer),
+		LFGRole_GetChecked(RaidFinderQueueFrameRoleButtonDPS) );
 end
 
 function RaidFinderQueueFrameRewards_UpdateFrame()
 	LFGRewardsFrame_UpdateFrame(RaidFinderQueueFrameScrollFrameChildFrame, RaidFinderQueueFrame.raid, RaidFinderQueueFrameBackground);
-	RaidFinderQueueFrame_UpdateRoleIncentives();
+	RaidFinderQueueFrame_UpdateRoles();
 end
 
 function RaidFinderFrameFindRaidButton_Update()
 	local mode, subMode = GetLFGMode(LE_LFG_CATEGORY_RF, RaidFinderQueueFrame.raid);
+	--Update the text on the button
 	if ( mode == "queued" or mode == "rolecheck" or mode == "proposal" or mode == "suspended" ) then
 		RaidFinderFrameFindRaidButton:SetText(LEAVE_QUEUE);
 	else
@@ -280,6 +320,7 @@ function RaidFinderFrameFindRaidButton_Update()
 		end
 	end
 	
+	--Disable the button if we're not in a state where we can make a change
 	if ( LFD_IsEmpowered() and mode ~= "proposal" and mode ~= "listed"  ) then --During the proposal, they must use the proposal buttons to leave the queue.
 		if ( (mode == "queued" or mode == "rolecheck" or mode == "suspended")	--The players can dequeue even if one of the two cover panels is up.
 			or (not RaidFinderQueueFramePartyBackfill:IsVisible() and not RaidFinderQueueFrameCooldownFrame:IsVisible()) ) then
@@ -291,11 +332,51 @@ function RaidFinderFrameFindRaidButton_Update()
 		RaidFinderFrameFindRaidButton:Disable();
 	end
 
+	--Disable the button if the person is active in LFGList
+	local lfgListDisabled;
+	if ( C_LFGList.GetActiveEntryInfo() ) then
+		lfgListDisabled = CANNOT_DO_THIS_WHILE_LFGLIST_LISTED;
+	end
+
+	if ( lfgListDisabled ) then
+		RaidFinderFrameFindRaidButton:Disable();
+		RaidFinderFrameFindRaidButton.tooltip = lfgListDisabled;
+	else
+		RaidFinderFrameFindRaidButton.tooltip = nil;
+	end
+
+	--Update the backfill enable state
 	if ( LFD_IsEmpowered() and mode ~= "proposal" and mode ~= "queued" and mode ~= "suspended" and mode ~= "rolecheck" ) then
 		RaidFinderQueueFramePartyBackfillBackfillButton:Enable();
 	else
 		RaidFinderQueueFramePartyBackfillBackfillButton:Disable();
 	end
+end
+
+function RaidFinderRoleButton_OnEnter(self)
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip:SetText(_G["ROLE_DESCRIPTION_"..self.role], nil, nil, nil, nil, true);
+	if ( self.permDisabled ) then
+		if(self.permDisabledTip)then
+			GameTooltip:AddLine(self.permDisabledTip, 1, 0, 0, true);
+		end
+	elseif ( self.disabledTooltip and not self:IsEnabled() ) then
+		GameTooltip:AddLine(self.disabledTooltip, 1, 0, 0, true);
+	elseif ( self.lockedIndicator:IsVisible() ) then
+		local dungeonID = RaidFinderQueueFrame.raid;
+		local roleID = self:GetID();
+		GameTooltip:SetText(ERR_ROLE_UNAVAILABLE, 1.0, 1.0, 1.0, true);
+		if ( type(dungeonID) == "number" ) then
+			local textTable = LFGRoleButton_LockReasonsTextTable(dungeonID, roleID);
+			for text,_ in pairs( textTable ) do
+				GameTooltip:AddLine(text, nil, nil, nil, true);
+			end
+		end
+		GameTooltip:Show();
+		return;
+	end
+	GameTooltip:Show();
+	LFGFrameRoleCheckButton_OnEnter(self);
 end
 
 --Cooldown panel

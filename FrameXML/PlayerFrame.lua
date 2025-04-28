@@ -1,6 +1,11 @@
 REQUIRED_REST_HOURS = 5;
 
 function PlayerFrame_OnLoad(self)
+	PlayerFrameHealthBar.LeftText = PlayerFrameHealthBarTextLeft;
+	PlayerFrameHealthBar.RightText = PlayerFrameHealthBarTextRight;
+	PlayerFrameManaBar.LeftText = PlayerFrameManaBarTextLeft;
+	PlayerFrameManaBar.RightText = PlayerFrameManaBarTextRight;
+
 	UnitFrame_Initialize(self, "player", PlayerName, PlayerPortrait,
 						 PlayerFrameHealthBar, PlayerFrameHealthBarText, 
 						 PlayerFrameManaBar, PlayerFrameManaBarText,
@@ -54,9 +59,26 @@ function PlayerFrame_OnLoad(self)
 	SecureUnitButton_OnLoad(self, "player", showmenu);
 end
 
+--This is overwritten in LocalizationPost for different languages.
+function PlayerFrame_UpdateLevelTextAnchor(level)
+	if ( level >= 100 ) then
+		PlayerLevelText:SetPoint("CENTER", PlayerFrameTexture, "CENTER", -62, -17);
+	else
+		PlayerLevelText:SetPoint("CENTER", PlayerFrameTexture, "CENTER", -61, -17);
+	end
+end
+
 function PlayerFrame_Update ()
 	if ( UnitExists("player") ) then
-		PlayerLevelText:SetText(UnitLevel(PlayerFrame.unit));
+		local level = UnitLevel(PlayerFrame.unit);
+		local effectiveLevel = UnitEffectiveLevel(PlayerFrame.unit);
+		if ( effectiveLevel ~= level ) then
+			PlayerLevelText:SetVertexColor(0.1, 1.0, 0.1, 1.0);
+		else
+			PlayerLevelText:SetVertexColor(1.0, 0.82, 0.0, 1.0);
+		end
+		PlayerFrame_UpdateLevelTextAnchor(effectiveLevel);
+		PlayerLevelText:SetText(effectiveLevel);
 		PlayerFrame_UpdatePartyLeader();
 		PlayerFrame_UpdatePvPStatus();
 		PlayerFrame_UpdateStatus();
@@ -110,6 +132,16 @@ function PlayerFrame_UpdatePvPStatus()
 			PlaySound("igPVPUpdate");
 		end
 		PlayerPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-"..factionGroup);
+
+		-- ugly special case handling for mercenary mode
+		if ( UnitIsMercenary("player") ) then
+			if ( factionGroup == "Horde" ) then
+				PlayerPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-Alliance");
+			elseif ( factionGroup == "Alliance" ) then
+				PlayerPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-Horde");
+			end
+		end
+		
 		PlayerPVPIcon:Show();
 
 		-- Setup newbie tooltip
@@ -130,7 +162,7 @@ function PlayerFrame_OnEvent(self, event, ...)
 	local arg1, arg2, arg3, arg4, arg5 = ...;
 	if ( event == "UNIT_LEVEL" ) then
 		if ( arg1 == "player" ) then
-			PlayerLevelText:SetText(UnitLevel(self.unit));
+			PlayerFrame_Update();
 		end
 	elseif ( event == "UNIT_COMBAT" ) then
 		if ( arg1 == self.unit ) then
@@ -775,6 +807,7 @@ function PlayerFrame_AttachCastBar()
 	local petCastBar = PetCastingBarFrame;
 	-- player
 	castBar.ignoreFramePositionManager = true;
+	castBar:SetAttribute("ignoreFramePositionManager", true);
 	CastingBarFrame_SetLook(castBar, "UNITFRAME");
 	castBar:ClearAllPoints();
 	castBar:SetPoint("LEFT", PlayerFrame, 78, 0);
@@ -786,6 +819,7 @@ function PlayerFrame_AttachCastBar()
 	petCastBar:SetPoint("TOP", castBar, "TOP", 0, 0);
 	
 	PlayerFrame_AdjustAttachments();
+	UIParent_ManageFramePositions();
 end
 
 function PlayerFrame_DetachCastBar()
@@ -793,6 +827,7 @@ function PlayerFrame_DetachCastBar()
 	local petCastBar = PetCastingBarFrame;
 	-- player
 	castBar.ignoreFramePositionManager = nil;
+	castBar:SetAttribute("ignoreFramePositionManager", false);
 	CastingBarFrame_SetLook(castBar, "CLASSIC");
 	castBar:ClearAllPoints();
 	-- pet

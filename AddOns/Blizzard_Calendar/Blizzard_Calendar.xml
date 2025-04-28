@@ -500,6 +500,7 @@
 			<OnEvent function="CalendarFrame_OnEvent"/>
 			<OnShow function="CalendarFrame_OnShow"/>
 			<OnHide function="CalendarFrame_OnHide"/>
+			<OnMouseWheel function="CalendarFrame_OnMouseWheel"/>
 		</Scripts>
 	</Frame>
 
@@ -1083,10 +1084,10 @@
 					</Anchor>
 				</Anchors>
 			</Frame>
-			<Frame name="CalendarCreateEventRepeatOptionDropDown" inherits="UIDropDownMenuTemplate" hidden="true">
+			<Frame name="CalendarCreateEventDifficultyOptionDropDown" inherits="UIDropDownMenuTemplate">
 				<Anchors>
 					<Anchor point="TOPLEFT">
-						<Offset x="180" y="-114"/>
+						<Offset x="160" y="-114"/>
 					</Anchor>
 				</Anchors>
 			</Frame>
@@ -1201,7 +1202,7 @@
 							<OnClick function="CalendarCreateEventAutoApproveCheck_OnClick"/>
 							<OnEnter>
 								GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-								GameTooltip:SetText(CALENDAR_TOOLTIP_AUTOAPPROVE, nil, nil, nil, nil, 1);
+								GameTooltip:SetText(CALENDAR_TOOLTIP_AUTOAPPROVE, nil, nil, nil, nil, true);
 								GameTooltip:Show();
 								--GameTooltip_AddNewbieTip(self, nil, 1.0, 1.0, 1.0, CALENDAR_TOOLTIP_AUTOAPPROVE, 1);
 							</OnEnter>
@@ -1220,7 +1221,7 @@
 							<OnClick function="CalendarCreateEventLockEventCheck_OnClick"/>
 							<OnEnter>
 								GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-								GameTooltip:SetText(CALENDAR_TOOLTIP_LOCKEVENT, nil, nil, nil, nil, 1);
+								GameTooltip:SetText(CALENDAR_TOOLTIP_LOCKEVENT, nil, nil, nil, nil, true);
 								GameTooltip:Show();
 								--GameTooltip_AddNewbieTip(self, nil, 1.0, 1.0, 1.0, CALENDAR_TOOLTIP_LOCKEVENT, 1);
 							</OnEnter>
@@ -1317,7 +1318,7 @@
 					<OnUpdate function="CalendarCreateEventMassInviteButton_OnUpdate"/>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-						GameTooltip:SetText(CALENDAR_TOOLTIP_MASSINVITE, nil, nil, nil, nil, 1);
+						GameTooltip:SetText(CALENDAR_TOOLTIP_MASSINVITE, nil, nil, nil, nil, true);
 						GameTooltip:Show();
 						--GameTooltip_AddNewbieTip(self, nil, 1.0, 1.0, 1.0, CALENDAR_TOOLTIP_MASSINVITE, 1);
 					</OnEnter>

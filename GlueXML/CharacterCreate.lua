@@ -69,6 +69,21 @@ RACE_ICON_TCOORDS = {
 	["PANDAREN_MALE"]	= {0.750, 0.875, 0, 0.25},
 	["PANDAREN_FEMALE"]	= {0.750, 0.875, 0.5, 0.75},
 };
+
+
+RAID_CLASS_COLORS = {
+	["HUNTER"] = { r = 0.67, g = 0.83, b = 0.45, colorStr = "ffabd473" },
+	["WARLOCK"] = { r = 0.58, g = 0.51, b = 0.79, colorStr = "ff9482c9" },
+	["PRIEST"] = { r = 1.0, g = 1.0, b = 1.0, colorStr = "ffffffff" },
+	["PALADIN"] = { r = 0.96, g = 0.55, b = 0.73, colorStr = "fff58cba" },
+	["MAGE"] = { r = 0.41, g = 0.8, b = 0.94, colorStr = "ff69ccf0" },
+	["ROGUE"] = { r = 1.0, g = 0.96, b = 0.41, colorStr = "fffff569" },
+	["DRUID"] = { r = 1.0, g = 0.49, b = 0.04, colorStr = "ffff7d0a" },
+	["SHAMAN"] = { r = 0.0, g = 0.44, b = 0.87, colorStr = "ff0070de" },
+	["WARRIOR"] = { r = 0.78, g = 0.61, b = 0.43, colorStr = "ffc79c6e" },
+	["DEATHKNIGHT"] = { r = 0.77, g = 0.12 , b = 0.23, colorStr = "ffc41f3b" },
+	["MONK"] = { r = 0.0, g = 1.00 , b = 0.59, colorStr = "ff00ff96" },
+};
 CLASS_ICON_TCOORDS = {
 	["WARRIOR"]	= {0, 0.25, 0, 0.25},
 	["MAGE"]	= {0.25, 0.49609375, 0, 0.25},
@@ -86,7 +101,7 @@ MODEL_CAMERA_CONFIG = {
 	[2] = { 
 		["Draenei"] = { tx = 0.191, ty = -0.015, tz = 2.302, cz = 2.160, distance = 1.116, light =  0.80 },
 		["NightElf"] = { tx = 0.095, ty = -0.008, tz = 2.240, cz = 2.045, distance = 0.830, light =  0.85 },
-		["Scourge"] = { tx = 0.094, ty = -0.172, tz = 1.675, cz = 1.478, distance = 0.691, light =  0.80 },
+		["Scourge"] = { tx = 0.094, ty = -0.172, tz = 1.675, cz = 1.478, distance = 0.726, light =  0.80 },
 		["Orc"] = { tx = 0.346, ty = -0.001, tz = 1.878, cz = 1.793, distance = 1.074, light =  0.80 },
 		["Gnome"] = { tx = 0.051, ty = 0.015, tz = 0.845, cz = 0.821, distance = 0.821, light =  0.85 },
 		["Dwarf"] = { tx = 0.037, ty = 0.009, tz = 1.298, cz = 1.265, distance = 0.839, light =  0.85 },
@@ -124,7 +139,12 @@ CHAR_CUSTOMIZE_HAIR_COLOR = 4;
 
 function CharacterCreate_OnLoad(self)
 	self:RegisterEvent("RANDOM_CHARACTER_NAME_RESULT");
-	self:RegisterEvent("GLUE_UPDATE_EXPANSION_LEVEL");
+	self:RegisterEvent("UPDATE_EXPANSION_LEVEL");
+	self:RegisterEvent("CHARACTER_CREATION_RESULT");
+	self:RegisterEvent("CUSTOMIZE_CHARACTER_STARTED");
+	self:RegisterEvent("CUSTOMIZE_CHARACTER_RESULT");
+	self:RegisterEvent("RACE_FACTION_CHANGE_STARTED");
+	self:RegisterEvent("RACE_FACTION_CHANGE_RESULT");
 
 	self:SetSequence(0);
 	self:SetCamera(0);
@@ -146,16 +166,15 @@ function CharacterCreate_OnLoad(self)
 	CharacterCreateNameEdit:SetBackdropBorderColor(backdropColor[1], backdropColor[2], backdropColor[3]);
 	CharacterCreateNameEdit:SetBackdropColor(backdropColor[4], backdropColor[5], backdropColor[6]);
 
-	if( IsBlizzCon() ) then
-		CharCreateBackButton:Disable();
-	end
-
 	CharacterCreateFrame.state = "CLASSRACE";
 	
 	CharCreatePreviewFrame.previews = { };
 end
 
 function CharacterCreate_OnShow()
+	InitializeCharacterScreenData();
+	SetInCharacterCreate(true);
+
 	for i=1, MAX_CLASSES_PER_RACE, 1 do
 		local button = _G["CharCreateClassButton"..i];
 		button:Enable();
@@ -186,7 +205,7 @@ function CharacterCreate_OnShow()
 	
 	CharacterCreateEnumerateRaces(GetAvailableRaces());
 	SetCharacterRace(GetSelectedRace());
-	
+		
 	CharacterCreateEnumerateClasses(GetAvailableClasses());
 	local _,_,index = GetSelectedClass();
 	SetCharacterClass(index);
@@ -203,64 +222,10 @@ function CharacterCreate_OnShow()
 
 	SetFaceCustomizeCamera(false);
 
-	CharacterCreateFrame_UpdateRecruitInfo(self);
+	CharacterCreateFrame_UpdateRecruitInfo();
 	
 	if( IsBlizzCon() ) then
 		BLIZZCON_IS_A_GO = false;
-		CharacterCreateAllianceLabel:Hide();
-		CharacterCreateHordeLabel:Hide();
-		CharacterCreateGender:Hide();
-		CharCreateRandomizeButton:Hide();
-		CharacterCreateRandomName:Hide();
-		CharacterCreateGenderButtonMale:Hide();
-		CharacterCreateGenderButtonFemale:Hide();
-		CharacterCreateBanners:Hide();
-		CharacterCreateOuterBorder1:Hide();
-		CharacterCreateOuterBorder2:Hide();
-		CharacterCreateOuterBorder3:Hide();
-		CharacterCreateConfigurationBackground:Hide();
-
-		CharCreateBlizzconFrame:Show();
-		CharCreateBlizzconFrame2:Show();
-
-		for i=1, MAX_RACES, 1 do
-			_G["CharacterCreateRaceButton"..i]:Hide();
-		end
-		
-		for i=1, NUM_CHAR_CUSTOMIZATIONS, 1 do
-			_G["CharacterCustomizationButtonFrame"..i]:Hide();
-		end
-
---		CharacterCreateClassName:Hide();
---		CharacterCreateClassName:ClearAllPoints();
---		CharacterCreateClassName:SetPoint("BOTTOM", CharCreateBlizzconFrame, "BOTTOM", 0, 15);
---		CharacterCreateClassName:SetFontObject(GlueFontNormalGigantor);
-		
-		local previous = nil;
-		for i=1, MAX_CLASSES_PER_RACE, 1 do
-			local button = _G["CharacterCreateClassButton"..i];
-			if ( i == 2 or i == 6 or i == 9 or i == 11 ) then
-				button:Hide();
-			else
-				button:SetSize(64,64);
-				button:GetNormalTexture():SetSize(64,64);
-				button:GetPushedTexture():SetSize(64,64);
-				_G["CharacterCreateClassButton"..i.."BevelEdge"]:SetSize(64,64);
-				_G["CharacterCreateClassButton"..i.."Shadow"]:SetSize(84,84);
-				_G["CharacterCreateClassButton"..i.."DisableTexture"]:SetSize(60,60);
-				button:ClearAllPoints();
-				if ( i == 1 ) then
-					button:SetPoint("BOTTOM", CharCreateBlizzconFrame, "BOTTOMLEFT", 70, 20);
---				elseif ( i == 5 ) then
---					button:SetPoint("BOTTOM", CharCreateBlizzconFrame, "TOP", 50, 30);
---				elseif ( i == 10 ) then
---					button:SetPoint("BOTTOM", CharCreateBlizzconFrame, "TOP", 0, 290);
-				else
-					button:SetPoint("BOTTOM", previous, "TOP", 0, 20)
-				end
-				previous = button;
-			end
-		end
 	end
 end
 
@@ -273,25 +238,60 @@ function CharacterCreate_OnHide()
 	-- character previews will need to be redone if coming back to character create. One reason is all the memory used for
 	-- tracking the frames (on the c side) will get released if the user returns to the login screen
 	CharCreatePreviewFrame.rebuildPreviews = true;
+	SetInCharacterCreate(false);
 end
 
-function CharacterCreate_OnEvent(event, arg1, arg2, arg3)
+function CharacterCreate_OnEvent(event, ...)
 	if ( event == "RANDOM_CHARACTER_NAME_RESULT" ) then
-		if ( arg1 == 0 ) then
+		local success, name = ...;
+		if ( not success ) then
 			-- Failed.  Generate a random name locally.
 			CharacterCreateNameEdit:SetText(GenerateRandomName());
 		else
 			-- Succeeded.  Use what the server sent.
-			CharacterCreateNameEdit:SetText(arg2);
+			CharacterCreateNameEdit:SetText(name);
 		end
 		CharacterCreateRandomName:Enable();
 		CharCreateOkayButton:Enable();
 		PlaySound("gsCharacterCreationLook");
-	elseif ( event == "GLUE_UPDATE_EXPANSION_LEVEL" ) then
+	elseif ( event == "UPDATE_EXPANSION_LEVEL" ) then
 		-- Expansion level changed while online, so enable buttons as needed
 		if ( CharacterCreateFrame:IsShown() ) then
 			CharacterCreateEnumerateRaces(GetAvailableRaces());
 			CharacterCreateEnumerateClasses(GetAvailableClasses());
+		end
+	elseif ( event == "CHARACTER_CREATION_RESULT" ) then
+		local success, errorCode = ...;
+		if ( success ) then
+			CharacterSelect.selectLast = true;
+			GlueParent_SetScreen("charselect");
+		else
+			GlueDialog_Show("OKAY", _G[errorCode]);
+		end
+	elseif ( event == "CUSTOMIZE_CHARACTER_STARTED" ) then
+		GlueDialog_Show("PAID_SERVICE_IN_PROGRESS", CHAR_CUSTOMIZE_IN_PROGRESS);
+	elseif ( event == "CUSTOMIZE_CHARACTER_RESULT" ) then
+		local success, err = ...;
+		if ( success ) then
+			GlueDialog_Hide("PAID_SERVICE_IN_PROGRESS");
+			GlueParent_SetScreen("charselect");
+		else
+			GlueDialog_Show("OKAY", _G[err]);
+		end
+	elseif ( event == "RACE_FACTION_CHANGE_STARTED" ) then
+		local changeType = ...;
+		if ( changeType == "RACE" ) then
+			GlueDialog_Show("PAID_SERVICE_IN_PROGRESS", RACE_CHANGE_IN_PROGRESS);
+		elseif ( changeType == "FACTION" ) then
+			GlueDialog_Show("PAID_SERVICE_IN_PROGRESS", FACTION_CHANGE_IN_PROGRESS);
+		end
+	elseif ( event == "RACE_FACTION_CHANGE_RESULT" ) then
+		local success, err = ...;
+		if ( success ) then
+			GlueDialog_Hide("PAID_SERVICE_IN_PROGRESS");
+			GlueParent_SetScreen("charselect");
+		else
+			GlueDialog_Show("OKAY", _G[err]);
 		end
 	end
 end
@@ -326,7 +326,7 @@ local function ShowGlowyDialog(dialog, text, showOKButton)
 	dialog:Show();
 end
 
-function CharacterCreateFrame_UpdateRecruitInfo(self)
+function CharacterCreateFrame_UpdateRecruitInfo()
 	local active, faction = C_RecruitAFriend.GetRecruitInfo();
 	if ( active and not PAID_SERVICE_TYPE ) then
 		if ( faction == FACTION_GROUP_HORDE ) then
@@ -355,9 +355,7 @@ function CharacterCreateEnumerateRaces(...)
 		message("Too many races!  Update MAX_RACES");
 		return;
 	end
-	local coords;
-	local index = 1;
-	local button;
+
 	local gender;
 	local selectedSex = GetSelectedSex();
 	if ( selectedSex == SEX_MALE ) then
@@ -365,19 +363,20 @@ function CharacterCreateEnumerateRaces(...)
 	else
 		gender = "FEMALE";
 	end
+
+	local index = 1;
 	for i=1, select("#", ...), 3 do
-		local name = select(i, ...);
-		coords = RACE_ICON_TCOORDS[strupper(select(i+1, ...).."_"..gender)];
-		_G["CharCreateRaceButton"..index.."NormalTexture"]:SetTexCoord(coords[1], coords[2], coords[3], coords[4]);
-		_G["CharCreateRaceButton"..index.."PushedTexture"]:SetTexCoord(coords[1], coords[2], coords[3], coords[4]);
-		button = _G["CharCreateRaceButton"..index];
+		local button = _G["CharCreateRaceButton"..index];
 		if ( not button  ) then
 			return;
 		end
-		if( not IsBlizzCon() ) then
-			button:Show();
-		end
+		
+		local name = select(i, ...);
+		local coords = RACE_ICON_TCOORDS[strupper(select(i+1, ...).."_"..gender)];
+		_G["CharCreateRaceButton"..index.."NormalTexture"]:SetTexCoord(coords[1], coords[2], coords[3], coords[4]);
+		_G["CharCreateRaceButton"..index.."PushedTexture"]:SetTexCoord(coords[1], coords[2], coords[3], coords[4]);
 		button.nameFrame.text:SetText(name);
+
 		if ( select(i+2, ...) == 1 ) then
 			button:Enable();
 			SetButtonDesaturated(button);
@@ -385,15 +384,15 @@ function CharacterCreateEnumerateRaces(...)
 			button.tooltip = name;
 		else
 			button:Disable();
-			SetButtonDesaturated(button, 1);
+			SetButtonDesaturated(button, true);
 			button.name = name;
 			local disabledReason = _G[strupper(select(i+1, ...).."_".."DISABLED")];
-			if ( disabledReason ) then
-				button.tooltip = name.."|n"..disabledReason;
-			else
-				button.tooltip = nil;
+				if ( disabledReason ) then
+					button.tooltip = name.."|n"..disabledReason;
+				else
+					button.tooltip = nil;
+				end
 			end
-		end
 		index = index + 1;
 	end
 	for i=CharacterCreate.numRaces + 1, MAX_RACES, 1 do
@@ -425,19 +424,15 @@ function CharacterCreateEnumerateClasses(...)
 				_G["CharCreateClassButton"..index.."DisableTexture"]:Hide();
 			else
 				button:Disable();
-				SetButtonDesaturated(button, 1);
+				SetButtonDesaturated(button, true);
 				button.tooltip = CLASS_DISABLED;
 				_G["CharCreateClassButton"..index.."DisableTexture"]:Show();
 			end
 		else
 			button:Disable();
-			SetButtonDesaturated(button, 1);
+			SetButtonDesaturated(button, true);
 			button.tooltip = _G[strupper(select(i+1, ...).."_".."DISABLED")];
 			_G["CharCreateClassButton"..index.."DisableTexture"]:Show();
-		end
-		if( IsBlizzCon() ) then
-			button.text:SetText(select(i, ...));
-			button.text:Show();
 		end
 		index = index + 1;
 	end
@@ -447,17 +442,13 @@ function CharacterCreateEnumerateClasses(...)
 end
 
 function SetCharacterRace(id)
-	if( IsBlizzCon() ) then
-		id = 7;
-	end
-
 	CharacterCreate.selectedRace = id;
 	for i=1, CharacterCreate.numRaces, 1 do
 		local button = _G["CharCreateRaceButton"..i];
 		if ( i == id ) then
-			button:SetChecked(1);
+			button:SetChecked(true);
 		else
-			button:SetChecked(0);
+			button:SetChecked(false);
 		end
 	end
 
@@ -534,7 +525,7 @@ function SetCharacterRace(id)
 		CharCreateRaceInfoFrame.scrollFrame.scrollChild.bulletText:SetText(abilityText);
 	else
 		CharCreateRaceInfoFrame.scrollFrame.scrollChild.bulletText:SetText("");
-	end	
+	end
 
 	-- Altered form
 	if (HasAlteredForm()) then
@@ -560,12 +551,9 @@ function SetCharacterClass(id)
 	for i=1, CharacterCreate.numClasses, 1 do
 		local button = _G["CharCreateClassButton"..i];
 		if ( i == id ) then
-			button:SetChecked(1);
-			if( IsBlizzCon() ) then
-				button.selection:Show();
-			end
+			button:SetChecked(true);
 		else
-			button:SetChecked(0);
+			button:SetChecked(false);
 			button.selection:Hide();
 		end
 	end
@@ -660,7 +648,7 @@ function CharacterCreate_Back()
 
 	PlaySound("gsCharacterCreationCancel");
 	CHARACTER_SELECT_BACK_FROM_CREATE = true;
-	SetGlueScreen("charselect");
+	GlueParent_SetScreen("charselect");
 end
 
 function CharacterCreate_Forward()
@@ -723,7 +711,7 @@ function CharCreateCustomizationFrame_OnShow ()
 			_G["CharCreateCustomizationButton"..i]:Hide();
 		else
 			_G["CharCreateCustomizationButton"..i]:Show();
-			_G["CharCreateCustomizationButton"..i]:SetChecked(0); -- we will handle default selection
+			_G["CharCreateCustomizationButton"..i]:SetChecked(false); -- we will handle default selection
 			-- this must be done since a selected button can 'disappear' when swapping genders
 			if ( isDefaultSet == 0 and CharacterCreateFrame.customizationType == i) then
 				isDefaultSet = 1;
@@ -741,7 +729,7 @@ function CharCreateCustomizationFrame_OnShow ()
 		CharacterCreateFrame.customizationType = lastGood;
 		checkedButton = lastGood;
 	end
-	_G["CharCreateCustomizationButton"..checkedButton]:SetChecked(1);
+	_G["CharCreateCustomizationButton"..checkedButton]:SetChecked(true);
 
 	if (resize > 0) then
 	-- we need to resize and remap the banner texture
@@ -770,10 +758,10 @@ function CharacterClass_OnClick(self, id)
 			SetCharacterRace(GetSelectedRace());
 			CharacterChangeFixup();
 		else
-			self:SetChecked(1);
+			self:SetChecked(true);
 		end
 	else
-		self:SetChecked(0);
+		self:SetChecked(false);
 	end
 end
 
@@ -786,37 +774,34 @@ function CharacterRace_OnClick(self, id, forceSelect)
 			SetCharacterGender(GetSelectedSex());
 			SetCharacterCreateFacing(-15);
 			CharacterCreateEnumerateClasses(GetAvailableClasses());
-			local _,_,classIndex = GetSelectedClass();
-			if ( PAID_SERVICE_TYPE ) then
-				classIndex = PaidChange_GetCurrentClassIndex();
-				SetSelectedClass(classIndex);	-- selecting a race would have changed class to default
-			end
-			SetCharacterClass(classIndex);
+				local _,_,classIndex = GetSelectedClass();
+				if ( PAID_SERVICE_TYPE ) then
+					classIndex = PaidChange_GetCurrentClassIndex();
+					SetSelectedClass(classIndex);	-- selecting a race would have changed class to default
+				end
+				SetCharacterClass(classIndex);
 			
 			-- Hair customization stuff
 			CharacterCreate_UpdateHairCustomization();
 				
 			CharacterChangeFixup();
 		else
-			self:SetChecked(1);
+			self:SetChecked(true);
 		end
 	else
-		self:SetChecked(0);
+		self:SetChecked(false);
 	end
 end
 
 function SetCharacterGender(sex)
-	if( IsBlizzCon() ) then
-		sex = 2;
-	end
 	local gender;
 	SetSelectedSex(sex);
 	if ( sex == SEX_MALE ) then
-		CharCreateMaleButton:SetChecked(1);
-		CharCreateFemaleButton:SetChecked(0);
+		CharCreateMaleButton:SetChecked(true);
+		CharCreateFemaleButton:SetChecked(false);
 	else
-		CharCreateMaleButton:SetChecked(0);
-		CharCreateFemaleButton:SetChecked(1);
+		CharCreateMaleButton:SetChecked(false);
+		CharCreateFemaleButton:SetChecked(true);
 	end
 
 	-- Update race images to reflect gender
@@ -983,9 +968,9 @@ end
 function CharCreateSelectCustomizationType(newType)
 	-- deselect previous type selection
 	if ( CharacterCreateFrame.customizationType and CharacterCreateFrame.customizationType ~= newType ) then
-		_G["CharCreateCustomizationButton"..CharacterCreateFrame.customizationType]:SetChecked(0);
+		_G["CharCreateCustomizationButton"..CharacterCreateFrame.customizationType]:SetChecked(false);
 	end
-	_G["CharCreateCustomizationButton"..newType]:SetChecked(1);
+	_G["CharCreateCustomizationButton"..newType]:SetChecked(true);
 	CharacterCreateFrame.customizationType = newType;
 	CharCreate_ResetFeaturesDisplay();
 
@@ -1285,7 +1270,7 @@ function PandarenFactionButtons_Show()
 	local _, faction = PaidChange_GetCurrentFaction();
 	-- deselect first in case of multiple pandaren faction changes
 	PandarenFactionButtons_ClearSelection();
-	frame[faction.."Button"]:SetChecked(1);
+	frame[faction.."Button"]:SetChecked(true);
 	-- show the frame on top of the normal pandaren button
 	frame:Show();
 	frame:SetFrameLevel(frame.PandarenButton:GetFrameLevel() + 2);
@@ -1312,8 +1297,8 @@ function PandarenFactionButtons_SetTextures()
 end
 
 function PandarenFactionButtons_ClearSelection()
-	CharCreatePandarenFactionFrame.AllianceButton:SetChecked(0);
-	CharCreatePandarenFactionFrame.HordeButton:SetChecked(0);
+	CharCreatePandarenFactionFrame.AllianceButton:SetChecked(false);
+	CharCreatePandarenFactionFrame.HordeButton:SetChecked(false);
 end
 
 function PandarenFactionButtons_GetSelectedFaction()
@@ -1326,6 +1311,6 @@ end
 
 function PandarenFactionButton_OnClick(self)
 	PandarenFactionButtons_ClearSelection();
-	self:SetChecked(1);
+	self:SetChecked(true);
 	CharacterRace_OnClick(CharCreatePandarenFactionFrame.PandarenButton, CharCreatePandarenFactionFrame.PandarenButton:GetID(), true);
 end

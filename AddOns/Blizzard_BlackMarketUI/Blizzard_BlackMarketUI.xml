@@ -173,6 +173,15 @@
 							</Anchors>
 						</FontString>
 					</Layer>
+					<Layer level="OVERLAY">
+						<Texture parentKey="IconBorder" file="Interface\Common\WhiteIconFrame" hidden="true">
+							<Size x="34" y="34"/>
+							<Anchors>
+								<Anchor point="CENTER" x="0" y="0"/>
+							</Anchors>
+							<Color r="0" g="0.8" b="1"/>
+						</Texture>
+					</Layer>
 				</Layers>
 				<Scripts>
 					<OnEnter>
@@ -521,7 +530,7 @@
 							</OnClick>
 							<OnEnter>
 								GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-								GameTooltip:SetText(DISPLAY_ON_CHAR_TOOLTIP, nil, nil, nil, nil, 1);
+								GameTooltip:SetText(DISPLAY_ON_CHAR_TOOLTIP, nil, nil, nil, nil, true);
 							</OnEnter>
 							<OnLeave function="GameTooltip_Hide"/>
 						</Scripts>
@@ -678,6 +687,15 @@
 										<Anchor point="TOPLEFT" x="0" y="-2"/>
 									</Anchors>
 								</FontString>
+							</Layer>
+							<Layer level="OVERLAY">
+								<Texture parentKey="IconBorder" file="Interface\Common\WhiteIconFrame" hidden="true">
+									<Size x="35" y="35"/>
+									<Anchors>
+										<Anchor point="CENTER" x="0" y="0"/>
+									</Anchors>
+									<Color r="0" g="0.8" b="1"/>
+								</Texture>
 							</Layer>
 						</Layers>
 						<Scripts>

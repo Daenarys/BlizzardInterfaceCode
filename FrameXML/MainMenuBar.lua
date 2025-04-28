@@ -65,11 +65,23 @@ function MainMenuBar_OnEvent(self, event, ...)
 end
 
 function MainMenuBarVehicleLeaveButton_OnLoad(self)
+	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	self:RegisterEvent("UPDATE_BONUS_ACTIONBAR");
 	self:RegisterEvent("UPDATE_MULTI_CAST_ACTIONBAR");
 	self:RegisterEvent("UNIT_ENTERED_VEHICLE");
 	self:RegisterEvent("UNIT_EXITED_VEHICLE");
 	self:RegisterEvent("VEHICLE_UPDATE");
+end
+
+function MainMenuBarVehicleLeaveButton_OnEnter(self)
+	if ( UnitOnTaxi("player") ) then
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+		GameTooltip:SetText(TAXI_CANCEL, 1, 1, 1);
+		GameTooltip:AddLine(TAXI_CANCEL_DESCRIPTION, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
+		GameTooltip:Show();
+	else
+		GameTooltip_AddNewbieTip(self, LEAVE_VEHICLE, 1.0, 1.0, 1.0, nil);
+	end
 end
 
 function MainMenuBarVehicleLeaveButton_OnEvent(self, event, ...)
@@ -90,13 +102,29 @@ function MainMenuBarVehicleLeaveButton_Update()
 		end
 
 		MainMenuBarVehicleLeaveButton:Show();
+		MainMenuBarVehicleLeaveButton:Enable();
 		ShowPetActionBar(true);
 	else
+		MainMenuBarVehicleLeaveButton:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]], "ADD");
+		MainMenuBarVehicleLeaveButton:UnlockHighlight();
 		MainMenuBarVehicleLeaveButton:Hide();
 		ShowPetActionBar(true);
 	end
 
 	UIParent_ManageFramePositions();
+end
+
+function MainMenuBarVehicleLeaveButton_OnClicked(self)
+	if ( UnitOnTaxi("player") ) then
+		TaxiRequestEarlyLanding();
+		
+		-- Show that the request for landing has been received.
+		self:Disable();
+		self:SetHighlightTexture([[Interface\Buttons\CheckButtonHilight]], "ADD");
+		self:LockHighlight();
+	else
+		VehicleExit();
+	end
 end
 
 function ExhaustionTick_OnLoad(self)
@@ -288,6 +316,9 @@ local MovieList = {
   { 23 },
   -- Movie sequence 5 = MP
   { 115 },
+  -- Movie sequence 6 = WoD
+  -- TODO change movie ID when it is available
+  { 115 },
 }
 
 function MainMenu_GetMovieDownloadProgress(id)
@@ -307,13 +338,6 @@ function MainMenu_GetMovieDownloadProgress(id)
 	return anyInProgress, allDownloaded, allTotal;
 end
 
--- We want to save which movies were downloading when the player logged in so that we can continue to show
--- those movies after the download finishes
-for i, movieList in next, MovieList do
-	local inProgress = MainMenu_GetMovieDownloadProgress(i);
-	movieList.inProgress = inProgress;
-end
-
 local ipTypes = { "IPv4", "IPv6" }
 
 function MainMenuBarPerformanceBarFrame_OnEnter(self)
@@ -330,7 +354,7 @@ function MainMenuBarPerformanceBarFrame_OnEnter(self)
 	GameTooltip:AddLine(" ");
 	GameTooltip:AddLine(string, 1.0, 1.0, 1.0);
 	if ( SHOW_NEWBIE_TIPS == "1" ) then
-		GameTooltip:AddLine(NEWBIE_TOOLTIP_LATENCY, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
+		GameTooltip:AddLine(NEWBIE_TOOLTIP_LATENCY, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
 	end
 	GameTooltip:AddLine(" ");
 	
@@ -341,7 +365,7 @@ function MainMenuBarPerformanceBarFrame_OnEnter(self)
 		GameTooltip:AddLine(" ");
 		GameTooltip:AddLine(string, 1.0, 1.0, 1.0);
 		if ( SHOW_NEWBIE_TIPS == "1" ) then
-			GameTooltip:AddLine(NEWBIE_TOOLTIP_PROTOCOLS, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
+			GameTooltip:AddLine(NEWBIE_TOOLTIP_PROTOCOLS, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
 		end
 		GameTooltip:AddLine(" ");
 	end
@@ -350,14 +374,14 @@ function MainMenuBarPerformanceBarFrame_OnEnter(self)
 	string = format(MAINMENUBAR_FPS_LABEL, GetFramerate());
 	GameTooltip:AddLine(string, 1.0, 1.0, 1.0);
 	if ( SHOW_NEWBIE_TIPS == "1" ) then
-		GameTooltip:AddLine(NEWBIE_TOOLTIP_FRAMERATE, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
+		GameTooltip:AddLine(NEWBIE_TOOLTIP_FRAMERATE, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
 	end
 	GameTooltip:AddLine(" ");
 
 	string = format(MAINMENUBAR_BANDWIDTH_LABEL, GetAvailableBandwidth());
 	GameTooltip:AddLine(string, 1.0, 1.0, 1.0);
 	if ( SHOW_NEWBIE_TIPS == "1" ) then
-		GameTooltip:AddLine(NEWBIE_TOOLTIP_BANDWIDTH, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
+		GameTooltip:AddLine(NEWBIE_TOOLTIP_BANDWIDTH, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
 	end
 	GameTooltip:AddLine(" ");
 
@@ -365,27 +389,23 @@ function MainMenuBarPerformanceBarFrame_OnEnter(self)
 	string = format(MAINMENUBAR_DOWNLOAD_PERCENT_LABEL, percent);
 	GameTooltip:AddLine(string, 1.0, 1.0, 1.0);
 	if ( SHOW_NEWBIE_TIPS == "1" ) then
-		GameTooltip:AddLine(NEWBIE_TOOLTIP_DOWNLOAD_PERCENT, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
+		GameTooltip:AddLine(NEWBIE_TOOLTIP_DOWNLOAD_PERCENT, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
 	end
 	
 	-- Downloaded cinematics
 	local firstMovie = true;
 	for i, movieList in next, MovieList do
-		if (movieList.inProgress) then
+		local inProgress, downloaded, total = MainMenu_GetMovieDownloadProgress(i);
+		if (inProgress) then
 			if (firstMovie) then
 				if ( SHOW_NEWBIE_TIPS == "1" ) then
 					-- The "Cinematics" header looks bad when it's next to the newbie tooltip text, so add an extra line break
 					GameTooltip:AddLine(" ");
 				end
-				GameTooltip:AddLine("   "..CINEMATICS, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
+				GameTooltip:AddLine("   "..CINEMATICS, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
 				firstMovie = false;
 			end
-			local inProgress, downloaded, total = MainMenu_GetMovieDownloadProgress(i);
-			if (inProgress) then
-				GameTooltip:AddLine("   "..format(CINEMATIC_DOWNLOAD_FORMAT, _G["CINEMATIC_NAME_"..i], downloaded/total*100), GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, 1);
-			else
-				GameTooltip:AddLine("   "..format(CINEMATIC_DOWNLOAD_FORMAT, _G["CINEMATIC_NAME_"..i], downloaded/total*100), HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1);
-			end
+			GameTooltip:AddLine("   "..format(CINEMATIC_DOWNLOAD_FORMAT, _G["CINEMATIC_NAME_"..i], downloaded/total*100), GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, true);
 		end
 	end
 
@@ -428,7 +448,7 @@ function MainMenuBarPerformanceBarFrame_OnEnter(self)
 		GameTooltip:AddLine("\n");
 		GameTooltip:AddLine(string, 1.0, 1.0, 1.0);
 		if ( SHOW_NEWBIE_TIPS == "1" ) then
-			GameTooltip:AddLine(NEWBIE_TOOLTIP_MEMORY, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
+			GameTooltip:AddLine(NEWBIE_TOOLTIP_MEMORY, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
 		end
 		
 		local size;

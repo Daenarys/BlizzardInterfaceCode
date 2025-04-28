@@ -72,19 +72,22 @@
 					</Anchors>
 				</Texture>
 				<FontString parentKey="SpecName" inherits="GameFontNormalLarge" justifyH="LEFT">
-					<Size>
-						<AbsDimension x="150" y="0"/>
-					</Size>
+					<Size x="150" y="0"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Frame" relativePoint="TOPRIGHT" x="6" y="-8"/>
 					</Anchors>
 				</FontString>
-				<FontString parentKey="RoleName" inherits="GameFontNormal" justifyH="LEFT">
-					<Size>
-						<AbsDimension x="75" y="0"/>
-					</Size>
+				<FontString parentKey="Recommended" inherits="GameFontNormal" justifyH="LEFT" text="CHAR_SPEC_RECOMMENEDED">
+					<Size x="150" y="0"/>
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.Frame" relativePoint="BOTTOMRIGHT" x="6" y="6"/>
+						<Anchor point="TOPLEFT" relativeKey="$parent.SpecName" relativePoint="BOTTOMLEFT" x="0" y="0"/>
+					</Anchors>
+					<Color r="0.1172" g="1.0" b="0.0"/>
+				</FontString>
+				<FontString parentKey="RoleName" inherits="GameFontNormal" justifyH="LEFT">
+					<Size x="75" y="0"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.SpecName" relativePoint="BOTTOMLEFT" x="0" y="0"/>
 					</Anchors>
 					<Color r="0.5" g="0.5" b="0.5"/>
 				</FontString>
@@ -100,7 +103,7 @@
 			</OnClick>
 			<OnEnter>
 				if (self.tooltip) then
-					GlueTooltip:SetOwner(self, "ANCHOR_TOP");
+					GlueTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", 48, -4);
 					GlueTooltip:AddLine(self.tooltip, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1, true);
 					GlueTooltip:Show();
 				end
@@ -188,26 +191,7 @@
 			</Layer>
 		</Layers>
 	</Frame>
-	<Frame name="CharacterServicesProcessingIconTemplate" virtual="true">
-		<Size x="42" y="37"/>
-		<Layers>
-			<Layer level="ARTWORK">
-				<Texture parentKey="Icon" inherits="services-icon-processing" setAllPoints="true"/>
-			</Layer>
-		</Layers>
-		<Scripts>
-			<OnEnter>
-				GlueTooltip:SetOwner(self, -260);
-				GlueTooltip:AddLine(CHARACTER_UPGRADE_PROCESSING, 1.0, 1.0, 1.0);
-				GlueTooltip:AddLine(CHARACTER_SERVICES_PLEASE_WAIT, nil, nil, nil, 1, 1);
-				GlueTooltip:Show();
-			</OnEnter>
-			<OnLeave>
-				GlueTooltip:Hide();
-			</OnLeave>
-		</Scripts>
-	</Frame>
-	<Frame name="CharacterUpgradeSelectCharacterFrame" inherits="CharacterServicesBlockTemplate" hidden="true" frameStrata="DIALOG">
+	<Frame name="CharacterUpgradeSelectCharacterFrame" parent="CharSelectServicesFlowFrame" inherits="CharacterServicesBlockTemplate" hidden="true" frameStrata="DIALOG">
 		<Size x="300" y="250"/>
 		<Frames>
 			<Frame parentKey="ControlsFrame" setAllPoints="true">
@@ -361,7 +345,7 @@
 				</Layers>
 				<Scripts>
 					<OnEnter>
-						GlueTooltip:SetOwner(self, -60);
+						GlueTooltip:SetOwner(self, "ANCHOR_RIGHT", -60);
 						GlueTooltip:AddLine(CHARACTER_UPGRADE_PROFESSION_BOOST, 1, 1, 1, 1, true);
 						GlueTooltip:Show();
 					</OnEnter>
@@ -372,7 +356,7 @@
 			</Frame>
 		</Frames>
 	</Frame>
-	<Frame name="CharacterUpgradeMaxCharactersFrame" hidden="true" frameStrata="DIALOG">
+	<Frame name="CharacterUpgradeMaxCharactersFrame" parent="CharSelectServicesFlowFrame" hidden="true" frameStrata="DIALOG">
 		<Size x="400" y="250"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -398,7 +382,7 @@
 			</Button>
 		</Frames>
 	</Frame>
-	<Frame name="CharacterUpgradeSelectSpecFrame" inherits="CharacterServicesBlockTemplate" hidden="true" frameStrata="DIALOG">
+	<Frame name="CharacterUpgradeSelectSpecFrame" parent="CharSelectServicesFlowFrame" inherits="CharacterServicesBlockTemplate" hidden="true" frameStrata="DIALOG">
 		<Size x="300" y="250"/>
 		<Frames>
 			<Frame parentKey="ControlsFrame" setAllPoints="true">
@@ -412,7 +396,7 @@
 			</Frame>
 		</Frames>
 	</Frame>
-	<Frame name="CharacterUpgradeSelectFactionFrame" inherits="CharacterServicesBlockTemplate" hidden="true" frameStrata="DIALOG">
+	<Frame name="CharacterUpgradeSelectFactionFrame" parent="CharSelectServicesFlowFrame" inherits="CharacterServicesBlockTemplate" hidden="true" frameStrata="DIALOG">
 		<Size x="300" y="150"/>
 		<Frames>
 			<Frame parentKey="ControlsFrame" setAllPoints="true">

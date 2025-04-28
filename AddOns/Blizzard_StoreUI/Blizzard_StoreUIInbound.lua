@@ -15,3 +15,26 @@ end
 function StoreFrame_PreviewFrameIsShown(isShown)
 	StoreFrame:SetAttribute("previewframeshown", isShown);
 end
+
+function StoreFrame_CheckForFree(event)
+	StoreFrame:SetAttribute("checkforfree", event);
+end
+
+function StoreFrame_SetTokenCategory()
+	StoreFrame:SetAttribute("settokencategory");
+end
+
+function StoreFrame_SetGamesCategory()
+	StoreFrame:SetAttribute("setgamescategory");
+end
+
+if (InGlue()) then
+	function StoreFrame_GetVASErrorMessage(guid, errorList)
+		local data = {};
+		data.guid = guid;
+		data.errors = errorList;
+		data.realmName = GetServerName();
+		StoreFrame:SetAttribute("getvaserrormessage", data);
+		return StoreFrame:GetAttribute("vaserrormessageresult");
+	end
+end

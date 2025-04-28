@@ -3,7 +3,7 @@ NUM_PET_STATS = 5;
 
 PETPAPERDOLL_STATCATEGORY_DEFAULTORDER = {
 	"GENERAL",
-	"MELEE",
+	"ATTACK",
 	"SPELL",
 	"DEFENSE",
 };
@@ -120,7 +120,7 @@ function PetPaperDollFrame_Update()
 	end
 	PetModelFrame:SetUnit("pet");
 	if ( UnitCreatureFamily("pet") ) then
-		PetLevelText:SetFormattedText(UNIT_TYPE_LEVEL_TEMPLATE,UnitLevel("pet"),UnitCreatureFamily("pet"));
+		PetLevelText:SetFormattedText(UNIT_TYPE_LEVEL_TEMPLATE, UnitEffectiveLevel("pet"), UnitCreatureFamily("pet"));
 	end
 	CharacterFrameTitleText:SetText(UnitName("pet"));
 	PaperDollFrame_UpdateStats();

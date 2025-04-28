@@ -96,6 +96,34 @@
 		</xs:restriction>
 	</xs:simpleType>
 
+	<xs:simpleType name="KEYVALUETYPE">
+		<xs:restriction base="xs:NMTOKEN">
+			<xs:enumeration value="nil"/>
+			<xs:enumeration value="boolean"/>
+			<xs:enumeration value="number"/>
+			<xs:enumeration value="string"/>
+			<xs:enumeration value="global"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="SCRIPTINHERITTYPE">
+		<xs:restriction base="xs:NMTOKEN">
+			<xs:enumeration value="prepend"/>
+			<xs:enumeration value="append"/>
+			<xs:enumeration value="none"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="FONTALPHABET">
+		<xs:restriction base="xs:NMTOKEN">
+			<xs:enumeration value="roman"/>
+			<xs:enumeration value="korean"/>
+			<xs:enumeration value="simplifiedchinese"/>
+			<xs:enumeration value="traditionalchinese"/>
+			<xs:enumeration value="russian"/>
+		</xs:restriction>
+	</xs:simpleType>
+
 	<xs:element name="AbsValue">
 		<xs:complexType>
 			<xs:attribute name="val" type="xs:int" use="required"/>
@@ -199,6 +227,21 @@
 		<xs:attribute name="orientation" type="ORIENTATION" default="HORIZONTAL"/>
 	</xs:complexType>
 
+	<xs:complexType name="KeyValueType">
+		<xs:attribute name="key" type="xs:string" use="required"/>
+		<xs:attribute name="value" type="xs:string" use="required"/>
+		<xs:attribute name="keyType" type="KEYVALUETYPE" use="optional" default="string"/>
+		<xs:attribute name="type" type="KEYVALUETYPE" use="optional" default="string"/>
+	</xs:complexType>
+
+	<xs:complexType name="KeyValuesType">
+		<xs:sequence>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="KeyValue" type="KeyValueType"/>
+			</xs:choice>
+		</xs:sequence>
+	</xs:complexType>
+
 	<xs:complexType name="AttributeType">
 		<xs:attribute name="name" type="xs:string" use="required"/>
 		<xs:attribute name="type" type="ATTRIBUTETYPE" use="optional" default="string"/>
@@ -283,6 +326,10 @@
 				<xs:element name="OnTooltipSetAchievement" type="ScriptType"/>
 				<xs:element name="OnEnable" type="ScriptType"/>
 				<xs:element name="OnDisable" type="ScriptType"/>
+				<xs:element name="OnArrowPressed" type="ScriptType"/>
+				<xs:element name="OnExternalLink" type="ScriptType"/>
+				<xs:element name="OnButtonUpdate" type="ScriptType"/>
+				<xs:element name="OnError" type="ScriptType"/>
 			</xs:choice>
 		</xs:sequence>
 	</xs:complexType>
@@ -291,6 +338,7 @@
 		<xs:simpleContent>
 			<xs:extension base="xs:string">
 				<xs:attribute name="function" type="xs:string"/>
+				<xs:attribute name="inherit" type="SCRIPTINHERITTYPE" use="optional" default="none"/>
 			</xs:extension>
 		</xs:simpleContent>
 	</xs:complexType>
@@ -312,6 +360,7 @@
 		<xs:attribute name="monochrome" type="xs:boolean" default="false"/>
 		<xs:attribute name="justifyV" type="JUSTIFYVTYPE" default="MIDDLE"/>
 		<xs:attribute name="justifyH" type="JUSTIFYHTYPE" default="CENTER"/>
+		<xs:attribute name="height" type="xs:float"/>
 	</xs:complexType>
 
 	<xs:element name="Font">
@@ -322,6 +371,25 @@
 		</xs:complexType>
 	</xs:element>
 
+	<xs:complexType name="FontMemberType">
+		<xs:sequence minOccurs="1" maxOccurs="1">
+			<xs:element name="Font" type="FontType"/>
+		</xs:sequence>
+		<xs:attribute name="alphabet" type="FONTALPHABET" use="required"/>
+	</xs:complexType>
+	
+	<xs:complexType name="FontFamilyType">
+		<xs:sequence>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="Member" type="FontMemberType"/>
+			</xs:choice>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" use="required"/>
+		<xs:attribute name="virtual" type="xs:boolean" default="false"/>
+	</xs:complexType>
+
+	<xs:element name="FontFamily" type="FontFamilyType"/>
+	
 	<xs:complexType name="LayoutFrameType">
 		<xs:sequence minOccurs="0">
 			<xs:choice maxOccurs="unbounded">
@@ -335,6 +403,7 @@
 										<xs:element name="Offset" type="Dimension"/>
 									</xs:sequence>
 									<xs:attribute name="point" type="FRAMEPOINT" use="required"/>
+									<xs:attribute name="relativeKey" type="xs:string"/>
 									<xs:attribute name="relativeTo" type="xs:string"/>
 									<xs:attribute name="relativePoint" type="FRAMEPOINT"/>
 									<xs:attribute name="x" type="xs:float"/>
@@ -344,6 +413,7 @@
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="KeyValues" type="KeyValuesType"/>
 				<xs:element name="Animations">
 					<xs:complexType>
 						<xs:sequence>
@@ -360,6 +430,7 @@
 		<xs:attribute name="virtual" type="xs:boolean" default="false"/>
 		<xs:attribute name="setAllPoints" type="xs:boolean" default="false"/>
 		<xs:attribute name="hidden" type="xs:boolean" default="false"/>
+		<xs:attribute name="mixin" type="xs:string"/>
 	</xs:complexType>
 	<xs:element name="LayoutFrame" type="LayoutFrameType"/>
 
@@ -412,6 +483,8 @@
 				<xs:attribute name="nonBlocking" type="xs:boolean" default="false"/>
 				<xs:attribute name="horizTile" type="xs:boolean" default="false"/>
 				<xs:attribute name="vertTile" type="xs:boolean" default="false"/>
+				<xs:attribute name="atlas" type="xs:string"/>
+				<xs:attribute name="useAtlasSize" type="xs:boolean"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -672,6 +745,7 @@
 						<xs:restriction base="xs:float"/>
 					</xs:simpleType>
 				</xs:attribute>
+				<xs:attribute name="drawLayer" type="ui:DRAWLAYER" default="ARTWORK"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -793,6 +867,7 @@
 						</xs:complexType>
 					</xs:element>
 					<xs:element ref="Font" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element ref="FontFamily" minOccurs="0" maxOccurs="unbounded"/>
 					<xs:element ref="LayoutFrame" minOccurs="0" maxOccurs="unbounded"/>
 					<xs:element ref="Animation" minOccurs="0" maxOccurs="unbounded"/>
 					<xs:element ref="AnimationGroup" minOccurs="0" maxOccurs="unbounded"/>
@@ -884,6 +959,15 @@
 		</xs:complexContent>
 	</xs:complexType>
 	<xs:element name="TabardModel" type="TabardModelType" substitutionGroup="ui:Frame"/>
+	
+	<xs:complexType name="CinematicModelType">
+		<xs:complexContent>
+			<xs:extension base="ModelType">
+				<xs:attribute name="facing" type="xs:boolean" default="false"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:element name="CinematicModel" type="CinematicModelType" substitutionGroup="ui:Frame"/>
 
 	<xs:complexType name="UnitButtonType">
 		<xs:complexContent>
@@ -897,6 +981,15 @@
 		</xs:complexContent>
 	</xs:complexType>
 	<xs:element name="TaxiRouteFrame" type="TaxiRouteFrameType" substitutionGroup="ui:Frame"/>
+
+	<xs:complexType name="BrowserType">
+		<xs:complexContent>
+			<xs:extension base="FrameType">
+				<xs:attribute name="imefont" type="xs:string"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:element name="Browser" type="BrowserType" substitutionGroup="ui:Frame"/>
 
 	<xs:simpleType name="ANIMLOOPTYPE">
 		<xs:restriction base="xs:NMTOKEN">

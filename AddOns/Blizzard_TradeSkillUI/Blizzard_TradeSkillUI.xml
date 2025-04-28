@@ -44,12 +44,41 @@
 					</OnClick>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-						GameTooltip:AddLine(string.format(SKILLUP_TOOLTIP, self.countText:GetText()), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1, 1);
+						GameTooltip:AddLine(string.format(SKILLUP_TOOLTIP, self.countText:GetText()), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
 						GameTooltip:Show();
 						TradeSkillFrameButton_OnEnter(self:GetParent());
 					</OnEnter>
 					<OnLeave>
 						GameTooltip:Hide();
+						TradeSkillFrameButton_OnLeave(self:GetParent());
+					</OnLeave>
+				</Scripts>
+			</Button>
+			<Button name="$parentLockedIcon" parentKey="lockedicon">
+				<Size x="26" y="16"/>
+				<Anchors>
+					<Anchor point="RIGHT" x="-2" y="0"/>
+				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture name="$parentIcon" file="Interface\LFGFrame\UI-LFG-ICON-LOCK" parentKey="icon">
+							<Size x="16" y="16"/>
+							<Anchors>
+								<Anchor point="RIGHT" x="0" y="-1"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnClick>
+						self:GetParent():Click(button);
+					</OnClick>
+					<OnEnter>
+						TradeSkillFrameLockIcon_OnEnter(self:GetParent());
+						TradeSkillFrameButton_OnEnter(self:GetParent());
+					</OnEnter>
+					<OnLeave>
+						TradeSkillFrameLockIcon_OnLeave(self:GetParent());
 						TradeSkillFrameButton_OnLeave(self:GetParent());
 					</OnLeave>
 				</Scripts>
@@ -247,7 +276,7 @@
 							<OnEnter>
 								if (self.tooltip) then
 									GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-									GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, 1);
+									GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true);
 								end
 							</OnEnter>
 							<OnLeave function="GameTooltip_Hide"/>
@@ -284,7 +313,7 @@
 							<OnEnter>
 								if (self.tooltip) then
 									GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-									GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, 1);
+									GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true);
 								end
 							</OnEnter>
 							<OnLeave function="GameTooltip_Hide"/>
@@ -640,14 +669,16 @@
 									</Anchors>
 								</FontString>
 								<FontString name="TradeSkillRequirementText" inherits="GameFontHighlightSmall" justifyV="TOP" justifyH="LEFT">
-									<Size x="180" y="0"/>
+									<!-- width set in OnLoad -->
 									<Anchors>
 										<Anchor point="TOPLEFT" relativeTo="TradeSkillRequirementLabel" relativePoint="TOPRIGHT" x="4" y="0"/>
 									</Anchors>
 								</FontString>
-								<FontString name="TradeSkillSkillCooldown" inherits="GameFontRedSmall">
+								<FontString name="TradeSkillSkillCooldown" inherits="GameFontRedSmall" justifyH="LEFT">
+									<Size x="240" y="0"/>
 									<Anchors>
-										<Anchor point="TOPLEFT" relativeTo="TradeSkillRequirementLabel" relativePoint="BOTTOMLEFT" x="0" y="0"/>
+										<Anchor point="LEFT" relativeTo="TradeSkillRequirementLabel" relativePoint="LEFT" x="0" y="0"/>
+										<Anchor point="TOP" relativeTo="TradeSkillRequirementText" relativePoint="BOTTOM" x="0" y="0"/>
 									</Anchors>
 								</FontString>
 								<Texture name="TradeSkillDetailHeaderLeft" file="Interface\ClassTrainerFrame\UI-ClassTrainer-DetailHeaderLeft">
@@ -758,7 +789,7 @@
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
-						<FontString name="$parentSkillRank" inherits="GameFontHighlightSmall" justifyH="CENTER">
+						<FontString name="$parentSkillRank" inherits="WhiteNormalNumberFont" justifyH="CENTER">
 							<Size x="0" y="9"/>
 							<Anchors>
 								<Anchor point="CENTER" relativeTo="TradeSkillRankFrame" x="0" y="0"/>
@@ -786,74 +817,17 @@
 				<BarTexture name="$parentBar" file="Interface\PaperDollInfoFrame\UI-Character-Skills-Bar" />
 				<BarColor r="0.25" g="0.25" b="0.75" />
 			</StatusBar>
-			<EditBox name="$parentSearchBox" autoFocus="false">
+			<EditBox name="$parentSearchBox" autoFocus="false" inherits="SearchBoxTemplate">
 				<Size x="180" y="20"/>
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeTo="TradeSkillRankFrame" relativePoint="BOTTOMLEFT" x="8" y="-9"/>
 				</Anchors>
-				<Layers>
-					<Layer level="BACKGROUND">
-						<Texture name="$parentLeft" file="Interface\Common\Common-Input-Border">
-							<Size x="8" y="20"/>
-							<Anchors>
-								<Anchor point="TOPLEFT" x="-5" y="0"/>
-							</Anchors>
-							<TexCoords left="0" right="0.0625" top="0" bottom="0.625"/>
-						</Texture>
-						<Texture name="$parentRight" file="Interface\Common\Common-Input-Border">
-							<Size x="8" y="20"/>
-							<Anchors>
-								<Anchor point="RIGHT" x="0" y="0"/>
-							</Anchors>
-							<TexCoords left="0.9375" right="1.0" top="0" bottom="0.625"/>
-						</Texture>
-						<Texture name="$parentMiddle" file="Interface\Common\Common-Input-Border">
-							<Size x="0" y="20"/>
-							<Anchors>
-								<Anchor point="LEFT" relativeTo="$parentLeft" relativePoint="RIGHT"/>
-								<Anchor point="RIGHT" relativeTo="$parentRight" relativePoint="LEFT"/>
-							</Anchors>
-							<TexCoords left="0.0625" right="0.9375" top="0" bottom="0.625"/>
-						</Texture>
-					</Layer>
-					<Layer level="OVERLAY">
-						<Texture name="$parentSearchIcon" file="Interface\Common\UI-Searchbox-Icon">
-							<Size x="14" y="14"/>
-							<Anchors>
-								<Anchor point="LEFT" y="-2"/>
-							</Anchors>
-							<Color r="0.7" g="0.7" b="0.7" />
-						</Texture>
-					</Layer>
-				</Layers>
 				<Scripts>
 					<OnShow>
-						self:SetText(SEARCH);
-						self:SetFontObject("GameFontDisable");
-						TradeSkillFrameSearchBoxSearchIcon:SetVertexColor(0.6, 0.6, 0.6);
-						self:SetTextInsets(16, 0, 0, 0);
+						self.clearButton:Click();
 					</OnShow>
-					<OnEnterPressed function="EditBox_ClearFocus"/>
-					<OnEscapePressed function="EditBox_ClearFocus"/>
-					<OnTextChanged function="TradeSkillSearch_OnTextChanged"/>
-					<OnEditFocusLost>
-						self:HighlightText(0, 0);
-						if ( self:GetText() == "" ) then
-							self:SetText(SEARCH);
-							self:SetFontObject("GameFontDisable");
-							TradeSkillFrameSearchBoxSearchIcon:SetVertexColor(0.6, 0.6, 0.6);
-						end
-					</OnEditFocusLost>
-					<OnEditFocusGained>
-						self:HighlightText();
-						if ( self:GetText() == SEARCH ) then
-							--self:SetText("");
-							self:SetFontObject("ChatFontSmall");
-							TradeSkillFrameSearchBoxSearchIcon:SetVertexColor(1.0, 1.0, 1.0);
-						end
-					</OnEditFocusGained>
+					<OnTextChanged function="TradeSkillSearch_OnTextChanged" inherit="prepend"/>
 				</Scripts>
-				<FontString inherits="ChatFontSmall"/>
 			</EditBox>
 			<Frame name="TradeSkillFilterFrame" >
 				<Size x="1" y="1"/>
@@ -866,13 +840,20 @@
 						<Anchors>
 							<Anchor point="LEFT"/>
 						</Anchors>
+						<Layers>
+							<Layer level="ARTWORK">
+								<Texture parentKey="Icon" file="Interface\ChatFrame\ChatFrameExpandArrow">
+									<Size x="10" y="12"/>
+									<Anchors>
+										<Anchor point="RIGHT" relativeKey="$parent.Right" relativePoint="RIGHT" x="-5"/>
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
 						<Scripts>
 							<OnClick> 
 								ToggleDropDownMenu(1, nil, TradeSkillFilterDropDown, "TradeSkillFilterButton", 74, 15);
 							</OnClick>	
-							<OnLoad>
-								TradeSkillFilterButtonRightArrow:Show();
-							</OnLoad>
 						</Scripts>						
 					</Button>
 					<Frame name="TradeSkillFilterDropDown" inherits="UIDropDownMenuTemplate">
@@ -919,7 +900,7 @@
 							</OnClick>
 							<OnEnter>
 								GameTooltip:SetOwner(self,"ANCHOR_TOPLEFT");
-								GameTooltip:SetText(LINK_TRADESKILL_TOOLTIP, nil, nil, nil, nil, 1);
+								GameTooltip:SetText(LINK_TRADESKILL_TOOLTIP, nil, nil, nil, nil, true);
 								GameTooltip:Show();
 							</OnEnter>
 							<OnLeave function="GameTooltip_Hide"/>
@@ -989,6 +970,7 @@
 				self:RegisterEvent("GUILD_RECIPE_KNOWN_BY_MEMBERS");
 				self:RegisterEvent("DISPLAY_SIZE_CHANGED");
 				TradeSkillFrameInset:SetPoint("TOPLEFT", 4, -81);
+				TradeSkillRequirementText:SetWidth(236 - TradeSkillRequirementLabel:GetWidth());
 				self.filterTbl = {hasMaterials = false, hasSkillUp = false, subClassValue = -1, slotValue = -1 };
 				TradeSkillSetFilter(-1, -1);
 			</OnLoad>
@@ -999,6 +981,7 @@
 			</OnShow>
 			<OnHide>
 				CloseTradeSkill();
+				C_Garrison.CloseGarrisonTradeskillNPC();
 				PlaySound("igCharacterInfoClose");
 			</OnHide>
 			<OnUpdate function="TradeSkillFrame_OnUpdate"/>

@@ -37,8 +37,10 @@ function PossessBar_UpdateState ()
 		cooldown = _G["PossessButton"..i.."Cooldown"];
 		cooldown:Hide();
 
-		button:SetChecked(nil);
+		button:SetChecked(false);
+		button:Enable();
 		icon:SetVertexColor(1.0, 1.0, 1.0);
+		icon:SetDesaturated(false);
 
 		if ( enabled ) then
 			button:Show();
@@ -51,11 +53,20 @@ function PossessBar_UpdateState ()
 end
 
 function PossessButton_OnClick (self)
-	self:SetChecked(nil);
+	self:SetChecked(false);
 
 	local id = self:GetID();
 	if ( id == POSSESS_CANCEL_SLOT ) then
-		if ( UnitControllingVehicle("player") and CanExitVehicle() ) then
+		if ( UnitOnTaxi("player") ) then
+			TaxiRequestEarlyLanding();
+			
+			-- Show that the request for landing has been received.
+			icon = _G["PossessButton"..id.."Icon"];
+			icon:SetDesaturated(true);
+			button = _G["PossessButton"..id];
+			button:SetChecked(true);
+			button:Disable();
+		elseif ( UnitControllingVehicle("player") and CanExitVehicle() ) then
 			VehicleExit();
 		else
 			local texture, name = GetPossessInfo(id);

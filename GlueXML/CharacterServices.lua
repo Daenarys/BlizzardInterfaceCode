@@ -14,8 +14,7 @@
 --  :OnHide():  Check each block for a :OnHide method and call it if it exists.
 --
 -- Flows should have the following members:
---  .Icon - The icon to show on the flow frame when this flow is active.
---  .Text - The label to show next to the icon on the flow frame when this flow is active.
+--  .data - reference to an entry in CharacterUpgrade_Items with display info
 --  .FinishLabel - The label to show on the finish button for this flow.
 --
 -- Blocks are opaque data structures.  Frames that belong to blocks inherit the template for blocks, and all controls used for data collection must be in the ControlsFrame.
@@ -29,8 +28,11 @@
 --  :FormatResult() - Formats the result for display with the result label.  If absent, :GetResult() will be used instead.
 --  :OnHide() - This function is called when a block needs to handle any resetting when the flow is hidden.
 --  :OnAdvance() - This function is called in response to the flow:Advance call if the block needs to handle any logic here.
+--  :OnRewind() - This function is called in response to the flow:Rewind call if the block needs to handle any logic here.
 --  :SkipIf() - Skip this block if a certain result is present
 --  :OnSkip() - If you have a SkipIf() then OnSkip() will perform any actions you need if you are skipped.
+--  :ShowPopupIf() - If you have a .Popup, then ShowPopupIf will perform a check if the popup should appear.
+--  :GetPopupText() - If you have a .Popup, then GetPopupText fetch the text to display.
 --
 -- The following members must be present on a block:
 --  .Back - Show the back button on the flow frame.
@@ -47,17 +49,20 @@
 --    cause the master to change the flow controls.
 --  .SkipOnRewind - This tells the flow to ignore the :IsFinished() result when deciding where to rewind and instead skip this block.
 --  .ExtraOffset - May be set on a block by the flow for the master to add extra vertical offset to a block based on previous results.
+--  .Popup - May be set on a block to potentially show a popup before advancing to the next step.
 --
 -- However a block uses controls to gather data, once it has data and is finished it should call
 -- CharacterServicesMaster_Update() to advance the flow and button states.
 ----
 
-local CHARACTER_UPGRADE_CREATE_CHARACTER = false;
-local CHARACTER_UPGRADE_WAITING_ON_COMPLETE = false;
+CHARACTER_UPGRADE_CREATE_CHARACTER = false;
+CHARACTER_UPGRADE_CREATE_CHARACTER_DATA = nil;
 
-local UPGRADE_MAX_LEVEL = 90;
+local UPGRADE_90_MAX_LEVEL = 90;
+local UPGRADE_100_MAX_LEVEL = 100;
 local UPGRADE_BONUS_LEVEL = 60;
 
+LE_EXPANSION_7_0 = 6;
 CURRENCY_KRW = 3;
 
 local RAID_CLASS_COLORS = {
@@ -154,14 +159,20 @@ local defaultProfessions = {
 	["CLOTH"] = { [1] = 197, [2] = 333 },
 };
 
+GlueDialogTypes["PRODUCT_ASSIGN_TO_TARGET_FAILED"] = {
+	text = BLIZZARD_STORE_INTERNAL_ERROR,
+	button1 = OKAY,
+	escapeHides = true,
+};
+
 local CharacterUpgradeCharacterSelectBlock = { Back = false, Next = false, Finish = false, AutoAdvance = true, ActiveLabel = SELECT_CHARACTER_ACTIVE_LABEL, ResultsLabel = SELECT_CHARACTER_RESULTS_LABEL };
-local CharacterUpgradeSpecSelectBlock = { Back = true, Next = true, Finish = false, ActiveLabel = SELECT_SPEC_ACTIVE_LABEL, ResultsLabel = SELECT_SPEC_RESULTS_LABEL };
+local CharacterUpgradeSpecSelectBlock = { Back = true, Next = true, Finish = false, ActiveLabel = SELECT_SPEC_ACTIVE_LABEL, ResultsLabel = SELECT_SPEC_RESULTS_LABEL, Popup = "BOOST_NOT_RECOMMEND_SPEC_WARNING" };
 local CharacterUpgradeFactionSelectBlock = { Back = true, Next = true, Finish = false, ActiveLabel = SELECT_FACTION_ACTIVE_LABEL, ResultsLabel = SELECT_FACTION_RESULTS_LABEL };
 local CharacterUpgradeEndStep = { Back = true, Next = false, Finish = true, HiddenStep = true, SkipOnRewind = true };
 
-local CharacterServicesFlowPrototype = {};
+CharacterServicesFlowPrototype = {};
 
-CharacterUpgradeFlow = { Icon = "Interface\\Icons\\achievement_level_90", Text = CHARACTER_UPGRADE_FLOW_LABEL, FinishLabel = CHARACTER_UPGRADE_FINISH_LABEL };
+CharacterUpgradeFlow = { Icon = "Interface\\Icons\\achievement_level_90", Text = CHARACTER_UPGRADE_90_FLOW_LABEL, FinishLabel = CHARACTER_UPGRADE_FINISH_LABEL };
 CharacterUpgradeFlow.Steps = {
 	[1] = CharacterUpgradeCharacterSelectBlock,
 	[2] = CharacterUpgradeSpecSelectBlock,
@@ -170,263 +181,93 @@ CharacterUpgradeFlow.Steps = {
 }
 CharacterUpgradeFlow.numSteps = 4;
 
-local EXPANSION_LEVEL_MOP = 4
+CharacterUpgrade_Items = {
+	[LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_90_CHARACTER_UPGRADE] = {
+		free = {
+			productId = LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_90_CHARACTER_UPGRADE,
+			Size = { x = 72, y = 68 },
+			icon = "Interface\\Icons\\achievement_level_90",		
+			iconBorder = "services-ring-wod",
+			
+			maxLevel = UPGRADE_90_MAX_LEVEL,
+			expansion = LE_EXPANSION_WARLORDS_OF_DRAENOR,
+			popupDesc = {
+				title = CHARACTER_UPGRADE_FREE_90_POPUP_TITLE,
+				desc = CHARACTER_UPGRADE_FREE_90_POPUP_DESCRIPTION,
+				width = 430,
+				offset = { x = 8, y = 26 },
+				topAtlas = "boostpopup-wod-top",
+				middleAtlas = "boostpopup-wod-middle",
+				bottomAtlas = "boostpopup-wod-bottom",
+			},
+			
+			tooltipTitle = CHARACTER_UPGRADE_WOD_TOKEN_TITLE,
+			tooltipDesc = CHARACTER_UPGRADE_WOD_TOKEN_DESCRIPTION,
+			flowTitle = CHARACTER_UPGRADE_90_FLOW_LABEL,
+			
+			glowOffset = { x = 2, y = 4 },
+			free = true,
+			
+			professionLevel = 600,
+		},
+		paid = {
+			productId = LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_90_CHARACTER_UPGRADE,
+			icon = "Interface\\Icons\\achievement_level_90",
+			iconBorder = "services-ring",
+			
+			maxLevel = UPGRADE_90_MAX_LEVEL,
+			tooltipTitle = CHARACTER_UPGRADE_90_TOKEN_TITLE,
+			tooltipDesc = CHARACTER_UPGRADE_90_TOKEN_DESCRIPTION,
+			flowTitle = CHARACTER_UPGRADE_90_FLOW_LABEL,
+			
+			professionLevel = 600,
+		},
+	},
+	[LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_100_CHARACTER_UPGRADE] = {
+		free = {
+			productId = LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_100_CHARACTER_UPGRADE;
+			icon = "Interface\\Icons\\achievement_level_100",
+			iconBorder = "services-ring",
+			
+			maxLevel = UPGRADE_100_MAX_LEVEL,
+			expansion = LE_EXPANSION_7_0,
+			popupDesc = {
+				title = CHARACTER_UPGRADE_FREE_100_POPUP_TITLE,
+				desc = CHARACTER_UPGRADE_FREE_100_POPUP_DESCRIPTION,
+				width = 430,
+				offset = { x = 8, y = 18 },
+				topAtlas = "boostpopup-legion-top",
+				middleAtlas = "boostpopup-legion-middle",
+				bottomAtlas = "boostpopup-legion-bottom",
+			},
+			
+			tooltipTitle = CHARACTER_UPGRADE_100_TOKEN_TITLE,
+			tooltipDesc = CHARACTER_UPGRADE_100_TOKEN_DESCRIPTION,
+			flowTitle = CHARACTER_UPGRADE_100_FLOW_LABEL,
+			free = true,
+			
+			professionLevel = 700,
+		},
+		paid = {
+			productId = LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_100_CHARACTER_UPGRADE;
+			icon = "Interface\\Icons\\achievement_level_100",		
+			iconBorder = "services-ring",
+			maxLevel = UPGRADE_100_MAX_LEVEL,
+			tooltipTitle = CHARACTER_UPGRADE_100_TOKEN_TITLE,
+			tooltipDesc = CHARACTER_UPGRADE_100_TOKEN_DESCRIPTION,
+			flowTitle = CHARACTER_UPGRADE_100_FLOW_LABEL,
+			
+			professionLevel = 700,
+		},
+	}
+}
 
-function CharacterServicesMaster_UpdateServiceButton()
-	if (GetAccountExpansionLevel() < EXPANSION_LEVEL_MOP) then -- You do not have MoP or above so you cannot consume the boost distributions.
-		CharacterServicesTokenNormal:Hide();
-		CharacterServicesTokenWoDFree:Hide();
-		return;
-	end
-
-	local frame;
-	local showPopup = false;
-	local hasFree = false;
-	local hasPaid = false;
-	if (C_CharacterServices.HasFreeDistribution()) then
-		hasFree = true;
-		if (not C_CharacterServices.HasSeenPopup()) then
-			showPopup = true;
-		end
-	end
-	if (C_CharacterServices.NumUpgradeDistributions() > 0) then
-		hasPaid = true;
-	end
-
-	if (hasPaid) then
-		frame = CharacterServicesTokenNormal;
-		frame:SetShown(not CharSelectServicesFlowFrame:IsShown());
-		if (C_CharacterServices.NumUpgradeDistributions() > 1) then
-			frame.Ring:Show();
-			frame.NumberBackground:Show();
-			frame.Number:Show();
-			frame.Number:SetText(C_CharacterServices.NumUpgradeDistributions());
-		else
-			frame.Ring:Hide();
-			frame.NumberBackground:Hide();
-			frame.Number:Hide();
-		end
-	else
-		CharacterServicesTokenNormal:Hide();
-	end
-
-	if (hasFree) then
-		frame = CharacterServicesTokenWoDFree;
-		frame:SetShown(not CharSelectServicesFlowFrame:IsShown());
-		if (showPopup) then
-			frame.Glow:Show();
-			frame.GlowSpin.SpinAnim:Play();
-			frame.GlowPulse.PulseAnim:Play();
-	 		frame.GlowSpin:Show();
-	 		frame.GlowPulse:Show();
-			frame.PopupFrame:Show();
-		else
-			frame.Glow:Hide();
-			frame.GlowSpin:Hide();
-			frame.GlowPulse:Hide();
-	 		frame.GlowSpin.SpinAnim:Stop();
-	 		frame.GlowPulse.PulseAnim:Stop();
-			frame.PopupFrame:Hide();
-		end
-		
-		if (not hasPaid) then
-			frame:SetPoint("TOPRIGHT", CharacterSelectCharacterFrame, "TOPLEFT", -18, -4);
-		else
-			local offset;
-			if (showPopup) then
-				offset = -3;
-			else
-				offset = -3;
-			end
-			frame:SetPoint("TOPRIGHT", CharacterServicesTokenNormal, "TOPLEFT", offset, 0);
-		end
-	else
-		CharacterServicesTokenWoDFree:Hide();
-	end
-end
-
-function CharacterServicesMaster_OnLoad(self)
-	self.flows = {};
-	CharacterUpgradeSelectCharacterFrame:SetFrameLevel(self:GetFrameLevel()+2);
-	
-	SetPortraitToTexture(CharacterServicesTokenNormal.Icon, "Interface\\Icons\\achievement_level_90");
-	SetPortraitToTexture(CharacterServicesTokenNormal.Highlight.Icon, "Interface\\Icons\\achievement_level_90");
-	SetPortraitToTexture(CharacterServicesTokenWoDFree.Icon, "Interface\\Icons\\achievement_level_90");
-	SetPortraitToTexture(CharacterServicesTokenWoDFree.Highlight.Icon, "Interface\\Icons\\achievement_level_90");
-
-	self:RegisterEvent("PRODUCT_DISTRIBUTIONS_UPDATED");
-	self:RegisterEvent("CHARACTER_UPGRADE_STARTED");
-	self:RegisterEvent("CHARACTER_UPGRADE_COMPLETE");
-end
-
-local completedGuid;
-
-function CharacterServicesMaster_OnEvent(self, event, ...)
-	if (event == "PRODUCT_DISTRIBUTIONS_UPDATED") then
-		CharacterServicesMaster_UpdateServiceButton();
-	elseif (event == "CHARACTER_UPGRADE_STARTED") then
-		UpdateCharacterList(true);
-		UpdateCharacterSelection(CharacterSelect);
-	elseif (event == "CHARACTER_UPGRADE_COMPLETE") then
-		completedGuid = ...;
-		CHARACTER_UPGRADE_WAITING_ON_COMPLETE = true;
-	end
-end
-
-function CharacterServicesMaster_OnCharacterListUpdate()
-	if (CHARACTER_UPGRADE_CREATE_CHARACTER or C_CharacterServices.GetStartAutomatically()) then
-		CharSelectServicesFlowFrame:Show();
-		CharacterServicesMaster_SetFlow(CharacterServicesMaster, CharacterUpgradeFlow);
-		CHARACTER_UPGRADE_CREATE_CHARACTER = false;
-		C_SharedCharacterServices.SetStartAutomatically(false);
-	elseif (CHARACTER_UPGRADE_WAITING_ON_COMPLETE) then
-		local num = math.min(GetNumCharacters(), MAX_CHARACTERS_DISPLAYED);
-
-		for i = 1, num do
-			if (select(14, GetCharacterInfo(GetCharIDFromIndex(i))) == completedGuid) then
-				local button = _G["CharSelectCharacterButton"..i];
-				CharacterSelectButton_OnClick(button);
-				button.selection:Show();
-				C_CharacterServices.ApplyLevelUp();
-				UpdateCharacterSelection(CharacterSelect);
-				break;
-			end
-		end
-
-		CHARACTER_UPGRADE_WAITING_ON_COMPLETE = false;
-	end
-end
-
-function CharacterServicesMaster_SetFlow(self, flow)
-	self.flow = flow;
-	if (not self.flows[flow]) then
-		setmetatable(flow, { __index = CharacterServicesFlowPrototype });
-	end
-	self.flows[flow] = true;
-	flow:Initialize(self);
-	SetPortraitToTexture(self:GetParent().Icon, flow.Icon);
-	self:GetParent().TitleText:SetText(flow.Text);
-	self:GetParent().FinishButton:SetText(flow.FinishLabel);
-	for i = 1, #flow.Steps do
-		local block = flow.Steps[i];
-		if (not block.HiddenStep) then
-			block.frame:SetFrameLevel(CharacterServicesMaster:GetFrameLevel()+2);
-			block.frame:SetParent(self);
-		end
-	end
-end
-
-function CharacterServicesMaster_SetCurrentBlock(self, block)
-	local parent = self:GetParent();
-	if (not block.HiddenStep) then
-		CharacterServicesMaster_SetBlockActiveState(block);
-	end
-	self.currentBlock = block;
-	self.blockComplete = false;
-	parent.BackButton:SetShown(block.Back);
-	parent.NextButton:SetShown(block.Next);
-	parent.FinishButton:SetShown(block.Finish);
-	if (block.Finish) then
-		self.FinishTime = GetTime();
-	end
-	parent.NextButton:SetEnabled(block:IsFinished());
-	parent.FinishButton:SetEnabled(block:IsFinished());
-end
-
-function CharacterServicesMaster_Update()
-	local self = CharacterServicesMaster;
-	local parent = self:GetParent();
-	local block = self.currentBlock;
-	if (block and block:IsFinished()) then
-		if (not block.HiddenStep and (block.AutoAdvance or self.blockComplete)) then
-			CharacterServicesMaster_SetBlockFinishedState(block);
-		end
-		if (block.AutoAdvance) then
-			self.flow:Advance(self);
-		else
-			if (block.Next) then
-				if (not parent.NextButton:IsEnabled()) then
-					parent.NextButton:SetEnabled(true);
-					if ( parent.NextButton:IsVisible() ) then
-						parent.NextButton.PulseAnim:Play();
-					end
-				end
-			elseif (block.Finish) then
-				parent.FinishButton:SetEnabled(true);
-			end
-		end
-	elseif (block) then
-		if (block.Next) then
-			parent.NextButton:SetEnabled(false);
-		elseif (block.Finish) then
-			parent.FinishButton:SetEnabled(false);
-		end
-	end
-	self.currentTime = 0;
-end
-
-function CharacterServicesMaster_OnHide(self)
-	for flow, _ in pairs(self.flows) do
-		flow:OnHide();
-	end
-end
-
-function CharacterServicesMaster_SetBlockActiveState(block)
-	block.frame.StepLabel:Show();
-	block.frame.StepNumber:Show();
-	block.frame.StepActiveLabel:Show();
-	block.frame.StepActiveLabel:SetText(block.ActiveLabel);
-	block.frame.ControlsFrame:Show();
-	block.frame.Checkmark:Hide();
-	block.frame.StepFinishedLabel:Hide();
-	block.frame.ResultsLabel:Hide();
-end
-
-function CharacterServicesMaster_SetBlockFinishedState(block)
-	block.frame.Checkmark:Show();
-	block.frame.StepFinishedLabel:Show();
-	block.frame.StepFinishedLabel:SetText(block.ResultsLabel);
-	block.frame.ResultsLabel:Show();
-	if (block.FormatResult) then
-		block.frame.ResultsLabel:SetText(block:FormatResult());
-	else
-		block.frame.ResultsLabel:SetText(block:GetResult());
-	end
-	block.frame.StepLabel:Hide();
-	block.frame.StepNumber:Hide();
-	block.frame.StepActiveLabel:Hide();
-	block.frame.ControlsFrame:Hide();
-end
-
-function CharacterServicesMasterBackButton_OnClick(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
-	local master = CharacterServicesMaster;
-	master.flow:Rewind(master);
-end
-
-function CharacterServicesMasterNextButton_OnClick(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
-	local master = CharacterServicesMaster;
-	master.blockComplete = true;
-	CharacterServicesMaster_Update();
-	master.flow:Advance(master);
-end
-
-function CharacterServicesMasterFinishButton_OnClick(self)
-	-- wait a bit after button is shown so no one accidentally upgrades the wrong character
-	if ( GetTime() - CharacterServicesMaster.FinishTime < 0.5 ) then
-		return;
-	end
-	local master = CharacterServicesMaster;
-	local parent = master:GetParent();
-	local success = master.flow:Finish(master);
-	if (success) then
-		PlaySound("gsCharacterSelectionCreateNew");
-		parent:Hide();
-	else
-		PlaySound("igMainMenuOptionCheckBoxOn");
-	end
-end
+CharacterUpgrade_DisplayOrder = { 
+	{ productId = LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_90_CHARACTER_UPGRADE,		free = false},
+	{ productId = LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_90_CHARACTER_UPGRADE,		free = true	},
+	{ productId = LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_100_CHARACTER_UPGRADE,	free = true	},
+	{ productId = LE_BATTLEPAY_PRODUCT_ITEM_LEVEL_100_CHARACTER_UPGRADE ,	free = false},
+}
 
 function CharacterServicesFlowPrototype:BuildResults(steps)
 	if (not self.results) then
@@ -444,6 +285,9 @@ end
 function CharacterServicesFlowPrototype:Rewind(controller)
 	local block = self.Steps[self.step];
 	local results;
+	if (block.OnRewind) then
+		block:OnRewind();
+	end
 	if (block:IsFinished() and not block.SkipOnRewind) then
 		if (self.step ~= 1) then
 			results = self:BuildResults(self.step - 1);
@@ -453,6 +297,9 @@ function CharacterServicesFlowPrototype:Rewind(controller)
 		self:HideBlock(self.step);
 		self.step = self.step - 1;
 		while ( self.Steps[self.step].SkipOnRewind ) do
+			if (self.Steps[self.step].OnRewind) then
+				self.Steps[self.step]:OnRewind();
+			end
 			self:HideBlock(self.step);
 			self.step = self.step - 1;
 		end
@@ -514,14 +361,12 @@ function CharacterServicesFlowPrototype:OnHide()
 	end
 end
 
-local warningAccepted = false;
-
-function CharacterUpgradeFlow:SetTarget(wasFree)
-	self.wasFree = wasFree;
+function CharacterUpgradeFlow:SetTarget(data)
+	self.data = data;
 end
 
 function CharacterUpgradeFlow:Initialize(controller)
-	warningAccepted = false;
+	CharacterUpgradeSecondChanceWarningFrame.warningAccepted = false;
 
 	CharacterUpgradeCharacterSelectBlock.frame = CharacterUpgradeSelectCharacterFrame;
 	CharacterUpgradeSpecSelectBlock.frame = CharacterUpgradeSelectSpecFrame;
@@ -583,7 +428,12 @@ function CharacterUpgradeFlow:Advance(controller)
 end
 
 function CharacterUpgradeFlow:Finish(controller)
-	if (not warningAccepted and C_PurchaseAPI.GetCurrencyID() == CURRENCY_KRW) then
+	if (not CharacterUpgradeSecondChanceWarningFrame.warningAccepted) then
+		if ( C_PurchaseAPI.GetCurrencyID() == CURRENCY_KRW ) then
+			CharacterUpgradeSecondChanceWarningBackground.Text:SetText(CHARACTER_UPGRADE_KRW_FINISH_BUTTON_POPUP_TEXT);
+		else
+			CharacterUpgradeSecondChanceWarningBackground.Text:SetText(CHARACTER_UPGRADE_FINISH_BUTTON_POPUP_TEXT);
+		end
 		CharacterUpgradeSecondChanceWarningFrame:Show();
 		return false;
 	end
@@ -601,7 +451,7 @@ function CharacterUpgradeFlow:Finish(controller)
 		return false;
 	end
 
-	C_CharacterServices.AssignUpgradeDistribution(results.playerguid, results.faction, results.spec, results.classId, self.wasFree);
+	C_CharacterServices.AssignUpgradeDistribution(results.playerguid, results.faction, results.spec, results.classId, self.data.free, self.data.productId);
 	return true;
 end
 
@@ -614,6 +464,8 @@ local function replaceScripts(button)
 	button:SetScript("OnMouseUp", nil);
 	button.upButton:SetScript("OnClick", nil);
 	button.downButton:SetScript("OnClick", nil);
+	button:SetScript("OnEnter", nil);
+	button:SetScript("OnLeave", nil);
 end
 
 local function resetScripts(button)
@@ -636,7 +488,49 @@ local function resetScripts(button)
 		local index = self:GetParent().index;
 		MoveCharacter(index, index + 1);
 	end);
+	button:SetScript("OnEnter", function(self)
+		if ( self.selection:IsShown() ) then
+			CharacterSelectButton_ShowMoveButtons(self);
+		end
+		if ( self.isVeteranLocked ) then
+			GlueTooltip:SetText(CHARSELECT_CHAR_LIMITED_TOOLTIP, nil, nil, nil, nil, true);
+			GlueTooltip:Show();
+			GlueTooltip:SetOwner(self, "ANCHOR_LEFT", -16, -5);
+			CharSelectAccountUpgradeButtonPointerFrame:Show();
+			CharSelectAccountUpgradeButtonGlow:Show();
+		end
+	end);
+	button:SetScript("OnLeave", function(self)
+		if ( self.upButton:IsShown() and not (self.upButton:IsMouseOver() or self.downButton:IsMouseOver()) ) then
+			self.upButton:Hide();
+			self.downButton:Hide();
+		end
+		CharSelectAccountUpgradeButtonPointerFrame:Hide();
+		CharSelectAccountUpgradeButtonGlow:Hide();
+		GlueTooltip:Hide();
+	end);
 	button:SetScript("OnMouseUp", CharacterSelectButton_OnDragStop);
+end
+
+local function disableScroll(scrollBar)
+	scrollBar.ScrollUpButton:SetEnabled(false);
+	scrollBar.ScrollDownButton:SetEnabled(false);
+	scrollBar:GetParent():EnableMouseWheel(false);
+end
+
+local function enableScroll(scrollBar)
+	scrollBar.ScrollUpButton:SetEnabled(true);
+	scrollBar.ScrollDownButton:SetEnabled(true);
+	scrollBar:GetParent():EnableMouseWheel(true);
+end
+
+local function replaceAllScripts()
+	for i = 1, math.min(GetNumCharacters(), MAX_CHARACTERS_DISPLAYED) do
+		local button = _G["CharSelectCharacterButton"..i];
+		replaceScripts(button);
+		button.upButton:Hide();
+		button.downButton:Hide();
+	end
 end
 
 function CharacterUpgradeCharacterSelectBlock:Initialize(results)
@@ -646,7 +540,8 @@ function CharacterUpgradeCharacterSelectBlock:Initialize(results)
 		end
 	end
 	self.frame.NoBonusResult:Hide();
-	
+	enableScroll(CharacterSelectCharacterFrame.scrollBar);
+
 	self.charid = nil;
 	self.lastSelectedIndex = CharacterSelect.selectedIndex;
 
@@ -661,14 +556,23 @@ function CharacterUpgradeCharacterSelectBlock:Initialize(results)
 			self.index = CharacterSelect.selectedIndex;
 			self.charid = GetCharIDFromIndex(CharacterSelect.selectedIndex + CHARACTER_LIST_OFFSET);
 			self.playerguid = select(14, GetCharacterInfo(self.charid));
+			local button = _G["CharSelectCharacterButton"..num];
+			replaceScripts(button);
 			CharacterServicesMaster_Update();
 			return;
 		end
 	end
 
+	CharacterSelect_SaveCharacterOrder();
 	-- Set up the GlowBox around the show characters
-	self.frame.ControlsFrame.GlowBox:SetPoint("TOP", CharacterSelectCharacterFrame, 2, -60);
-	self.frame.ControlsFrame.GlowBox:SetHeight(58 * GetNumCharacters());
+	self.frame.ControlsFrame.GlowBox:SetHeight(58 * num);
+	if (CharacterSelectCharacterFrame.scrollBar:IsShown()) then
+		self.frame.ControlsFrame.GlowBox:SetPoint("TOP", CharacterSelectCharacterFrame, -8, -60);
+		self.frame.ControlsFrame.GlowBox:SetWidth(238);
+	else
+		self.frame.ControlsFrame.GlowBox:SetPoint("TOP", CharacterSelectCharacterFrame, 2, -60);
+		self.frame.ControlsFrame.GlowBox:SetWidth(244);
+	end
 	for i = 1, MAX_CHARACTERS_DISPLAYED do
 		if (not self.frame.ControlsFrame.Arrows[i]) then
 			self.frame.ControlsFrame.Arrows[i] = CreateFrame("Frame", nil, self.frame.ControlsFrame, "CharacterServicesArrowTemplate");
@@ -689,11 +593,12 @@ function CharacterUpgradeCharacterSelectBlock:Initialize(results)
 
 	local numEligible = 0;
 	self.hasVeteran = false;
+	replaceAllScripts();
 	for i = 1, num do
 		local button = _G["CharSelectCharacterButton"..i];
 		_G["CharSelectPaidService"..i]:Hide();
-		local _, _, _, _, _, level, _, _, _, _, _, _, _, _, _, _, _, boostInProgress = GetCharacterInfo(GetCharIDFromIndex(i+CHARACTER_LIST_OFFSET));
-		if (level >= UPGRADE_MAX_LEVEL or boostInProgress) then
+		local level, _, _, _, _, _, _, _, _, _, _, _, boostInProgress = select(6, GetCharacterInfo(GetCharIDFromIndex(i+CHARACTER_LIST_OFFSET)));
+		if (level >= CharacterUpgradeFlow.data.maxLevel or boostInProgress) then
 			button.buttonText.name:SetTextColor(0.25, 0.25, 0.25);
 			button.buttonText.Info:SetTextColor(0.25, 0.25, 0.25);
 			button.buttonText.Location:SetTextColor(0.25, 0.25, 0.25);
@@ -702,9 +607,7 @@ function CharacterUpgradeCharacterSelectBlock:Initialize(results)
 			self.frame.ControlsFrame.Arrows[i]:Show();
 			if (level >= UPGRADE_BONUS_LEVEL) then
 				self.frame.ControlsFrame.BonusIcons[i]:Show();
-				self.hasVeteran = true;
 			end
-			replaceScripts(button);
 			button.buttonText.name:SetTextColor(1.0, 0.82, 0);
 			button.buttonText.Info:SetTextColor(1, 1, 1);
 			button.buttonText.Location:SetTextColor(0.5, 0.5, 0.5);
@@ -717,6 +620,15 @@ function CharacterUpgradeCharacterSelectBlock:Initialize(results)
 				button.selection:Show();
 				CharacterServicesMaster_Update();
 			end)
+		end
+	end
+	
+	for i = 1, GetNumCharacters() do
+		local level, _, _, _, _, _, _, _, _, _, _, _, boostInProgress = select(6, GetCharacterInfo(GetCharIDFromIndex(i)));
+		if (level < CharacterUpgradeFlow.data.maxLevel and not boostInProgress) then
+			if (level >= UPGRADE_BONUS_LEVEL) then
+				self.hasVeteran = true;
+			end
 			numEligible = numEligible + 1;
 		end
 	end
@@ -727,7 +639,9 @@ function CharacterUpgradeCharacterSelectBlock:Initialize(results)
 
 	local errorFrame = CharacterUpgradeMaxCharactersFrame;
 	errorFrame:Hide();
-	if (num < MAX_CHARACTERS_DISPLAYED) then
+	self.frame.ControlsFrame.OrLabel:Hide();
+	self.frame.ControlsFrame.CreateCharacterButton:Hide();
+	if (num < MAX_CHARACTERS_DISPLAYED_BASE) then
 		self.frame.ControlsFrame.OrLabel:Show();
 		self.frame.ControlsFrame.CreateCharacterButton:Show();
 		self.frame.ControlsFrame.CreateCharacterButton:SetID(CharacterSelect.createIndex);
@@ -755,9 +669,15 @@ function CharacterUpgradeCharacterSelectBlock:FormatResult()
 	local name, _, class, classFileName, _, level, _, _, _, _, _, _, _, _, prof1, prof2 = GetCharacterInfo(self.charid);
 	if (level >= UPGRADE_BONUS_LEVEL) then
 		local defaults = defaultProfessions[classDefaultProfessionMap[classFileName]];
-		if (prof1 == 0) then
+		if (prof1 == 0 and prof2 == 0) then
 			prof1 = defaults[1];
 			prof2 = defaults[2];
+		elseif (prof1 == 0) then
+			if (prof2 == defaults[1]) then
+				prof1 = defaults[2];
+			else
+				prof1 = defaults[1];
+			end
 		elseif (prof2 == 0) then
 			if (prof1 == defaults[1]) then
 				prof2 = defaults[2];
@@ -781,7 +701,7 @@ function CharacterUpgradeCharacterSelectBlock:FormatResult()
 			else
 				result:SetPoint("TOPLEFT", self.frame.BonusResults[i-1], "BOTTOMLEFT", 0, -2);
 			end
-			result.Label:SetText(CHARACTER_UPGRADE_PROFESSION_BOOST_RESULT_FORMAT:format(bonuses[i]));
+			result.Label:SetText(CHARACTER_UPGRADE_PROFESSION_BOOST_RESULT_FORMAT:format(bonuses[i], CharacterUpgradeFlow.data.professionLevel));
 			result:Show();
 		end
 	elseif (self.hasVeteran) then
@@ -791,6 +711,8 @@ function CharacterUpgradeCharacterSelectBlock:FormatResult()
 end
 
 function CharacterUpgradeCharacterSelectBlock:OnHide()
+	enableScroll(CharacterSelectCharacterFrame.scrollBar);
+
 	local num = math.min(GetNumCharacters(), MAX_CHARACTERS_DISPLAYED);
 
 	for i = 1, num do
@@ -815,6 +737,8 @@ function CharacterUpgradeCharacterSelectBlock:OnHide()
 end
 
 function CharacterUpgradeCharacterSelectBlock:OnAdvance()
+	disableScroll(CharacterSelectCharacterFrame.scrollBar);
+
 	local index = self.index;
 
 	local num = math.min(GetNumCharacters(), MAX_CHARACTERS_DISPLAYED);
@@ -832,6 +756,7 @@ end
 function CharacterUpgradeCreateCharacter_OnClick(self)
 	CharacterUpgradeCharacterSelectBlock.createNum = GetNumCharacters();
 	CHARACTER_UPGRADE_CREATE_CHARACTER = true;
+	CHARACTER_UPGRADE_CREATE_CHARACTER_DATA = CharacterServicesMaster.flow.data;
 	CharacterSelect_SelectCharacter(self:GetID());
 end
 
@@ -849,7 +774,7 @@ function CharacterUpgradeSpecSelectBlock:Initialize(results)
 	self.selected = nil;
 
 	local classID = classIds[select(4,GetCharacterInfo(results.charid))];
-
+	local sex = select(17, GetCharacterInfo(results.charid));
 	local numSpecs = GetNumSpecializationsForClassID(classID);
 
 	for i = 1, 4 do
@@ -860,12 +785,21 @@ function CharacterUpgradeSpecSelectBlock:Initialize(results)
 		end
 		local button = self.frame.ControlsFrame.SpecButtons[i];
 		if (i <= numSpecs ) then
-			local specID, name, description, icon, _, role  = GetSpecializationInfoForClassID(classID, i);
+			local specID, name, description, icon, _, role, isRecommended  = GetSpecializationInfoForClassID(classID, i, sex);
 			button:SetID(specID);
 			button.SpecIcon:SetTexture(icon);
 			button.SpecName:SetText(name);
 			button.RoleIcon:SetTexCoord(GetTexCoordsForRole(role));
-			button.RoleName:SetText(_G[role]);
+			button.RoleName:SetText(_G["ROLE_"..role]);
+			if ( isRecommended ) then
+				button.SpecName:SetPoint("TOPLEFT", button.Frame, "TOPRIGHT", 6, -3);
+				button.Recommended:Show();
+				button.RoleName:SetPoint("TOPLEFT", button.Recommended, "BOTTOMLEFT");
+			else
+				button.SpecName:SetPoint("TOPLEFT", button.Frame, "TOPRIGHT", 6, -8);
+				button.Recommended:Hide();
+				button.RoleName:SetPoint("TOPLEFT", button.SpecName, "BOTTOMLEFT");
+			end
 			button:SetChecked(false);
 			button:Show();
 			button.tooltip = formatDescription(description, results);
@@ -886,6 +820,15 @@ end
 
 function CharacterUpgradeSpecSelectBlock:FormatResult()
 	return GetSpecializationNameForSpecID(self.selected);
+end
+
+function CharacterUpgradeSpecSelectBlock:ShowPopupIf()
+	local role = select(6, GetSpecializationInfoForSpecID(self.selected));
+	return role == "HEALER";
+end
+
+function CharacterUpgradeSpecSelectBlock:GetPopupText()
+	return string.format(BOOST_NOT_RECOMMEND_SPEC_WARNING, GetSpecializationNameForSpecID(self.selected));
 end
 
 function CharacterUpgradeSelectSpecRadioButton_OnClick(self, button, down)
@@ -981,18 +924,8 @@ function CharacterUpgradeEndStep:GetResult()
 	return {};
 end
 
-function CharacterUpgradeSecondChanceWarningFrameConfirmButton_OnClick(self)
-	warningAccepted = true;
-
-	CharacterUpgradeSecondChanceWarningFrame:Hide();
-
-	CharacterServicesMasterFinishButton_OnClick(CharacterServicesMasterFinishButton);
-end
-
-function CharacterUpgradeSecondChanceWarningFrameCancelButton_OnClick(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
-
-	CharacterUpgradeSecondChanceWarningFrame:Hide();
-
-	warningAccepted = false;
+function CharacterUpgradeEndStep:OnRewind()
+	if (CharacterUpgradeSecondChanceWarningFrame:IsShown()) then
+		CharacterUpgradeSecondChanceWarningFrame:Hide();
+	end
 end

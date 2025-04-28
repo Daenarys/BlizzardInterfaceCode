@@ -49,8 +49,6 @@ function SetItemRef(link, text, button, chatFrame)
 				end
 				if ( ChatEdit_GetActiveWindow() ) then
 					ChatEdit_InsertLink(name);
-				elseif ( HelpFrameOpenTicketEditBox:IsVisible() ) then
-					HelpFrameOpenTicketEditBox:Insert(name);
 				else
 					SendWho(WHO_TAG_EXACT..name);
 				end
@@ -65,11 +63,11 @@ function SetItemRef(link, text, button, chatFrame)
 	elseif ( strsub(link, 1, 8) == "BNplayer" ) then
 		local namelink = strsub(link, 10);
 		
-		local name, presenceID, lineid, chatType, chatTarget = strsplit(":", namelink);
+		local name, bnetIDAccount, lineid, chatType, chatTarget = strsplit(":", namelink);
 		if ( name and (strlen(name) > 0) ) then
 			if ( IsModifiedClick("CHATLINK") ) then
 				--[[
-				disable SHIFT-CLICK for battlenet friends, so we don't put an encoded presence id in chat
+				disable SHIFT-CLICK for battlenet friends, so we don't put an encoded bnetIDAccount in chat
 
 				local staticPopup;
 				staticPopup = StaticPopup_Visible("ADD_IGNORE");
@@ -109,16 +107,14 @@ function SetItemRef(link, text, button, chatFrame)
 				end
 				if ( ChatEdit_GetActiveWindow() ) then
 					ChatEdit_InsertLink(name);
-				elseif ( HelpFrameOpenTicketEditBox:IsVisible() ) then
-					HelpFrameOpenTicketEditBox:Insert(name);				
 				end
 				]]
 			elseif ( button == "RightButton" ) then
-				if ( not BNIsSelf(presenceID) ) then
-					FriendsFrame_ShowBNDropdown(name, 1, nil, chatType, chatFrame, nil, BNet_GetPresenceID(name));
+				if ( not BNIsSelf(bnetIDAccount) ) then
+					FriendsFrame_ShowBNDropdown(name, 1, nil, chatType, chatFrame, nil, BNet_GetBNetIDAccount(name));
 				end
 			else
-				if ( not BNIsSelf(presenceID) ) then
+				if ( not BNIsSelf(bnetIDAccount) ) then
 					ChatFrame_SendSmartTell(name, chatFrame);
 				end
 			end
@@ -128,11 +124,7 @@ function SetItemRef(link, text, button, chatFrame)
 		if ( IsModifiedClick("CHATLINK") ) then
 			local chanLink = strsub(link, 9);
 			local chatType, chatTarget = strsplit(":", chanLink);
-			if ( strupper(chatType) == "BN_CONVERSATION" ) then
-				BNListConversation(chatTarget);
-			else
-				ToggleFriendsFrame(3);
-			end
+			ToggleFriendsFrame(3);
 		elseif ( button == "LeftButton" ) then
 			local chanLink = strsub(link, 9);
 			local chatType, chatTarget = strsplit(":", chanLink);
@@ -140,10 +132,6 @@ function SetItemRef(link, text, button, chatFrame)
 			if ( strupper(chatType) == "CHANNEL" ) then
 				if ( GetChannelName(tonumber(chatTarget))~=0 ) then
 					ChatFrame_OpenChat("/"..chatTarget, chatFrame);
-				end
-			elseif ( strupper(chatType) == "BN_CONVERSATION" ) then
-				if ( BNGetConversationInfo(chatTarget) ) then
-					ChatFrame_OpenChat("/"..(chatTarget + MAX_WOW_CHAT_CHANNELS), chatFrame);
 				end
 			elseif ( strupper(chatType) == "PET_BATTLE_COMBAT_LOG" or strupper(chatType) == "PET_BATTLE_INFO" ) then
 				--Don't do anything
@@ -153,8 +141,7 @@ function SetItemRef(link, text, button, chatFrame)
 		elseif ( button == "RightButton" ) then
 			local chanLink = strsub(link, 9);
 			local chatType, chatTarget = strsplit(":", chanLink);
-			if not ( (strupper(chatType) == "CHANNEL" and GetChannelName(tonumber(chatTarget)) == 0) or	--Don't show the dropdown if this is a channel we are no longer in.
-				(strupper(chatType) == "BN_CONVERSATION" and not BNGetConversationInfo(chatTarget)) ) then	--Or a conversation we are no longer in.
+			if not ( (strupper(chatType) == "CHANNEL" and GetChannelName(tonumber(chatTarget)) == 0) ) then	--Don't show the dropdown if this is a channel we are no longer in.
 				ChatChannelDropDown_Show(chatFrame, strupper(chatType), chatTarget, Chat_GetColoredChatName(strupper(chatType), chatTarget));
 			end
 		end
@@ -212,8 +199,54 @@ function SetItemRef(link, text, button, chatFrame)
 			FloatingBattlePet_Toggle(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), string.gsub(string.gsub(text, "^(.*)%[", ""), "%](.*)$", ""), battlePetID);
 		end
 		return;
+	elseif ( strsub(link, 1, 19) == "garrfollowerability" ) then
+		local _, garrFollowerAbilityID = strsplit(":", link);
+		if ( IsModifiedClick() ) then
+			local fixedLink = GetFixedLink(text);
+			HandleModifiedItemClick(fixedLink);
+		else
+			FloatingGarrisonFollowerAbility_Toggle(tonumber(garrFollowerAbilityID));
+		end
+		return;
+	elseif ( strsub(link, 1, 12) == "garrfollower" ) then
+		local _, garrisonFollowerID, quality, level, itemLevel, ability1, ability2, ability3, ability4, trait1, trait2, trait3, trait4 = strsplit(":", link);
+		if ( IsModifiedClick() ) then
+			local fixedLink = GetFixedLink(text);
+			HandleModifiedItemClick(fixedLink);
+		else
+			FloatingGarrisonFollower_Toggle(tonumber(garrisonFollowerID), tonumber(quality), tonumber(level), tonumber(itemLevel), tonumber(ability1), tonumber(ability2), tonumber(ability3), tonumber(ability4), tonumber(trait1), tonumber(trait2), tonumber(trait3), tonumber(trait4));
+		end
+		return;
+	elseif ( strsub(link, 1, 11) == "garrmission" ) then
+		local _, garrMissionID = strsplit(":", link);
+		if ( IsModifiedClick() ) then
+			local fixedLink = GetFixedLink(text);
+			HandleModifiedItemClick(fixedLink);
+		else
+			FloatingGarrisonMission_Toggle(tonumber(garrMissionID));
+		end
+		return;
+	elseif ( strsub(link, 1, 5) == "death" ) then
+		local _, id = strsplit(":", link);
+		OpenDeathRecapUI(id);
+		return;
+	elseif ( strsub(link, 1, 7) == "sharess" ) then
+		local _, index = strsplit(":", link);
+		SocialFrame_LoadUI();
+		Social_ShowScreenshot(tonumber(index));
+		return;
+	elseif ( strsub(link, 1, 12) == "shareachieve" ) then
+		local _, achievementID, earned = strsplit(":", link);
+		SocialFrame_LoadUI();
+		Social_ShowAchievement(tonumber(achievementID), StringToBoolean(earned));
+		return;
+	elseif ( strsub(link, 1, 9) == "shareitem" ) then
+		local itemID, earned, creationContext = link:match("shareitem:(%d+):(%d+):(.*)");
+		SocialFrame_LoadUI();
+		Social_ShowItem(itemID, creationContext, StringToBoolean(earned));
+		return;
 	end
-    
+
 	if ( IsModifiedClick() ) then
 		local fixedLink = GetFixedLink(text);
 		HandleModifiedItemClick(fixedLink);

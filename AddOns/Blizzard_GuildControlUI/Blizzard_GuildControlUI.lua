@@ -142,7 +142,12 @@ function GuildControlUI_BankTabPermissions_Update(self)
 			button:Show();
 			local ownedTab = button.owned;
 			ownedTab.tabName:SetText(name);	
-			ownedTab.tabIcon:SetTexture(icon);
+			local iconNumber = tonumber(icon);
+			if(iconNumber) then
+				ownedTab.tabIcon:SetToFileData(iconNumber);
+			else
+				ownedTab.tabIcon:SetTexture(icon);
+			end			
 			ownedTab.viewCB:SetChecked(isViewable);
 			ownedTab.infoCB:SetChecked(editText);
 			ownedTab.depositCB:SetChecked(canDeposit);
@@ -598,9 +603,9 @@ end
 	-- --If rank to modify is guild master then gray everything out
 	-- if ( IsGuildLeader() and rankID == 1 ) then
 		-- GuildBankTabLabel:SetVertexColor(GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
-		-- GuildControlTabPermissionsDepositItems:SetChecked(1);
-		-- GuildControlTabPermissionsViewTab:SetChecked(1);
-		-- GuildControlTabPermissionsUpdateText:SetChecked(1);
+		-- GuildControlTabPermissionsDepositItems:SetChecked(true);
+		-- GuildControlTabPermissionsViewTab:SetChecked(true);
+		-- GuildControlTabPermissionsUpdateText:SetChecked(true);
 		-- BlizzardOptionsPanel_CheckButton_Disable(GuildControlTabPermissionsDepositItems);
 		-- BlizzardOptionsPanel_CheckButton_Disable(GuildControlTabPermissionsViewTab);
 		-- BlizzardOptionsPanel_CheckButton_Disable(GuildControlTabPermissionsUpdateText);

@@ -326,12 +326,12 @@ function BlizzardOptionsPanel_OnLoad (frame, okay, cancel, default, refresh)
 	frame.default = default or BlizzardOptionsPanel_Default;
 	frame.refresh = refresh or BlizzardOptionsPanel_Refresh;
 
-	frame:RegisterEvent("SET_GLUE_SCREEN");
+	frame:RegisterEvent("FRAMES_LOADED");
 	frame:SetScript("OnEvent", BlizzardOptionsPanel_OnEvent);
 end
 
 function BlizzardOptionsPanel_OnEvent (frame, event, ...)
-	if ( event == "SET_GLUE_SCREEN" ) then
+	if ( event == "FRAMES_LOADED" ) then
 		if ( frame.options and frame.controls ) then
 			local entry;
 			local minValue, maxValue;
@@ -353,7 +353,7 @@ function BlizzardOptionsPanel_OnEvent (frame, event, ...)
 
 					if ( control.cvar ) then
 						if ( control.type == CONTROLTYPE_CHECKBOX ) then
-							control.defaultValue = GetCVarDefault(control.cvar);
+							control.defaultValue = control.defaultValue or GetCVarDefault(control.cvar);
 						else
 							control.defaultValue = BlizzardOptionsPanel_GetCVarDefaultSafe(control.cvar);
 							minValue = entry.minValue;

@@ -73,21 +73,6 @@ function ArchaeologyFrame_OnLoad(self)
 	self:RegisterEvent("BAG_UPDATE_DELAYED");
 	self:RegisterEvent("GET_ITEM_INFO_RECEIVED");
 	
-	
-	local numRaces = GetNumArchaeologyRaces();
-	local raceButton;
-	for i=1,ARCHAEOLOGY_MAX_RACES do
-		raceButton = self.summaryPage["race"..i];
-		if i <= numRaces then		
-			local _, texture =  GetArchaeologyRaceInfo(i);
-			if texture and texture ~= "" then
-				raceButton:GetNormalTexture():SetTexture(texture);
-				raceButton:GetHighlightTexture():SetTexture(texture);
-				raceButton.glow:SetTexture(texture);
-			end
-		end
-	end	
-	
 	local factionGroup = UnitFactionGroup("player");
 	if ( factionGroup and factionGroup ~= "Neutral" ) then
 		if ( factionGroup == "Alliance" ) then
@@ -113,7 +98,8 @@ function ArchaeologyFrame_OnLoad(self)
 	
 
 	self.currentFrame = self.summaryPage;
-	
+	self.currentFrame.currentPage = 1;
+
 	UIDropDownMenu_SetWidth(self.raceFilterDropDown, 95);
 	UIDropDownMenu_JustifyText(self.raceFilterDropDown, "LEFT");
 	UIDropDownMenu_Initialize(self.raceFilterDropDown, ArchaeologyFrame_InitRaceFilter);
@@ -196,23 +182,54 @@ function ArchaeologyFrame_OnEvent(self, event, ...)
 			self.completedPage.currData.onRare = true;
 			RequestArtifactCompletionHistory();
 		else
+			self.currentFrame.currentPage = 1;
 			self.currentFrame:UpdateFrame();
 		end
 	end
 end
 
-
+function ArchaeologyFrame_OnMouseWheel(self, value)
+	if ( self.currentFrame == self.summaryPage ) then
+		if ( value > 0 ) then
+			if ( self.currentFrame.prevPageButton:IsEnabled() ) then
+				ArchaeologyFrameSummary_PageClick(self.currentFrame.prevPageButton, false);
+			end
+		else
+			if ( self.currentFrame.nextPageButton:IsEnabled() ) then
+				ArchaeologyFrameSummary_PageClick(self.currentFrame.nextPageButton, true);
+			end
+		end
+	elseif ( self.currentFrame == self.completedPage ) then
+		if ( value > 0 ) then
+			if ( self.currentFrame.prevPageButton:IsEnabled() ) then
+				ArchaeologyFrame_PageClick(self.currentFrame.prevPageButton, false);
+			end
+		else
+			if ( self.currentFrame.nextPageButton:IsEnabled() ) then
+				ArchaeologyFrame_PageClick(self.currentFrame.nextPageButton, true);
+			end
+		end
+	end
+end
 
 function ArchaeologyFrame_UpdateSummary(self)
 	local numRaces = GetNumArchaeologyRaces();
 	local raceButton;
 	for i=1,ARCHAEOLOGY_MAX_RACES do
 		raceButton = self["race"..i];
-		if i <= numRaces then
-			local name, _, _, currencyAmount, projectAmount =  GetArchaeologyRaceInfo(i);
-			
-			local numProjects = GetNumArtifactsByRace(i);
+		local raceIndex = i + (ARCHAEOLOGY_MAX_RACES * (self.currentPage-1));
+		if raceIndex <= numRaces then
+			local name, texture, _, currencyAmount, projectAmount =  GetArchaeologyRaceInfo(raceIndex);
+
+			if texture and texture ~= "" then
+				raceButton:GetNormalTexture():SetTexture(texture);
+				raceButton:GetHighlightTexture():SetTexture(texture);
+				raceButton.glow:SetTexture(texture);
+			end
+
+			local numProjects = GetNumArtifactsByRace(raceIndex);
 			if numProjects==0 then
+				raceButton.readyAnim:Stop();
 				raceButton:Disable();
 			else
 				raceButton:Enable();
@@ -225,10 +242,25 @@ function ArchaeologyFrame_UpdateSummary(self)
 				end
 				raceButton.raceName:SetText(name.."|n"..currencyAmount.."/"..projectAmount);
 			end
+			raceButton:Show();
 		else
-			self["race"..i]:Hide();
+			raceButton:Hide();
 		end
-	end	
+	end
+
+	self.pageText:SetFormattedText(PAGE_NUMBER, self.currentPage);
+	if self.currentPage == 1 then
+		self.prevPageButton:SetButtonState("NORMAL");
+		self.prevPageButton:Disable();
+	else	
+		self.prevPageButton:Enable();
+	end
+	if (ARCHAEOLOGY_MAX_RACES+ARCHAEOLOGY_MAX_RACES*(self.currentPage-1) >= numRaces) then
+		self.nextPageButton:SetButtonState("NORMAL");
+		self.nextPageButton:Disable();
+	else	
+		self.nextPageButton:Enable();
+	end
 end
 
 
@@ -434,17 +466,17 @@ function ArchaeologyFrame_UpdateComplete(self)
 	
 	self.pageText:SetFormattedText(PAGE_NUMBER, self.currentPage);
 	if self.currentPage == 1 then
-		self.prevPageButon:SetButtonState("NORMAL");
-		self.prevPageButon:Disable();
+		self.prevPageButton:SetButtonState("NORMAL");
+		self.prevPageButton:Disable();
 	else	
-		self.prevPageButon:Enable();
+		self.prevPageButton:Enable();
 	end
 	name = GetArtifactInfoByRace(self.currData.raceIndex, self.currData.projectIndex);
 	if not name then
-		self.nextPageButon:SetButtonState("NORMAL");
-		self.nextPageButon:Disable();
+		self.nextPageButton:SetButtonState("NORMAL");
+		self.nextPageButton:Disable();
 	else	
-		self.nextPageButon:Enable();
+		self.nextPageButton:Enable();
 	end
 		
 	
@@ -577,6 +609,7 @@ function ArchaeologyFrame_OnTabClick(self)
 		archFrame.summaryPage:Show();
 		archFrame.currentFrame = archFrame.summaryPage;
 		archFrame.currentFrame.raceFilter = 0;
+		archFrame.currentFrame.currentPage = 1;
 		ArchaeologyFrame.raceFilterDropDown:Hide();
 		ArchaeologyFrame.factionIcon:Show();
 		archFrame.currentFrame:UpdateFrame();
@@ -617,6 +650,7 @@ function ArchaeologyFrame_KeyStoneClick(self)
 end
 
 function ArchaeologyFrame_PageClick(self, nextPage)
+	PlaySound("igSpellBookOpen");
 	if nextPage then
 		ArchaeologyFrame.currentFrame.currentPage = ArchaeologyFrame.currentFrame.currentPage + 1;
 		ArchaeologyFrame.currentFrame:UpdateFrame();
@@ -629,6 +663,15 @@ function ArchaeologyFrame_PageClick(self, nextPage)
 	end
 end
 
+function ArchaeologyFrameSummary_PageClick(self, nextPage)
+	PlaySound("igSpellBookOpen");
+	if nextPage then
+		ArchaeologyFrame.currentFrame.currentPage = ArchaeologyFrame.currentFrame.currentPage + 1;
+	else
+		ArchaeologyFrame.currentFrame.currentPage = ArchaeologyFrame.currentFrame.currentPage - 1;
+	end
+	ArchaeologyFrame.currentFrame:UpdateFrame();
+end
 
 
 function ArchaeologyFrame_RaceFilterSet(self, arg1)

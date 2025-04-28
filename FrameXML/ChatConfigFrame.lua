@@ -94,12 +94,6 @@ CHAT_CONFIG_CHAT_LEFT = {
 		checked = function () return IsListeningForMessageType("INSTANCE_CHAT_LEADER"); end;
 		func = function (self, checked) ToggleChatMessageGroup(checked, "INSTANCE_CHAT_LEADER"); end;
 	},
-	[17] = {
-		type = "BN_CONVERSATION",
-		noClassColor = 1,
-		checked = function () return IsListeningForMessageType("BN_CONVERSATION"); end;
-		func = function (self, checked) ToggleChatMessageGroup(checked, "BN_CONVERSATION"); end;
-	},
 };
 
 CHAT_CONFIG_CHAT_CREATURE_LEFT = {
@@ -1128,11 +1122,11 @@ function CombatConfig_Colorize_Update()
 		BlizzardOptionsPanel_CheckButton_Disable(CombatConfigColorsColorizeEntireLineByTarget);
 	end
 	if ( CHATCONFIG_SELECTED_FILTER.settings.lineColorPriority == 1 ) then
-		CombatConfigColorsColorizeEntireLineBySource:SetChecked(1);
-		CombatConfigColorsColorizeEntireLineByTarget:SetChecked(nil);
+		CombatConfigColorsColorizeEntireLineBySource:SetChecked(true);
+		CombatConfigColorsColorizeEntireLineByTarget:SetChecked(false);
 	else
-		CombatConfigColorsColorizeEntireLineBySource:SetChecked(nil);
-		CombatConfigColorsColorizeEntireLineByTarget:SetChecked(1);
+		CombatConfigColorsColorizeEntireLineBySource:SetChecked(false);
+		CombatConfigColorsColorizeEntireLineByTarget:SetChecked(true);
 	end
 
 	-- Line Highlighting

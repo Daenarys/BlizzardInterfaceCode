@@ -338,12 +338,7 @@
 			<OnEnter>
 				local chatFrame = _G["ChatFrame"..self:GetID()];
 				
-				if ( chatFrame.isTemporary and chatFrame.chatType == "BN_CONVERSATION" ) then
-					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT");
-					BNConversation_DisplayConversationTooltip(tonumber(chatFrame.chatTarget));
-				else
-					GameTooltip_AddNewbieTip(self, CHAT_OPTIONS_LABEL, 1.0, 1.0, 1.0, NEWBIE_TOOLTIP_CHATOPTIONS, 1);
-				end
+				GameTooltip_AddNewbieTip(self, CHAT_OPTIONS_LABEL, 1.0, 1.0, 1.0, NEWBIE_TOOLTIP_CHATOPTIONS, 1);
 			</OnEnter>
 			<OnLeave>
 				GameTooltip:Hide();
@@ -358,7 +353,7 @@
 					MOVING_CHATFRAME = chatFrame;
 				elseif ( chatFrame.isDocked ) then
 					FCF_UnDockFrame(chatFrame);
-					FCF_SetLocked(chatFrame, nil);
+					FCF_SetLocked(chatFrame, false);
 					local chatTab = _G[chatFrame:GetName().."Tab"];
 					local x,y = chatTab:GetCenter();
 					x = x - (chatTab:GetWidth()/2);
@@ -402,7 +397,7 @@
 
 	<!-- ===============================================================================-->
 	<!-- Floating frame template-->
-	<ScrollingMessageFrame name="FloatingChatFrameTemplate" movable="true" enableMouse="false" resizable="true" inherits="ChatFrameTemplate,FloatingBorderedFrame" parent="UIParent" hidden="true" clampedToScreen="true" dontSavePosition="true" virtual="true">
+	<ScrollingMessageFrame name="FloatingChatFrameTemplate" movable="true" enableMouse="false" resizable="true" inherits="ChatFrameTemplate,FloatingBorderedFrame" parent="UIParent" hidden="true" clampedToScreen="true" dontSavePosition="true" frameLevel="5" virtual="true">
 		<Size x="430" y="120"/>
 		<Anchors>
 			<Anchor point="BOTTOMLEFT" x="100" y="100"/>
@@ -579,7 +574,7 @@
 				_G[name.."ButtonFrameBottomButton"]:Show();
 				_G[name.."ButtonFrameDownButton"]:Show();
 				_G[name.."ButtonFrameUpButton"]:Show();
-				SetChatWindowShown(self:GetID(), 1);
+				SetChatWindowShown(self:GetID(), true);
 				FCF_StopAlertFlash(self);
 			</OnShow>
 			<OnHide>
@@ -590,7 +585,7 @@
 					_G[name.."ButtonFrameDownButton"]:Hide();
 					_G[name.."ButtonFrameUpButton"]:Hide();
 					if ( not self.minimized ) then
-						SetChatWindowShown(self:GetID(), nil);
+						SetChatWindowShown(self:GetID(), false);
 					end
 				end
 			</OnHide>

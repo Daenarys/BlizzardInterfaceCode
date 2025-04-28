@@ -104,6 +104,7 @@ SoundPanelOptions = {
 	Sound_EnableAmbience = { text = "ENABLE_AMBIENCE" },
 	Sound_EnableSFX = { text = "ENABLE_SOUNDFX" },
 	Sound_EnableAllSound = { text = "ENABLE_SOUND" },
+	Sound_EnableDialog = { text = "ENABLE_DIALOG" },
 	Sound_ListenerAtCharacter = { text = "ENABLE_SOUND_AT_CHARACTER" },
 	Sound_EnableEmoteSounds = { text = "ENABLE_EMOTE_SOUNDS" },
 	Sound_EnablePetSounds = { text = "ENABLE_PET_SOUNDS" },
@@ -117,8 +118,9 @@ SoundPanelOptions = {
 	Sound_SFXVolume = { text = "SOUND_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
 	Sound_MusicVolume = { text = "MUSIC_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
 	Sound_AmbienceVolume = { text = "AMBIENCE_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
+	Sound_DialogVolume = { text = "DIALOG_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
 	Sound_MasterVolume = { text = "MASTER_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.001, },
-	Sound_OutputQuality = { text = "SOUND_QUALITY", minValue = 0, maxValue = 2, valueStep = 1 },
+	--Sound_OutputQuality = { text = "SOUND_QUALITY", minValue = 0, maxValue = 2, valueStep = 1 },
 }
 
 function AudioOptionsSoundPanel_OnLoad (self)
@@ -451,7 +453,7 @@ end
 
 function AudioOptionsVoicePanelKeyBindingButton_Refresh ()
 	PUSH_TO_TALK_BUTTON = BlizzardOptionsPanel_GetCVarSafe("PushToTalkButton");
-	local bindingText = GetBindingText(PUSH_TO_TALK_BUTTON, "KEY_");
+	local bindingText = GetBindingText(PUSH_TO_TALK_BUTTON);
 	AudioOptionsVoicePanelChatMode1KeyBindingButtonHiddenText:SetText(bindingText);
 	AudioOptionsVoicePanelChatMode1KeyBindingButton:SetText(bindingText);
 end
@@ -582,7 +584,7 @@ function AudioOptionsVoicePanelKeyBindingButton_BindButton (self)
 	end
 	if ( PUSH_TO_TALK_BUTTON ~= "" ) then
 		BlizzardOptionsPanel_SetCVarSafe("PushToTalkButton", PUSH_TO_TALK_BUTTON);
-		local bindingText = GetBindingText(PUSH_TO_TALK_BUTTON, "KEY_");
+		local bindingText = GetBindingText(PUSH_TO_TALK_BUTTON);
 		self:SetText(bindingText);
 		AudioOptionsVoicePanelChatMode1KeyBindingButtonHiddenText:SetText(bindingText);
 
@@ -591,8 +593,13 @@ function AudioOptionsVoicePanelKeyBindingButton_BindButton (self)
 
 		local currentbinding = GetBindingByKey(PUSH_TO_TALK_BUTTON);
 		if ( currentbinding ) then
-			UIErrorsFrame:AddMessage(format(ALREADY_BOUND, GetBindingText(currentbinding, "BINDING_NAME_")), 1.0, 1.0, 0.0, 1.0);
-			AudioOptionsVoicePanelBindingOutputTextConflict:SetText(format(ALREADY_BOUND, GetBindingText(currentbinding, "BINDING_NAME_")));
+			local currentBindingString = _G["BINDING_NAME_"..currentbinding];
+			if ( not currentBindingString ) then
+				currentBindingString = currentbinding;
+			end
+			
+			UIErrorsFrame:AddMessage(format(ALREADY_BOUND, currentBindingString), 1.0, 1.0, 0.0, 1.0);
+			AudioOptionsVoicePanelBindingOutputTextConflict:SetText(format(ALREADY_BOUND, currentBindingString));
 		else
 			AudioOptionsVoicePanelBindingOutputTextConflict:SetText("");
 		end

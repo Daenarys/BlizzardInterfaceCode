@@ -133,7 +133,6 @@ local CALENDAR_CONTEXTMENU_FLAG_SHOWEVENT		= 0x02;
 local CALENDAR_CREATEEVENTFRAME_DEFAULT_TITLE			= CALENDAR_EVENT_NAME;
 local CALENDAR_CREATEEVENTFRAME_DEFAULT_DESCRIPTION		= CALENDAR_EVENT_DESCRIPTION;
 local CALENDAR_CREATEEVENTFRAME_DEFAULT_TYPE			= CALENDAR_EVENTTYPE_OTHER;
-local CALENDAR_CREATEEVENTFRAME_DEFAULT_REPEAT_OPTION	= 1;
 local CALENDAR_CREATEEVENTFRAME_DEFAULT_HOUR			= 12;		-- default is standard (not military) time
 local CALENDAR_CREATEEVENTFRAME_DEFAULT_MINUTE			= 0;
 local CALENDAR_CREATEEVENTFRAME_DEFAULT_AM				= true;
@@ -589,10 +588,6 @@ local CALENDAR_CALENDARTYPE_COLORS = {
 local CALENDAR_EVENTTYPE_TEXTURE_PATHS = {
 	[CALENDAR_EVENTTYPE_RAID]		= "Interface\\LFGFrame\\LFGIcon-",
 	[CALENDAR_EVENTTYPE_DUNGEON]	= "Interface\\LFGFrame\\LFGIcon-",
---	[CALENDAR_EVENTTYPE_PVP]		= "",
---	[CALENDAR_EVENTTYPE_MEETING]	= "",
---	[CALENDAR_EVENTTYPE_OTHER]		= "",
-	[CALENDAR_EVENTTYPE_HEROIC_DUNGEON] = "Interface\\LFGFrame\\LFGIcon-",
 };
 local CALENDAR_EVENTTYPE_TEXTURES = {
 	[CALENDAR_EVENTTYPE_RAID]		= "Interface\\LFGFrame\\LFGIcon-Raid",
@@ -600,7 +595,6 @@ local CALENDAR_EVENTTYPE_TEXTURES = {
 	[CALENDAR_EVENTTYPE_PVP]		= "Interface\\Calendar\\UI-Calendar-Event-PVP",
 	[CALENDAR_EVENTTYPE_MEETING]	= "Interface\\Calendar\\MeetingIcon",
 	[CALENDAR_EVENTTYPE_OTHER]		= "Interface\\Calendar\\UI-Calendar-Event-Other",
-	[CALENDAR_EVENTTYPE_HEROIC_DUNGEON] = "Interface\\LFGFrame\\LFGIcon-Dungeon",
 };
 local CALENDAR_EVENTTYPE_TCOORDS = {
 	[CALENDAR_EVENTTYPE_RAID] = {
@@ -633,12 +627,6 @@ local CALENDAR_EVENTTYPE_TCOORDS = {
 		top		= 0.0,
 		bottom	= 1.0,
 	},
-	[CALENDAR_EVENTTYPE_HEROIC_DUNGEON] = {
-		left	= 0.0,
-		right	= 1.0,
-		top		= 0.0,
-		bottom	= 1.0,
-	},
 };
 do
 	-- set the pvp icon to the player's faction
@@ -654,7 +642,6 @@ do
 end
 
 local CALENDAR_FILTER_CVARS = {
-	{text = CALENDAR_FILTER_BATTLEGROUND,		cvar = "calendarShowBattlegrounds"	},
 	{text = CALENDAR_FILTER_DARKMOON,			cvar = "calendarShowDarkmoon"		},
 	{text = CALENDAR_FILTER_RAID_LOCKOUTS,		cvar = "calendarShowLockouts"		},
 	{text = CALENDAR_FILTER_RAID_RESETS,		cvar = "calendarShowResets"			},
@@ -670,6 +657,7 @@ local CalendarDayButtons = { };
 -- CalendarEventTextureCache gets updated whenever event type textures are requested (currently only
 -- the Dungeon and Raid event types have texture lists)
 local CalendarEventTextureCache = { };
+local CalendarEventTextureCacheType = nil;
 
 -- CalendarClassData gets updated whenever the current event's invite list is updated
 local CalendarClassData = { };
@@ -804,65 +792,101 @@ local function _CalendarFrame_CanRemoveEvent(modStatus, calendarType, inviteType
 		(calendarType == "PLAYER" or (calendarType == "GUILD_EVENT" and inviteType == CALENDAR_INVITETYPE_NORMAL));
 end
 
-local function _CalendarFrame_CacheEventTextures_Internal(...)
-	local numTextures = select("#", ...) / 4;
+local function _CalendarFrame_CacheEventTextures_Internal(eventType, ...)
+	wipe(CalendarEventTextureCache);
+
+	local STRIDE = 6;
+	local numTextures = select("#", ...) / STRIDE;
 	if ( numTextures <= 0 ) then
-		CalendarEventTextureCache.eventType = nil;
 		return false;
 	end
 
-	while ( #CalendarEventTextureCache > numTextures ) do
-		tremove(CalendarEventTextureCache);
-	end
+	local overlappingMapIDs = (eventType == CALENDAR_EVENTTYPE_RAID or eventType == CALENDAR_EVENTTYPE_DUNGEON) and {};
 
-	local param = 1;
 	local cacheIndex = 1;
 	for textureIndex = 1, numTextures do
 		if ( not CalendarEventTextureCache[cacheIndex] ) then
 			CalendarEventTextureCache[cacheIndex] = { };
 		end
 
-		-- insert texture
-		CalendarEventTextureCache[cacheIndex].textureIndex = textureIndex;
-		CalendarEventTextureCache[cacheIndex].title = select(param, ...);
-		param = param + 1;
-		CalendarEventTextureCache[cacheIndex].texture = select(param, ...);
-		param = param + 1;
-		CalendarEventTextureCache[cacheIndex].expansionLevel = select(param, ...);
-		param = param + 1;
-		CalendarEventTextureCache[cacheIndex].difficultyName = select(param, ...);
-		param = param + 1;
+		local title, texture, expansionLevel, difficultyID, mapID, isLFR = select((textureIndex - 1) * STRIDE + 1, ...);
+		local difficultyName, instanceType, isHeroic, isChallengeMode, displayHeroic, displayMythic, toggleDifficultyID = GetDifficultyInfo(difficultyID);
+		if not difficultyName then
+			difficultyName = "";
+		end
 
+		if overlappingMapIDs and overlappingMapIDs[mapID] then
+			-- Already exists a map, collapse the difficulty
+			local firstCacheIndex = overlappingMapIDs[mapID];
+			local cacheEntry = CalendarEventTextureCache[firstCacheIndex];
+
+			if cacheEntry.isLFR and not isLFR then
+				-- Prefer a non-LFR name over a LFR name
+				cacheEntry.title = title;
+				cacheEntry.isLFR = nil;
+			end
+
+			if cacheEntry.displayHeroic or cacheEntry.displayMythic and (not displayHeroic and not displayMythic) then
+				-- Prefer normal difficulty name over higher difficulty
+				cacheEntry.title = title;
+				cacheEntry.displayHeroic = nil;
+				cacheEntry.displayMythic = nil;
+			end
+
+			table.insert(cacheEntry.difficulties, { textureIndex = textureIndex, difficultyName = difficultyName });
+		else
+			CalendarEventTextureCache[cacheIndex].textureIndex = textureIndex;
+			CalendarEventTextureCache[cacheIndex].title = title;
+			CalendarEventTextureCache[cacheIndex].texture = texture;
+			CalendarEventTextureCache[cacheIndex].expansionLevel = expansionLevel;
+			CalendarEventTextureCache[cacheIndex].difficultyName = difficultyName;
+			CalendarEventTextureCache[cacheIndex].isLFR = isLFR;
+			CalendarEventTextureCache[cacheIndex].displayHeroic = displayHeroic;
+			CalendarEventTextureCache[cacheIndex].displayMythic = displayMythic;
+
+			if overlappingMapIDs then
+				if not overlappingMapIDs[mapID] then
+					overlappingMapIDs[mapID] = cacheIndex;
+				end
+				CalendarEventTextureCache[cacheIndex].difficulties = { { textureIndex = textureIndex, difficultyName = difficultyName } };
+			end
+
+			cacheIndex = cacheIndex + 1;
+		end
+	end
+
+	local cacheIndex = 1;
+	while cacheIndex < #CalendarEventTextureCache do
 		-- insert headers between expansion levels
 		local entry = CalendarEventTextureCache[cacheIndex];
 		local prevEntry = CalendarEventTextureCache[cacheIndex - 1];
-		if ( not prevEntry or (prevEntry and prevEntry.expansionLevel ~= entry.expansionLevel) ) then
+
+		if ( entry.expansionLevel and (not prevEntry or (prevEntry.expansionLevel and prevEntry.expansionLevel ~= entry.expansionLevel)) ) then
 			-- insert empty entry...
 			if ( prevEntry ) then
 				--...only if we had a previous entry
-				CalendarEventTextureCache[cacheIndex] = { };
+				table.insert(CalendarEventTextureCache, cacheIndex, {});
 				cacheIndex = cacheIndex + 1;
 			end
 			-- insert header
-			CalendarEventTextureCache[cacheIndex] = {
+			table.insert(CalendarEventTextureCache, cacheIndex, {
 				title = _G["EXPANSION_NAME"..entry.expansionLevel],
 				expansionLevel = entry.expansionLevel,
-			};
+			});
 			cacheIndex = cacheIndex + 1;
-			-- make the current entry the next entry
-			CalendarEventTextureCache[cacheIndex] = entry;
 		end
 
 		cacheIndex = cacheIndex + 1;
 	end
+
 	return true;
 end
 
 local function _CalendarFrame_CacheEventTextures(eventType)
-	if ( eventType ~= CalendarEventTextureCache.eventType ) then
-		CalendarEventTextureCache.eventType = eventType
+	if ( eventType ~= CalendarEventTextureCacheType ) then
+		CalendarEventTextureCacheType = eventType;
 		if ( eventType ) then
-			return _CalendarFrame_CacheEventTextures_Internal(CalendarEventGetTextures(eventType));
+			return  _CalendarFrame_CacheEventTextures_Internal(eventType, CalendarEventGetTextures(eventType));
 		end
 	end
 	return true;
@@ -874,6 +898,13 @@ local function _CalendarFrame_GetEventTexture(index, eventType)
 	end
 	for cacheIndex = 1, #CalendarEventTextureCache do
 		local entry = CalendarEventTextureCache[cacheIndex];
+		if ( entry.difficulties ) then
+			for i, difficultyInfo in ipairs(entry.difficulties) do
+				if difficultyInfo.textureIndex == index then
+					return entry, difficultyInfo;
+				end
+			end
+		end
 		if ( entry.textureIndex and index == entry.textureIndex ) then
 			return entry;
 		end
@@ -958,7 +989,8 @@ local function _CalendarFrame_InviteToRaid(maxInviteCount)
 		if ( name ~= playerName and not UnitInParty(name) and not UnitInRaid(name) and
 			 (inviteStatus == CALENDAR_INVITESTATUS_ACCEPTED or
 			 inviteStatus == CALENDAR_INVITESTATUS_CONFIRMED or
-			 inviteStatus == CALENDAR_INVITESTATUS_SIGNEDUP) ) then
+			 inviteStatus == CALENDAR_INVITESTATUS_SIGNEDUP or
+			 inviteStatus == CALENDAR_INVITESTATUS_TENTATIVE)  ) then
 			InviteToGroup(name);
 			inviteCount = inviteCount + 1;
 		end
@@ -975,7 +1007,8 @@ local function _CalendarFrame_GetInviteToRaidCount(maxInviteCount)
 		if ( not UnitInParty(name) and not UnitInRaid(name) and
 			 (inviteStatus == CALENDAR_INVITESTATUS_ACCEPTED or
 			 inviteStatus == CALENDAR_INVITESTATUS_CONFIRMED or
-			 inviteStatus == CALENDAR_INVITESTATUS_SIGNEDUP) ) then
+			 inviteStatus == CALENDAR_INVITESTATUS_SIGNEDUP or
+			 inviteStatus == CALENDAR_INVITESTATUS_TENTATIVE) ) then
 			inviteCount = inviteCount + 1;
 		end
 		i = i + 1;
@@ -1158,6 +1191,18 @@ function CalendarFrame_OnHide(self)
 	end
 
 	PlaySound("igSpellBookClose");
+end
+
+function CalendarFrame_OnMouseWheel(self, value)
+	if ( value > 0 ) then
+		if ( CalendarPrevMonthButton:IsEnabled() ) then
+			CalendarPrevMonthButton_OnClick();
+		end
+	else
+		if ( CalendarNextMonthButton:IsEnabled() ) then
+			CalendarNextMonthButton_OnClick();
+		end	
+	end
 end
 
 function CalendarFrame_InitWeekday(index)
@@ -1833,7 +1878,7 @@ function CalendarFilterDropDown_Initialize(self)
 end
 
 function CalendarFilterDropDown_OnClick(self)
-	SetCVar(CALENDAR_FILTER_CVARS[self:GetID()].cvar, UIDropDownMenuButton_GetChecked(self));
+	SetCVar(CALENDAR_FILTER_CVARS[self:GetID()].cvar, UIDropDownMenuButton_GetChecked(self) and "1" or "0");
 	CalendarFrame_Update();
 end
 
@@ -2504,23 +2549,6 @@ function CalendarDayButtonMoreEventsButton_OnLeave(self)
 end
 
 function CalendarDayButtonMoreEventsButton_OnClick(self, button)
---[[
-	local dayButton = self:GetParent();
-	local dayChanged = CalendarFrame.selectedDayButton ~= dayButton;
-
-	CalendarDayButton_Click(dayButton);
-
-	if ( button == "LeftButton" ) then
-		CalendarEventPickerFrame_Toggle(dayButton);
-	elseif ( button == "RightButton" ) then
-		local flags = CALENDAR_CONTEXTMENU_FLAG_SHOWDAY;
-		if ( dayChanged ) then
-			CalendarContextMenu_Show(self, CalendarDayContextMenu_Initialize, "cursor", 3, -3, flags, dayButton);
-		else
-			CalendarContextMenu_Toggle(self, CalendarDayContextMenu_Initialize, "cursor", 3, -3, flags, dayButton);
-		end
-	end
---]]
 	local dayButton = self:GetParent();
 
 	if ( button == "LeftButton" ) then
@@ -2530,25 +2558,10 @@ function CalendarDayButtonMoreEventsButton_OnClick(self, button)
 		local dayChanged = CalendarFrame.selectedDayButton ~= dayButton;
 
 		local flags = CALENDAR_CONTEXTMENU_FLAG_SHOWDAY;
-		if ( firstEventButton ) then
-			local eventChanged =
-				CalendarContextMenu.eventButton ~= self or
-				CalendarContextMenu.dayButton ~= dayButton;
-
-			local flags = CALENDAR_CONTEXTMENU_FLAG_SHOWDAY + CALENDAR_CONTEXTMENU_FLAG_SHOWEVENT;
-			if ( eventChanged ) then
-				CalendarContextMenu_Show(self, CalendarDayContextMenu_Initialize, "cursor", 3, -3, flags, dayButton, self);
-			else
-				CalendarContextMenu_Toggle(self, CalendarDayContextMenu_Initialize, "cursor", 3, -3, flags, dayButton, self);
-			end
-			flags = flags + CALENDAR_CONTEXTMENU_FLAG_SHOWEVENT;
-
+		if ( dayChanged ) then
+			CalendarContextMenu_Show(self, CalendarDayContextMenu_Initialize, "cursor", 3, -3, flags, dayButton);
 		else
-			if ( dayChanged ) then
-				CalendarContextMenu_Show(self, CalendarDayContextMenu_Initialize, "cursor", 3, -3, flags, dayButton);
-			else
-				CalendarContextMenu_Toggle(self, CalendarDayContextMenu_Initialize, "cursor", 3, -3, flags, dayButton);
-			end
+			CalendarContextMenu_Toggle(self, CalendarDayContextMenu_Initialize, "cursor", 3, -3, flags, dayButton);
 		end
 	end
 
@@ -2652,10 +2665,9 @@ function CalendarViewHolidayFrame_Update()
 	CalendarTitleFrame_SetText(CalendarViewHolidayTitleFrame, name);
 	CalendarViewHolidayDescription:SetText(description);
 	CalendarViewHolidayInfoTexture:SetTexture();
-	-- mschweitzer NOTE: we're going to use the default texture here until we can get real INFO art
+
 	local texture = CALENDAR_CALENDARTYPE_TEXTURES["HOLIDAY"]["INFO"];
 	local tcoords = CALENDAR_CALENDARTYPE_TCOORDS["HOLIDAY"];
---	local texture, tcoords = _CalendarFrame_GetTextureFile(texture, "HOLIDAY", "INFO", 0);
 	if ( texture ) then
 		CalendarViewHolidayInfoTexture:SetTexture(texture);
 		CalendarViewHolidayInfoTexture:SetTexCoord(tcoords.left, tcoords.right, tcoords.top, tcoords.bottom);
@@ -2839,13 +2851,8 @@ function CalendarEventInviteList_AnchorSortButtons(inviteList)
 	local inviteButtonName = inviteButton:GetName();
 
 	local nameSortButton = inviteList.sortButtons.name;
-	if ( inviteList.partyMode ) then
-		local inviteName = _G[inviteButtonName.."Name"];
-		nameSortButton:SetPoint("LEFT", inviteName, "LEFT");
-	else
-		local invitePartyIcon = _G[inviteButtonName.."PartyIcon"];
-		nameSortButton:SetPoint("LEFT", invitePartyIcon, "LEFT");
-	end
+	local invitePartyIcon = _G[inviteButtonName.."PartyIcon"];
+	nameSortButton:SetPoint("LEFT", invitePartyIcon, "LEFT");
 
 	local classSortButton = inviteList.sortButtons.class;
 	local inviteClass = _G[inviteButtonName.."Class"];
@@ -2993,11 +3000,11 @@ function CalendarViewEventFrame_Update()
 	CalendarViewEventIcon:SetTexture();
 	local tcoords = CALENDAR_EVENTTYPE_TCOORDS[eventType];
 	CalendarViewEventIcon:SetTexCoord(tcoords.left, tcoords.right, tcoords.top, tcoords.bottom);
-	local eventTex = _CalendarFrame_GetEventTexture(textureIndex, eventType);
+	local eventTex, difficultyInfo = _CalendarFrame_GetEventTexture(textureIndex, eventType);
 	if ( eventTex ) then
 		-- set the event type
 		local name = eventTex.title;
-		name = GetDungeonNameWithDifficulty(name, eventTex.difficultyName);
+		name = GetDungeonNameWithDifficulty(name, difficultyInfo and difficultyInfo.difficultyName or eventTex.difficultyName);
 		CalendarViewEventTypeName:SetFormattedText(CALENDAR_VIEW_EVENTTYPE, safeselect(eventType, CalendarEventGetTypes()), name);
 		-- set the eventTex texture
 		if ( eventTex.texture ~= "" ) then
@@ -3083,9 +3090,9 @@ end
 function CalendarViewEventAcceptButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
 	if ( CalendarViewEventFrame.inviteType == CALENDAR_INVITETYPE_SIGNUP ) then
-		GameTooltip:SetText(CALENDAR_TOOLTIP_SIGNUPBUTTON, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CALENDAR_TOOLTIP_SIGNUPBUTTON, nil, nil, nil, nil, true);
 	else
-		GameTooltip:SetText(CALENDAR_TOOLTIP_AVAILABLEBUTTON, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CALENDAR_TOOLTIP_AVAILABLEBUTTON, nil, nil, nil, nil, true);
 	end
 	GameTooltip:Show();
 	--GameTooltip_AddNewbieTip(self, nil, 1.0, 1.0, 1.0, CALENDAR_TOOLTIP_AVAILABLEBUTTON, 1);
@@ -3101,7 +3108,7 @@ end
 
 function CalendarViewEventTentativeButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-	GameTooltip:SetText(CALENDAR_TOOLTIP_TENTATIVEBUTTON, nil, nil, nil, nil, 1);
+	GameTooltip:SetText(CALENDAR_TOOLTIP_TENTATIVEBUTTON, nil, nil, nil, nil, true);
 	GameTooltip:Show();
 	--GameTooltip_AddNewbieTip(self, nil, 1.0, 1.0, 1.0, CALENDAR_TOOLTIP_TENTATIVEBUTTON, 1);
 end
@@ -3112,7 +3119,7 @@ end
 
 function CalendarViewEventDeclineButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-	GameTooltip:SetText(CALENDAR_TOOLTIP_DECLINEBUTTON, nil, nil, nil, nil, 1);
+	GameTooltip:SetText(CALENDAR_TOOLTIP_DECLINEBUTTON, nil, nil, nil, nil, true);
 	GameTooltip:Show();
 	--GameTooltip_AddNewbieTip(self, nil, 1.0, 1.0, 1.0, CALENDAR_TOOLTIP_DECLINEBUTTON, 1);
 end
@@ -3124,9 +3131,9 @@ end
 function CalendarViewEventRemoveButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
 	if ( CalendarViewEventFrame.inviteType == CALENDAR_INVITETYPE_SIGNUP ) then
-		GameTooltip:SetText(CALENDAR_TOOLTIP_REMOVESIGNUPBUTTON, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CALENDAR_TOOLTIP_REMOVESIGNUPBUTTON, nil, nil, nil, nil, true);
 	else
-		GameTooltip:SetText(CALENDAR_TOOLTIP_REMOVEBUTTON, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CALENDAR_TOOLTIP_REMOVEBUTTON, nil, nil, nil, nil, true);
 	end
 	GameTooltip:Show();
 	--GameTooltip_AddNewbieTip(self, nil, 1.0, 1.0, 1.0, CALENDAR_TOOLTIP_REMOVEBUTTON, 1);
@@ -3236,9 +3243,6 @@ function CalendarViewEvent_SetEventButtons(inviteType, calendarType)
 end
 
 function CalendarViewEventInviteList_Update(inviteType, calendarType)
---	CalendarViewEventInviteList.partyMode = IsInGroup(LE_PARTY_CATEGORY_HOME);
-	CalendarViewEventInviteList.partyMode = false;
-
 	if ( _CalendarFrame_IsSignUpEvent(calendarType, inviteType) ) then
 		-- expand the event list so there is not so much empty space around the buttons
 		CalendarViewEventDivider:SetPoint("TOPLEFT", CalendarViewEventDivider:GetParent(), "TOPLEFT", 10, -30);
@@ -3298,17 +3302,7 @@ function CalendarViewEventInviteListScrollFrame_Update()
 				buttonModIcon:SetTexture();
 				buttonModIcon:Hide();
 			end
---[[
-			-- setup party status
-			buttonPartyIcon = _G[buttonName.."PartyIcon"];
-			if ( not CalendarViewEventInviteList.partyMode or not UnitInParty(name) or not UnitInRaid(name) ) then
-				buttonPartyIcon:Hide();
-			else
-				buttonPartyIcon:Show();
-				-- the party icon overrides the mod icon
-				buttonModIcon:Hide();
-			end
---]]
+
 			-- setup name
 			-- NOTE: classFilename could be invalid when a character is being transferred
 			local classColor = (classFilename and RAID_CLASS_COLORS[classFilename]) or NORMAL_FONT_COLOR;
@@ -3326,15 +3320,10 @@ function CalendarViewEventInviteListScrollFrame_Update()
 			buttonStatus:SetTextColor(inviteStatusInfo.color.r, inviteStatusInfo.color.g, inviteStatusInfo.color.b);
 
 			-- fixup anchors
-			if ( CalendarViewEventInviteList.partyMode ) then
-				buttonNameString:SetPoint("LEFT", buttonPartyIcon, "RIGHT");
-				--buttonClass:SetPoint("LEFT", buttonNameString, "RIGHT", -buttonPartyIcon:GetWidth(), 0);
-			elseif ( buttonModIcon:IsShown() ) then
+			if ( buttonModIcon:IsShown() ) then
 				buttonNameString:SetPoint("LEFT", buttonModIcon, "RIGHT");
-				--buttonClass:SetPoint("LEFT", buttonNameString, "RIGHT", -buttonModIcon:GetWidth(), 0);
 			else
 				buttonNameString:SetPoint("LEFT", button, "LEFT");
-				--buttonClass:SetPoint("LEFT", buttonNameString, "RIGHT", 0, 0);
 			end
 
 			-- set the selected button
@@ -3436,8 +3425,8 @@ function CalendarCreateEventFrame_OnLoad(self)
 	UIDropDownMenu_SetWidth(CalendarCreateEventMinuteDropDown, 30, 40);
 	UIDropDownMenu_Initialize(CalendarCreateEventAMPMDropDown, CalendarCreateEventAMPMDropDown_Initialize);
 	UIDropDownMenu_SetWidth(CalendarCreateEventAMPMDropDown, 40, 40);
-	UIDropDownMenu_Initialize(CalendarCreateEventRepeatOptionDropDown, CalendarCreateEventRepeatOptionDropDown_Initialize);
-	UIDropDownMenu_SetWidth(CalendarCreateEventRepeatOptionDropDown, 80);
+	UIDropDownMenu_Initialize(CalendarCreateEventDifficultyOptionDropDown, CalendarCreateEventDifficultyOptionDropDown_Initialize);
+	UIDropDownMenu_SetWidth(CalendarCreateEventDifficultyOptionDropDown, 100, 40);
 end
 
 function CalendarCreateEventFrame_OnEvent(self, event, ...)
@@ -3557,10 +3546,6 @@ function CalendarCreateEventFrame_Update()
 		CalendarCreateEventTexture_Update();
 		-- hide the creator
 		CalendarCreateEventCreatorName:Hide();
-		-- reset repeat option
-		CalendarCreateEventFrame.selectedRepeatOption = CALENDAR_CREATEEVENTFRAME_DEFAULT_REPEAT_OPTION;
-		CalendarCreateEvent_UpdateRepeatOption();
-		CalendarEventSetRepeatOption(CalendarCreateEventFrame.selectedRepeatOption);
 		local calendarType = CalendarEventGetCalendarType();
 		if ( calendarType == "GUILD_ANNOUNCEMENT" ) then
 			CalendarTitleFrame_SetText(CalendarCreateEventTitleFrame, CALENDAR_CREATE_ANNOUNCEMENT);
@@ -3641,9 +3626,6 @@ function CalendarCreateEventFrame_Update()
 		-- update the creator (must come after event texture)
 		CalendarCreateEventCreatorName:SetFormattedText(CALENDAR_EVENT_CREATORNAME, _CalendarFrame_SafeGetName(creator));
 		CalendarCreateEventCreatorName:Show();
-		-- update repeat option
-		CalendarCreateEventFrame.selectedRepeatOption = repeatOption;
-		CalendarCreateEvent_UpdateRepeatOption();
 		if ( calendarType == "GUILD_ANNOUNCEMENT" ) then
 			CalendarTitleFrame_SetText(CalendarCreateEventTitleFrame, CALENDAR_EDIT_ANNOUNCEMENT);
 			-- guild wide events don't have invites
@@ -3711,11 +3693,11 @@ function CalendarCreateEventTexture_Update()
 	CalendarCreateEventIcon:SetTexture();
 	local tcoords = CALENDAR_EVENTTYPE_TCOORDS[eventType];
 	CalendarCreateEventIcon:SetTexCoord(tcoords.left, tcoords.right, tcoords.top, tcoords.bottom);
-	local eventTex = _CalendarFrame_GetEventTexture(textureIndex, eventType);
+	local eventTex, difficultyInfo = _CalendarFrame_GetEventTexture(textureIndex, eventType);
 	if ( eventTex ) then
 		-- set the eventTex name since we have one
 		local name = eventTex.title;
-		CalendarCreateEventTextureName:SetText(GetDungeonNameWithDifficulty(name, eventTex.difficultyName));
+		CalendarCreateEventTextureName:SetText(GetDungeonNameWithDifficulty(name, difficultyInfo and difficultyInfo.difficultyName or eventTex.difficultyName));
 		CalendarCreateEventTextureName:Show();
 		-- set the eventTex texture
 		if ( eventTex.texture ~= "" ) then
@@ -3728,6 +3710,7 @@ function CalendarCreateEventTexture_Update()
 		CalendarCreateEventIcon:SetTexture(CALENDAR_EVENTTYPE_TEXTURES[eventType]);
 	end
 	-- need to update the creator name at this point since it is affected by the texture name
+	CalendarCreateEvent_UpdateEventType();
 	CalendarCreateEventCreatorName_Update();
 end
 
@@ -3752,14 +3735,14 @@ end
 
 function CalendarCreateEventTypeDropDown_OnClick(self)
 	local eventType = self.value;
-	if ( eventType == CALENDAR_EVENTTYPE_DUNGEON or eventType == CALENDAR_EVENTTYPE_RAID or eventType == CALENDAR_EVENTTYPE_HEROIC_DUNGEON ) then
+	if ( eventType == CALENDAR_EVENTTYPE_DUNGEON or eventType == CALENDAR_EVENTTYPE_RAID ) then
 		CalendarTexturePickerFrame_Show(eventType);
 	else
-		UIDropDownMenu_SetSelectedValue(CalendarCreateEventTypeDropDown, eventType);
-		CalendarCreateEventFrame.selectedEventType = eventType;
-		CalendarEventSetType(eventType);
-		-- NOTE: clear the texture selection for non-dungeon types since those don't have texture selections
 		CalendarCreateEventFrame.selectedTextureIndex = nil;
+		CalendarCreateEventFrame.selectedEventType = eventType;
+		CalendarCreateEvent_UpdateEventType();
+		CalendarEventSetType(eventType);
+
 		CalendarCreateEventTexture_Update();
 
 		CalendarCreateEventCreateButton_Update();
@@ -3769,39 +3752,34 @@ end
 function CalendarCreateEvent_UpdateEventType()
 	UIDropDownMenu_Initialize(CalendarCreateEventTypeDropDown, CalendarCreateEventTypeDropDown_Initialize);
 	UIDropDownMenu_SetSelectedValue(CalendarCreateEventTypeDropDown, CalendarCreateEventFrame.selectedEventType);
-end
 
-function CalendarCreateEventRepeatOptionDropDown_Initialize(self)
-	CalendarCreateEventTypeDropDown_InitRepeatOptions(self, CalendarEventGetRepeatOptions());
-end
-
-function CalendarCreateEventTypeDropDown_InitRepeatOptions(self, ...)
-	local info = UIDropDownMenu_CreateInfo();
-	for i = 1, select("#", ...) do
-		info.text = select(i, ...);
-		info.func = CalendarCreateEventRepeatOptionDropDown_OnClick;
-		if ( CalendarCreateEventFrame.selectedRepeatOption == i ) then
-			info.checked = 1;
-			UIDropDownMenu_SetText(self, info.text);
-		else
-			info.checked = nil;
-		end
-		UIDropDownMenu_AddButton(info);
+	local eventType = CalendarCreateEventFrame.selectedEventType;
+	local textureIndex = CalendarCreateEventFrame.selectedTextureIndex;
+	local eventTex, difficultyInfo = _CalendarFrame_GetEventTexture(textureIndex, eventType);
+	if ( eventTex and difficultyInfo and difficultyInfo.difficultyName ~= "") then
+		UIDropDownMenu_Initialize(CalendarCreateEventDifficultyOptionDropDown, CalendarCreateEventDifficultyOptionDropDown_Initialize);
+		UIDropDownMenu_SetSelectedValue(CalendarCreateEventDifficultyOptionDropDown, difficultyInfo.difficultyName);
+		CalendarCreateEventDifficultyOptionDropDown:Show();
+	else
+		CalendarCreateEventDifficultyOptionDropDown:Hide();
 	end
 end
 
-function CalendarCreateEventRepeatOptionDropDown_OnClick(self)
-	local id = self:GetID();
-	UIDropDownMenu_SetSelectedID(CalendarCreateEventRepeatOptionDropDown, id);
-	CalendarCreateEventFrame.selectedRepeatOption = id;
-	CalendarEventSetRepeatOption(id);
+function CalendarCreateEvent_SetSelectedIndex(selectedTextureIndex, eventType)
+	CalendarCreateEventFrame.selectedTextureIndex = selectedTextureIndex;
+	CalendarCreateEventFrame.selectedEventType = eventType;
+	if ( CalendarCreateEventFrame.selectedTextureIndex ) then
+		-- now that we've selected a texture, we can set the create event data
+		CalendarEventSetType(eventType);
+		CalendarEventSetTextureID(CalendarCreateEventFrame.selectedTextureIndex);
+		-- update the create event frame using our selection
+		CalendarCreateEventFrame.selectedEventType = eventType;
+		CalendarCreateEvent_UpdateEventType();
+		CalendarCreateEventTexture_Update();
+		CalendarTexturePickerFrame_Hide();
 
-	CalendarCreateEventCreateButton_Update();
-end
-
-function CalendarCreateEvent_UpdateRepeatOption()
-	UIDropDownMenu_Initialize(CalendarCreateEventRepeatOptionDropDown, CalendarCreateEventRepeatOptionDropDown_Initialize);
-	UIDropDownMenu_SetSelectedID(CalendarCreateEventRepeatOptionDropDown, CalendarCreateEventFrame.selectedRepeatOption);
+		CalendarCreateEventCreateButton_Update();
+	end
 end
 
 function CalendarCreateEventHourDropDown_Initialize(self)
@@ -3902,6 +3880,31 @@ function CalendarCreateEventAMPMDropDown_OnClick(self)
 	CalendarCreateEvent_SetEventTime();
 
 	CalendarCreateEventCreateButton_Update();
+end
+
+function CalendarCreateEventDifficultyOptionDropDown_Initialize(self)
+	local eventType = CalendarCreateEventFrame.selectedEventType;
+	local textureIndex = CalendarCreateEventFrame.selectedTextureIndex;
+	local eventTex = _CalendarFrame_GetEventTexture(textureIndex, eventType);
+	if ( eventTex ) then
+		local info = UIDropDownMenu_CreateInfo();
+		local alreadyAddedDifficulties = {};
+		for i, difficultyInfo in ipairs(eventTex.difficulties) do
+			if not alreadyAddedDifficulties[difficultyInfo.difficultyName] then
+				info.text = difficultyInfo.difficultyName;
+				info.arg1 = difficultyInfo.textureIndex;
+				info.func = CalendarCreateEventDifficultyOptionDropDown_OnClick;
+				info.checked = textureIndex == difficultyInfo.textureIndex or nil;
+				UIDropDownMenu_AddButton(info);
+
+				alreadyAddedDifficulties[difficultyInfo.difficultyName] = true;
+			end
+		end
+	end
+end
+
+function CalendarCreateEventDifficultyOptionDropDown_OnClick(self, textureIndex)
+	CalendarCreateEvent_SetSelectedIndex(textureIndex, CalendarCreateEventFrame.selectedEventType);
 end
 
 function CalendarCreateEvent_SetEventTime()
@@ -4013,9 +4016,6 @@ function CalendarCreateEvent_SetLockEvent()
 end
 
 function CalendarCreateEventInviteList_Update()
---	CalendarCreateEventInviteList.partyMode = CalendarCreateEventFrame.mode == "edit" and IsInRaid(LE_PARTY_CATEGORY_HOME);
-	CalendarCreateEventInviteList.partyMode = false;
-
 	CalendarCreateEventInviteListScrollFrame_Update();
 	CalendarEventInviteList_AnchorSortButtons(CalendarCreateEventInviteList);
 	CalendarEventInviteList_UpdateSortButtons(CalendarCreateEventInviteList);
@@ -4066,17 +4066,7 @@ function CalendarCreateEventInviteListScrollFrame_Update()
 				buttonModIcon:SetTexture();
 				buttonModIcon:Hide();
 			end
---[[
-			-- setup party status
-			buttonPartyIcon = _G[buttonName.."PartyIcon"];
-			if ( not CalendarCreateEventInviteList.partyMode or not UnitInParty(name) or not UnitInRaid(name) ) then
-				buttonPartyIcon:Hide();
-			else
-				buttonPartyIcon:Show();
-				-- the party icon overrides the mod icon
-				buttonModIcon:Hide();
-			end
---]]
+
 			-- setup name
 			-- NOTE: classFilename could be invalid when a character is being transferred
 			local classColor = (classFilename and RAID_CLASS_COLORS[classFilename]) or NORMAL_FONT_COLOR;
@@ -4094,15 +4084,10 @@ function CalendarCreateEventInviteListScrollFrame_Update()
 			buttonStatus:SetTextColor(inviteStatusInfo.color.r, inviteStatusInfo.color.g, inviteStatusInfo.color.b);
 
 			-- fixup anchors
-			if ( CalendarCreateEventInviteList.partyMode ) then
-				buttonNameString:SetPoint("LEFT", buttonPartyIcon, "RIGHT");
-				--buttonClass:SetPoint("LEFT", buttonNameString, "RIGHT", -buttonPartyIcon:GetWidth(), 0);
-			elseif ( buttonModIcon:IsShown() ) then
+			if ( buttonModIcon:IsShown() ) then
 				buttonNameString:SetPoint("LEFT", buttonModIcon, "RIGHT");
-				--buttonClass:SetPoint("LEFT", buttonNameString, "RIGHT", -buttonModIcon:GetWidth(), 0);
 			else
 				buttonNameString:SetPoint("LEFT", button, "LEFT");
-				--buttonClass:SetPoint("LEFT", buttonNameString, "RIGHT", 0, 0);
 			end
 
 			-- set the selected button
@@ -4421,9 +4406,9 @@ end
 function CalendarCreateEventRaidInviteButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
 	if ( IsInRaid(LE_PARTY_CATEGORY_HOME) or GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) + self.inviteCount > MAX_PARTY_MEMBERS + 1) then
-		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_RAID, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_RAID, nil, nil, nil, nil, true);
 	else
-		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_PARTY, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_PARTY, nil, nil, nil, nil, true);
 	end
 	GameTooltip:Show();
 	--GameTooltip_AddNewbieTip(self, nil, 1.0, 1.0, 1.0, CALENDAR_TOOLTIP_INVITETORAID_BUTTON, 1);
@@ -5036,7 +5021,7 @@ function CalendarTexturePickerScrollFrame_Update()
 
 				-- set the eventTex title
 				local name = eventTex.title;
-				buttonTitle:SetText(GetDungeonNameWithDifficulty(name, eventTex.difficultyName));
+				buttonTitle:SetText(GetDungeonNameWithDifficulty(name, eventTex.difficulties == nil and eventTex.difficultyName or ""));
 				buttonTitle:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
 				buttonTitle:ClearAllPoints();
 				buttonTitle:SetPoint("LEFT", buttonIcon, "RIGHT");
@@ -5088,20 +5073,7 @@ function CalendarTexturePickerScrollFrame_Update()
 end
 
 function CalendarTexturePickerAcceptButton_OnClick(self)
-	CalendarCreateEventFrame.selectedTextureIndex = CalendarTexturePickerFrame.selectedTextureIndex;
-	if ( CalendarCreateEventFrame.selectedTextureIndex ) then
-		-- now that we've selected a texture, we can set the create event data
-		local eventType = CalendarTexturePickerFrame.eventType;
-		CalendarEventSetType(eventType);
-		CalendarEventSetTextureID(CalendarCreateEventFrame.selectedTextureIndex);
-		-- update the create event frame using our selection
-		UIDropDownMenu_SetSelectedValue(CalendarCreateEventTypeDropDown, eventType);
-		CalendarCreateEventFrame.selectedEventType = eventType;
-		CalendarCreateEventTexture_Update();
-		CalendarTexturePickerFrame:Hide();
-
-		CalendarCreateEventCreateButton_Update();
-	end
+	CalendarCreateEvent_SetSelectedIndex(CalendarTexturePickerFrame.selectedTextureIndex, CalendarTexturePickerFrame.eventType);
 end
 
 function CalendarTexturePickerButton_OnLoad(self)
@@ -5220,7 +5192,7 @@ function CalendarClassButton_OnEnter(self)
 	-- TODO: set detailed counts info
 	local classData = CalendarClassData[self.class];
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-	GameTooltip:SetText(classData.name, nil, nil, nil, nil, 1);
+	GameTooltip:SetText(classData.name, nil, nil, nil, nil, true);
 	GameTooltip:Show();
 end
 --[[
@@ -5267,16 +5239,16 @@ end
 
 function CalendarClassTotalsButtonOnEnterDummy_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-	GameTooltip:SetText(CALENDAR_TOOLTIP_INVITE_TOTALS, nil, nil, nil, nil, 1);
+	GameTooltip:SetText(CALENDAR_TOOLTIP_INVITE_TOTALS, nil, nil, nil, nil, true);
 	GameTooltip:Show();
 end
 
 function CalendarClassTotalsButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
 	if ( CalendarEventGetNumInvites() > MAX_PARTY_MEMBERS + 1 ) then
-		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_RAID, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_RAID, nil, nil, nil, nil, true);
 	else
-		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_PARTY, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CALENDAR_TOOLTIP_INVITEMEMBERS_BUTTON_PARTY, nil, nil, nil, nil, true);
 	end
 	GameTooltip:Show();
 end
@@ -5333,7 +5305,7 @@ end
 
 function CalendarClassTotalsButton_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
-	GameTooltip:SetText(CALENDAR_TOOLTIP_INVITE_TOTALS, nil, nil, nil, nil, 1);
+	GameTooltip:SetText(CALENDAR_TOOLTIP_INVITE_TOTALS, nil, nil, nil, nil, true);
 	GameTooltip:Show();
 end
 

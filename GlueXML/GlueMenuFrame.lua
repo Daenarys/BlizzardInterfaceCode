@@ -5,3 +5,4 @@ end
 function GlueMenuFrame_Hide()
 	GlueMenuFrame:Hide();
 end
+

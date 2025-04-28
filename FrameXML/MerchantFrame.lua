@@ -8,6 +8,7 @@ function MerchantFrame_OnLoad(self)
 	self:RegisterEvent("MERCHANT_CLOSED");
 	self:RegisterEvent("MERCHANT_SHOW");
 	self:RegisterEvent("GUILDBANK_UPDATE_MONEY");
+	self:RegisterEvent("HEIRLOOMS_UPDATED");
 	self:RegisterForDrag("LeftButton");
 	self.page = 1;
 	-- Tab Handling code
@@ -40,11 +41,17 @@ function MerchantFrame_OnEvent(self, event, ...)
 		MerchantFrame_UpdateRepairButtons();
 	elseif ( event == "CURRENCY_DISPLAY_UPDATE" ) then
 		MerchantFrame_UpdateCurrencyAmounts();
+	elseif ( event == "HEIRLOOMS_UPDATED" ) then
+		local itemID, updateReason = ...;
+		if itemID and updateReason == "NEW" then
+			MerchantFrame_Update();
+		end
 	end
 end
 
 function MerchantFrame_OnShow(self)
 	OpenAllBags(self);
+	ContainerFrame_UpdateAll();
 	
 	-- Update repair all button status
 	MerchantFrame_UpdateCanRepairAll();
@@ -68,7 +75,23 @@ function MerchantFrame_OnHide(self)
 	PlaySound("igCharacterInfoClose");
 end
 
+function MerchantFrame_OnMouseWheel(self, value)
+	if ( value > 0 ) then
+		if ( MerchantPrevPageButton:IsShown() and MerchantPrevPageButton:IsEnabled() ) then
+			MerchantPrevPageButton_OnClick();
+		end
+	else
+		if ( MerchantNextPageButton:IsShown() and MerchantNextPageButton:IsEnabled() ) then
+			MerchantNextPageButton_OnClick();
+		end	
+	end
+end
+
 function MerchantFrame_Update()
+	if ( MerchantFrame.lastTab ~= MerchantFrame.selectedTab ) then
+		MerchantFrame_CloseStackSplitFrame();
+		MerchantFrame.lastTab = MerchantFrame.selectedTab;
+	end
 	MerchantFrame_UpdateFilterString()
 	if ( MerchantFrame.selectedTab == 1 ) then
 		MerchantFrame_UpdateMerchantInfo();
@@ -134,12 +157,24 @@ function MerchantFrame_UpdateMerchantInfo()
 				merchantMoney:Show();
 			end
 
+			local merchantItemID = GetMerchantItemID(index);
+
+			local isHeirloom = merchantItemID and C_Heirloom.IsItemHeirloom(merchantItemID);
+			local isKnownHeirloom = isHeirloom and C_Heirloom.PlayerHasHeirloom(merchantItemID);
+
+			itemButton.showNonrefundablePrompt = isHeirloom;
+
 			itemButton.hasItem = true;
 			itemButton:SetID(index);
 			itemButton:Show();
-			if ( numAvailable == 0 ) then
+
+			local tintRed = not isUsable and not isHeirloom;
+			
+			SetItemButtonDesaturated(itemButton, isKnownHeirloom);
+
+			if ( numAvailable == 0 or isKnownHeirloom ) then
 				-- If not available and not usable
-				if ( not isUsable ) then
+				if ( tintRed ) then
 					SetItemButtonNameFrameVertexColor(merchantButton, 0.5, 0, 0);
 					SetItemButtonSlotVertexColor(merchantButton, 0.5, 0, 0);
 					SetItemButtonTextureVertexColor(itemButton, 0.5, 0, 0);
@@ -151,7 +186,7 @@ function MerchantFrame_UpdateMerchantInfo()
 					SetItemButtonNormalTextureVertexColor(itemButton,0.5, 0.5, 0.5);
 				end
 				
-			elseif ( not isUsable ) then
+			elseif ( tintRed ) then
 				SetItemButtonNameFrameVertexColor(merchantButton, 1.0, 0, 0);
 				SetItemButtonSlotVertexColor(merchantButton, 1.0, 0, 0);
 				SetItemButtonTextureVertexColor(itemButton, 0.9, 0, 0);
@@ -339,13 +374,27 @@ end
 function MerchantPrevPageButton_OnClick()
 	PlaySound("igMainMenuOptionCheckBoxOn");
 	MerchantFrame.page = MerchantFrame.page - 1;
+	MerchantFrame_CloseStackSplitFrame();
 	MerchantFrame_Update();
 end
 
 function MerchantNextPageButton_OnClick()
 	PlaySound("igMainMenuOptionCheckBoxOn");
 	MerchantFrame.page = MerchantFrame.page + 1;
+	MerchantFrame_CloseStackSplitFrame();
 	MerchantFrame_Update();
+end
+
+function MerchantFrame_CloseStackSplitFrame()
+	if ( StackSplitFrame:IsShown() ) then
+		local numButtons = max(MERCHANT_ITEMS_PER_PAGE, BUYBACK_ITEMS_PER_PAGE);
+		for i = 1, numButtons do
+			if ( StackSplitFrame.owner == _G["MerchantItem"..i.."ItemButton"] ) then
+				StackSplitFrameCancel_Click();
+				return;
+			end
+		end
+	end
 end
 
 function MerchantItemBuybackButton_OnLoad(self)
@@ -366,6 +415,8 @@ function MerchantItemButton_OnLoad(self)
 	
 	self.SplitStack = function(button, split)
 		if ( button.extendedCost ) then
+			MerchantFrame_ConfirmExtendedItemCost(button, split)
+		elseif ( button.showNonrefundablePrompt ) then
 			MerchantFrame_ConfirmExtendedItemCost(button, split)
 		elseif ( split > 0 ) then
 			BuyMerchantItem(button:GetID(), split);
@@ -394,11 +445,15 @@ function MerchantItemButton_OnClick(self, button)
 			PickupMerchantItem(self:GetID());
 			if ( self.extendedCost ) then
 				MerchantFrame.extendedCost = self;
+			elseif ( self.showNonrefundablePrompt ) then
+				MerchantFrame.extendedCost = self;
 			elseif ( self.price and self.price >= MERCHANT_HIGH_PRICE_COST ) then
 				MerchantFrame.highPrice = self;
 			end
 		else
 			if ( self.extendedCost ) then
+				MerchantFrame_ConfirmExtendedItemCost(self);
+			elseif ( self.showNonrefundablePrompt ) then
 				MerchantFrame_ConfirmExtendedItemCost(self);
 			elseif ( self.price and self.price >= MERCHANT_HIGH_PRICE_COST ) then
 				MerchantFrame_ConfirmHighCostItem(self);
@@ -467,8 +522,12 @@ LIST_DELIMITER = ", "
 function MerchantFrame_ConfirmExtendedItemCost(itemButton, numToPurchase)
 	local index = itemButton:GetID();
 	local itemsString;
-	if ( GetMerchantItemCostInfo(index) == 0 ) then
-		BuyMerchantItem( itemButton:GetID(), numToPurchase );
+	if ( GetMerchantItemCostInfo(index) == 0 and not itemButton.showNonrefundablePrompt) then
+		if ( itemButton.price and itemButton.price >= MERCHANT_HIGH_PRICE_COST ) then
+			MerchantFrame_ConfirmHighCostItem(itemButton);
+		else
+			BuyMerchantItem( itemButton:GetID(), numToPurchase );
+		end
 		return;
 	end
 	
@@ -498,35 +557,46 @@ function MerchantFrame_ConfirmExtendedItemCost(itemButton, numToPurchase)
 			else
 				itemsString = " |T"..itemTexture..":0:0:0:-1|t "..format(CURRENCY_QUANTITY_TEMPLATE, costItemCount, currencyName);
 			end
+		end		
+	end
+	if ( itemButton.showNonrefundablePrompt and itemButton.price ) then
+		if ( itemsString ) then
+			itemsString = itemsString .. LIST_DELIMITER .. GetMoneyString(itemButton.price);
+		else
+			itemsString = GetMoneyString(itemButton.price);
 		end
 	end
 	
-	if ( not usingCurrency and maxQuality <= ITEM_QUALITY_UNCOMMON ) then
+	if ( not usingCurrency and maxQuality <= LE_ITEM_QUALITY_UNCOMMON and not itemButton.showNonrefundablePrompt) then
 		BuyMerchantItem( itemButton:GetID(), numToPurchase );
 		return;
 	end
 	
 	
-	local itemName = "YOU HAVE FOUND A BUG!";
+	local itemName;
 	local itemQuality = 1;
 	local _;
 	local r, g, b = 1, 1, 1;
 	local specs = {};
 	if(itemButton.link) then
 		itemName, _, itemQuality = GetItemInfo(itemButton.link);
+	end
+
+	if ( itemName ) then
+		--It's an item
 		r, g, b = GetItemQualityColor(itemQuality); 
 		specs = GetItemSpecInfo(itemButton.link, specs);
-	elseif(itemName) then		-- This is the case for a currency, which don't support links yet
+	else
+		--Not an item. Could be currency or something. Just use what's on the button.
 		itemName = itemButton.name;
 		r, g, b = GetItemQualityColor(1); 
 	end
-	
 	local specText;
 	if (specs and #specs > 0) then
 		local specName, specIcon;
 		specText = "\n\n";
 		for i=1, #specs do
-			_, specName, _, specIcon = GetSpecializationInfoByID(specs[i]);
+			_, specName, _, specIcon = GetSpecializationInfoByID(specs[i], UnitSex("player"));
 			specText = specText.." |T"..specIcon..":0:0:0:-1|t "..NORMAL_FONT_COLOR_CODE..specName..FONT_COLOR_CODE_CLOSE;
 			if (i < #specs) then
 				specText = specText..PLAYER_LIST_DELIMITER
@@ -536,9 +606,15 @@ function MerchantFrame_ConfirmExtendedItemCost(itemButton, numToPurchase)
 		specText = "";
 	end
 	
-	StaticPopup_Show("CONFIRM_PURCHASE_TOKEN_ITEM", itemsString, specText, 
-						{["texture"] = itemButton.texture, ["name"] = itemName, ["color"] = {r, g, b, 1}, 
-						["link"] = itemButton.link, ["index"] = index, ["count"] = numToPurchase});
+	if (itemButton.showNonrefundablePrompt) then
+		StaticPopup_Show("CONFIRM_PURCHASE_NONREFUNDABLE_ITEM", itemsString, specText, 
+							{["texture"] = itemButton.texture, ["name"] = itemName, ["color"] = {r, g, b, 1}, 
+							["link"] = itemButton.link, ["index"] = index, ["count"] = numToPurchase});
+	else
+		StaticPopup_Show("CONFIRM_PURCHASE_TOKEN_ITEM", itemsString, specText, 
+							{["texture"] = itemButton.texture, ["name"] = itemName, ["color"] = {r, g, b, 1}, 
+							["link"] = itemButton.link, ["index"] = index, ["count"] = numToPurchase});
+	end
 end
 
 function MerchantFrame_ResetRefundItem()
@@ -565,10 +641,10 @@ function MerchantFrame_UpdateCanRepairAll()
 	if ( MerchantRepairAllIcon ) then
 		local repairAllCost, canRepair = GetRepairAllCost();
 		if ( canRepair ) then
-			SetDesaturation(MerchantRepairAllIcon, nil);
+			SetDesaturation(MerchantRepairAllIcon, false);
 			MerchantRepairAllButton:Enable();
 		else
-			SetDesaturation(MerchantRepairAllIcon, 1);
+			SetDesaturation(MerchantRepairAllIcon, true);
 			MerchantRepairAllButton:Disable();
 		end	
 	end
@@ -577,10 +653,10 @@ end
 function MerchantFrame_UpdateGuildBankRepair()
 	local repairAllCost, canRepair = GetRepairAllCost();
 	if ( canRepair ) then
-		SetDesaturation(MerchantGuildBankRepairButtonIcon, nil);
+		SetDesaturation(MerchantGuildBankRepairButtonIcon, false);
 		MerchantGuildBankRepairButton:Enable();
 	else
-		SetDesaturation(MerchantGuildBankRepairButtonIcon, 1);
+		SetDesaturation(MerchantGuildBankRepairButtonIcon, true);
 		MerchantGuildBankRepairButton:Disable();
 	end	
 end
@@ -599,6 +675,7 @@ function MerchantFrame_UpdateRepairButtons()
 			MerchantRepairText:ClearAllPoints();
 			MerchantRepairText:SetPoint("CENTER", MerchantFrame, "BOTTOMLEFT", 80, 68);
 			MerchantGuildBankRepairButton:Show();
+			MerchantFrame_UpdateGuildBankRepair();
 		else
 			MerchantRepairAllButton:SetWidth(36);
 			MerchantRepairAllButton:SetHeight(36);
@@ -614,6 +691,7 @@ function MerchantFrame_UpdateRepairButtons()
 		MerchantRepairText:Show();
 		MerchantRepairAllButton:Show();
 		MerchantRepairItemButton:Show();
+		MerchantFrame_UpdateCanRepairAll();
 	else
 		MerchantRepairText:Hide();
 		MerchantRepairAllButton:Hide();
@@ -801,7 +879,7 @@ function MerchantFrame_UpdateFilterString()
 	elseif currFilter == LE_LOOT_FILTER_ALL then
 		name = ALL;
 	else -- Spec
-		local _, specName, _, icon = GetSpecializationInfo(currFilter - LE_LOOT_FILTER_SPEC1 + 1);
+		local _, specName, _, icon = GetSpecializationInfo(currFilter - LE_LOOT_FILTER_SPEC1 + 1, nil, nil, nil, UnitSex("player"));
 		name = specName;
 	end
 	
@@ -812,6 +890,7 @@ function MerchantFrame_InitFilter()
 	local info = UIDropDownMenu_CreateInfo();
 	local currFilter = GetMerchantFilter();
 	local className = UnitClass("player");
+	local sex = UnitSex("player");
 
 	info.func = MerchantFrame_SetFilter;
 	
@@ -822,7 +901,7 @@ function MerchantFrame_InitFilter()
 	
 	local numSpecs = GetNumSpecializations();
 	for i = 1, numSpecs do
-		local _, name, _, icon = GetSpecializationInfo(i);
+		local _, name, _, icon = GetSpecializationInfo(i, nil, nil, nil, sex);
 		info.text = name;
 		info.arg1 = LE_LOOT_FILTER_SPEC1 + i - 1;
 		info.checked = currFilter == (LE_LOOT_FILTER_SPEC1 + i - 1);

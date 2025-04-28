@@ -385,6 +385,17 @@ SECURE_ACTIONS.spell =
             CastSpellByName(spell, unit);
         end
     end;
+	
+SECURE_ACTIONS.toy =
+	function (self, unit, button)
+		local toy = SecureButton_GetModifiedAttribute(self, "toy", button);
+		local toyID = tonumber(toy);
+		if ( toyID ) then
+			UseToy(toyID);
+		elseif ( toy ) then
+			UseToyByName(toy);
+		end
+	end;
 
 -- Allow friendly names for glyph slots
 local GLYPH_SLOTS = {
@@ -476,6 +487,11 @@ SECURE_ACTIONS.cancelaura =
             end
         end
     end;
+
+SECURE_ACTIONS.destroytotem = 
+	function(self, unit, button)
+		DestroyTotem(SecureButton_GetModifiedAttribute(self, "totem-slot", button));
+	end;
 
 SECURE_ACTIONS.stop =
     function (self, unit, button)
@@ -637,7 +653,7 @@ function SecureActionButton_OnClick(self, button, down)
     end
 
     -- Target predefined item, if we just cast a spell that targets an item
-    if ( SpellCanTargetItem() ) then
+    if ( SpellCanTargetItem() or SpellCanTargetItemID() ) then
         local bag = SecureButton_GetModifiedAttribute(self, "target-bag", button);
         local slot = SecureButton_GetModifiedAttribute(self, "target-slot", button);
         if ( slot ) then

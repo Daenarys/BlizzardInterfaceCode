@@ -27,7 +27,7 @@ function InspectPaperDollFrame_SetLevel()
 		return;
 	end
 
-	local unit, level = InspectFrame.unit, UnitLevel(InspectFrame.unit);
+	local unit, level, effectiveLevel, sex = InspectFrame.unit, UnitLevel(InspectFrame.unit), UnitEffectiveLevel(InspectFrame.unit), UnitSex(InspectFrame.unit);
 	local specID = GetInspectSpecialization(InspectFrame.unit);
 	
 	local classDisplayName, class = UnitClass(InspectFrame.unit); 
@@ -35,11 +35,13 @@ function InspectPaperDollFrame_SetLevel()
 	local specName, _;
 	
 	if (specID) then
-		_, specName = GetSpecializationInfoByID(specID);
+		_, specName = GetSpecializationInfoByID(specID, sex);
 	end
 	
-	if ( level == -1 ) then
+	if ( level == -1 or effectiveLevel == -1 ) then
 		level = "??";
+	elseif ( effectiveLevel ~= level ) then
+		level = EFFECTIVE_LEVEL_FORMAT:format(effectiveLevel, level);
 	end
 	
 	if (specName and specName ~= "") then
@@ -98,10 +100,10 @@ function InspectPaperDollFrame_OnShow()
 	end
 	
 	SetPaperDollBackground(InspectModelFrame, InspectFrame.unit);
-	InspectModelFrameBackgroundTopLeft:SetDesaturated(1);
-	InspectModelFrameBackgroundTopRight:SetDesaturated(1);
-	InspectModelFrameBackgroundBotLeft:SetDesaturated(1);
-	InspectModelFrameBackgroundBotRight:SetDesaturated(1);
+	InspectModelFrameBackgroundTopLeft:SetDesaturated(true);
+	InspectModelFrameBackgroundTopRight:SetDesaturated(true);
+	InspectModelFrameBackgroundBotLeft:SetDesaturated(true);
+	InspectModelFrameBackgroundBotRight:SetDesaturated(true);
 end
 
 function InspectPaperDollItemSlotButton_OnLoad(self)
@@ -147,6 +149,13 @@ function InspectPaperDollItemSlotButton_Update(button)
 		SetItemButtonTexture(button, textureName);
 		SetItemButtonCount(button, GetInventoryItemCount(unit, button:GetID()));
 		button.hasItem = 1;
+		local quality = GetInventoryItemQuality(unit, button:GetID());
+		if (quality and quality > LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
+			button.IconBorder:Show();
+			button.IconBorder:SetVertexColor(BAG_ITEM_QUALITY_COLORS[quality].r, BAG_ITEM_QUALITY_COLORS[quality].g, BAG_ITEM_QUALITY_COLORS[quality].b);
+		else
+			button.IconBorder:Hide();
+		end
 	else
 		local textureName = button.backgroundTextureName;
 		if ( button.checkRelic and UnitHasRelicSlot(unit) ) then
@@ -154,15 +163,10 @@ function InspectPaperDollItemSlotButton_Update(button)
 		end
 		SetItemButtonTexture(button, textureName);
 		SetItemButtonCount(button, 0);
+		button.IconBorder:Hide();
 		button.hasItem = nil;
 	end
 	if ( GameTooltip:IsOwned(button) ) then
-		if ( texture ) then
-            if ( not GameTooltip:SetInventoryItem(InspectFrame.unit, button:GetID()) ) then
-				GameTooltip:SetText(_G[strupper(strsub(button:GetName(), 8))]);
-			end
-		else
-			GameTooltip:Hide();
-		end
+		GameTooltip:Hide();
 	end
 end

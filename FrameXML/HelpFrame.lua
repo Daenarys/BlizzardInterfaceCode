@@ -5,10 +5,10 @@ StaticPopupDialogs["EXTERNAL_LINK"] = {
 	button3 = BROWSER_COPY_LINK,
 	button2 = CANCEL,
 	OnAccept = function(self, data)
-		HelpBrowser:OpenExternalLink();
+		data.browser:OpenExternalLink();
 	end,
-	OnAlt = function(self)
-		HelpBrowser:CopyExternalLink();
+	OnAlt = function(self, data)
+		data.browser:CopyExternalLink();
 	end,
 	OnShow = function(self)
 		
@@ -81,7 +81,7 @@ HelpFrameNavTbl[13] = {	text = KBASE_TOP_ISSUES,
 					};
 HelpFrameNavTbl[14] = {	text = HELP_TICKET_OPEN, -- HELP_TICKET_EDIT
 						icon ="Interface\\HelpFrame\\HelpIcon-OpenTicket",
-						frame = "ticket"
+						frame = "ticketHelp"
 					};
 					
 --THis needs implementing - CHaz
@@ -148,7 +148,6 @@ function HelpFrame_OnLoad(self)
 	self:RegisterEvent("GMSURVEY_DISPLAY");
 	self:RegisterEvent("GMRESPONSE_RECEIVED");
 	self:RegisterEvent("QUICK_TICKET_SYSTEM_STATUS");
-	self:RegisterEvent("ITEM_RESTORATION_BUTTON_STATUS");
 	self:RegisterEvent("QUICK_TICKET_THROTTLE_CHANGED");
 	self:RegisterEvent("SIMPLE_BROWSER_WEB_PROXY_FAILED");
 	self:RegisterEvent("SIMPLE_BROWSER_WEB_ERROR");
@@ -165,7 +164,6 @@ function HelpFrame_OnLoad(self)
 	self.Bg:SetVertTile(true);
 
 	HelpFrame_UpdateQuickTicketSystemStatus();
-	HelpFrame_UpdateItemRestorationButtonStatus();
 end
 
 function HelpFrame_OnShow(self)
@@ -222,17 +220,15 @@ function HelpFrame_OnEvent(self, event, ...)
 		-- If there are args then the player has a ticket
 		if ( category and ticketDescription ) then
 			-- Has an open ticket
-			HelpFrameOpenTicketEditBox:SetText(ticketDescription);
 			haveTicket = true;
 		else
 			-- the player does not have a ticket
 			haveTicket = false;
 			haveResponse = false;
-			if ( not TicketStatusFrame.hasGMSurvey ) then
+			if ( not TicketStatusFrame.hasGMSurvey and not TicketStatusFrame.hasWebTicket ) then
 				TicketStatusFrame:Hide();
 			end
 		end
-		HelpFrame_SetTicketEntry();
 	elseif ( event == "GMRESPONSE_RECEIVED" ) then
 		local ticketDescription, response = ...;
 
@@ -247,19 +243,8 @@ function HelpFrame_OnEvent(self, event, ...)
 		TicketStatusTime:Hide();
 		TicketStatusFrame:Show();
 		TicketStatusFrame.hasGMSurvey = false;
-		HelpFrame_SetTicketButtonText(GM_RESPONSE_POPUP_VIEW_RESPONSE);
-		HelpFrameGMResponse_IssueText:SetText(ticketDescription);
-		HelpFrameGMResponse_GMText:SetText(response);
-		
-		-- update if at a ticket panel
-		if ( HelpFrame.selectedId == HELPFRAME_OPEN_TICKET or HelpFrame.selectedId == HELPFRAME_SUBMIT_TICKET ) then		
-			HelpFrame_SetFrameByKey(HELPFRAME_GM_RESPONSE);
-			HelpFrame_SetSelectedButton(HelpFrameButton6);
-		end
 	elseif ( event == "QUICK_TICKET_SYSTEM_STATUS" or event == "QUICK_TICKET_THROTTLE_CHANGED" ) then
 		HelpFrame_UpdateQuickTicketSystemStatus();
-	elseif ( event == "ITEM_RESTORATION_BUTTON_STATUS" ) then
-		HelpFrame_UpdateItemRestorationButtonStatus();
 	elseif ( event == "SIMPLE_BROWSER_WEB_PROXY_FAILED" ) then
 		StaticPopup_Show("WEB_PROXY_FAILED");
 	elseif ( event == "SIMPLE_BROWSER_WEB_ERROR" ) then
@@ -268,31 +253,32 @@ function HelpFrame_OnEvent(self, event, ...)
 	end
 end
 
-function HelpFrame_UpdateQuickTicketSystemStatus()
-	local enabled = GMQuickTicketSystemEnabled() and not GMQuickTicketSystemThrottled();
+function HelpFrame_UpdateSubsystemStatus(key, enabled)
 	if ( enabled ) then
-		HelpFrame_SetButtonEnabled(HelpFrame["button"..HELPFRAME_SUBMIT_BUG], true);
-		HelpFrame_SetButtonEnabled(HelpFrame["button"..HELPFRAME_SUBMIT_SUGGESTION], true);
+		HelpFrame_SetButtonEnabled(HelpFrame["button"..key], true);
 	else
-		if ( HelpFrame.selectedId == HELPFRAME_SUBMIT_BUG or HelpFrame.selectedId == HELPFRAME_SUBMIT_SUGGESTION ) then
+		if ( HelpFrame.selectedId == key ) then
 			HelpFrame.button1:Click();
 		end
-		HelpFrame_SetButtonEnabled(HelpFrame["button"..HELPFRAME_SUBMIT_BUG], false);
-		HelpFrame_SetButtonEnabled(HelpFrame["button"..HELPFRAME_SUBMIT_SUGGESTION], false);
+		HelpFrame_SetButtonEnabled(HelpFrame["button"..key], false);
 	end
 end
 
-function HelpFrame_UpdateItemRestorationButtonStatus()
-	local enabled = GMItemRestorationButtonEnabled();
-	if ( enabled ) then
-		HelpFrameOpenTicketHelpItemRestoration:Show();
-	else
-		HelpFrameOpenTicketHelpItemRestoration:Hide();
-	end
+function HelpFrame_UpdateQuickTicketSystemStatus()
+	HelpFrame_UpdateSubsystemStatus(HELPFRAME_SUBMIT_BUG, GMEuropaBugsEnabled() and not GMQuickTicketSystemThrottled());
+	HelpFrame_UpdateSubsystemStatus(HELPFRAME_SUBMIT_SUGGESTION, GMEuropaSuggestionsEnabled() and not GMQuickTicketSystemThrottled());
+	HelpFrame_UpdateSubsystemStatus(HELPFRAME_REPORT_ABUSE, GMEuropaComplaintsEnabled() and not GMQuickTicketSystemThrottled());
+	HelpFrame_UpdateSubsystemStatus(HELPFRAME_OPEN_TICKET, GMEuropaTicketsEnabled() and not GMQuickTicketSystemThrottled());
+	HelpFrame_UpdateSubsystemStatus(HELPFRAME_ACCOUNT_SECURITY, GMEuropaTicketsEnabled() and not GMQuickTicketSystemThrottled());
 end
 
 function HelpFrame_ShowFrame(key)
-	key = key or HelpFrame.selectedId or HELPFRAME_START_PAGE;
+	local testEnabled = IsTestBuild() and GMEuropaBugsEnabled() and not GMQuickTicketSystemThrottled();
+	if ( testEnabled ) then
+		key = key or HelpFrame.selectedId or HELPFRAME_SUBMIT_BUG;
+	else
+		key = key or HelpFrame.selectedId or HELPFRAME_START_PAGE;
+	end
 	if HelpFrameNavTbl[key].button and HelpFrameNavTbl[key].button:IsEnabled() then
 		HelpFrameNavTbl[key].button:Click();
 	else
@@ -326,7 +312,6 @@ end
 
 function HelpFrame_GMResponse_Acknowledge(markRead)
 	haveResponse = false;
-	HelpFrame_SetTicketEntry();
 	if ( markRead ) then
 		needMoreHelp = false;
 		GMResponseResolve();
@@ -342,11 +327,6 @@ end
 
 function HelpFrame_SetFrameByKey(key)
 	HelpBrowser:Hide();
-	-- if we're trying to open any ticket window and we have a GM response, override
-	if ( haveResponse and ( key == HELPFRAME_OPEN_TICKET or key == HELPFRAME_SUBMIT_TICKET ) ) then
-		key = HELPFRAME_GM_RESPONSE;
-		HelpFrame_SetSelectedButton(HelpFrameButton6);
-	end
 	local data = HelpFrameNavTbl[key];
 	if data.frame then
 		local showFrame = HelpFrame[data.frame];
@@ -383,36 +363,17 @@ function HelpFrame_SetTicketButtonText(text)
 	HelpFrame.ticketHelp.ticketButton:SetText(text);
 end
 
-function HelpFrame_SetTicketEntry()
-	-- don't do anything if we have a response
-	if ( not haveResponse ) then
-		local self = HelpFrame;
-		if ( haveTicket ) then
-			self.ticket.submitButton:SetText(EDIT_TICKET);
-			self.ticket.cancelButton:SetText(HELP_TICKET_ABANDON);
-			self.ticket.title:SetText(HELPFRAME_OPENTICKET_EDITTEXT);
-			HelpFrame_SetTicketButtonText(HELP_TICKET_EDIT);
-		else
-			HelpFrameOpenTicketEditBox:SetText("");
-			self.ticket.submitButton:SetText(SUBMIT);
-			self.ticket.cancelButton:SetText(CANCEL);
-			self.ticket.title:SetText(HELPFRAME_SUBMIT_TICKET_TITLE);
-			HelpFrame_SetTicketButtonText(HELP_TICKET_OPEN);
-		end
-	end
-end
-
 function HelpFrame_SetButtonEnabled(button, enabled)
 	if ( enabled ) then
 		button:Enable();
-		button:GetNormalTexture():SetDesaturated(0);
-		button.icon:SetDesaturated(0);
+		button:GetNormalTexture():SetDesaturated(false);
+		button.icon:SetDesaturated(false);
 		button.icon:SetVertexColor(1, 1, 1);
 		button.text:SetFontObject(GameFontNormalMed3);
 	else
 		button:Disable();
-		button:GetNormalTexture():SetDesaturated(1);
-		button.icon:SetDesaturated(1);
+		button:GetNormalTexture():SetDesaturated(true);
+		button.icon:SetDesaturated(true);
 		button.icon:SetVertexColor(0.5, 0.5, 0.5);
 		button.text:SetFontObject(GameFontDisableMed3);
 	end
@@ -498,35 +459,21 @@ function HelpFrameStuckHearthstone_Update(self)
 end
 
 --
--- HelpFrameOpenTicket
+-- AccountSecurity
 --
 
-function HelpFrameOpenTicketCancel_OnClick()
-	GetGMTicket();
-	if haveTicket then
-		if not StaticPopup_Visible("HELP_TICKET_ABANDON_CONFIRM") then
-			StaticPopup_Show("HELP_TICKET_ABANDON_CONFIRM");
+function AccountSecurityOpenTicket_OnClick(self)
+	PlaySound("igMainMenuOptionCheckBoxOn");
+	if ( HelpBrowser:HasConnection() ) then
+		local data = HelpFrameNavTbl[self:GetID()];
+		if ( not data.noSelection ) then
+			HelpFrame_SetSelectedButton(self);
 		end
+		HelpFrame_SetFrameByKey(self:GetID());
 	else
-		HelpFrame_ShowFrame(HELPFRAME_OPEN_TICKET);
+		StaticPopup_Show("CONFIRM_LAUNCH_URL", nil, nil, {index = 6});
 	end
 end
-
-function HelpFrameOpenTicketSubmit_OnClick()
-	if ( needMoreHelp ) then
-		GMResponseNeedMoreHelp(HelpFrameOpenTicketEditBox:GetText());
-		needMoreHelp = false;
-	else
-		if ( haveTicket ) then
-			UpdateGMTicket(HelpFrameOpenTicketEditBox:GetText());
-		else
-			NewGMTicket(HelpFrameOpenTicketEditBox:GetText(), needResponse);
-			HelpOpenTicketButton.tutorial:Show();
-		end
-	end
-	HideUIPanel(HelpFrame);
-end
-
 
 --
 -- HelpFrameSubmitBug
@@ -601,21 +548,21 @@ function HelpOpenTicketButton_OnUpdate(self, elapsed)
 		end
 		
 		GameTooltip:SetOwner(self, "ANCHOR_TOP");
-		GameTooltip:AddLine(self.titleText, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1);
+		GameTooltip:AddLine(self.titleText, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, true);
 		GameTooltip:AddLine(self.statusText);
 		if (timeText) then
 			GameTooltip:AddLine(timeText);
 		end
 		
 		GameTooltip:AddLine(" ");
-		GameTooltip:AddLine(HELPFRAME_TICKET_CLICK_HELP, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, 1);
+		GameTooltip:AddLine(HELPFRAME_TICKET_CLICK_HELP, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, true);
 		GameTooltip:Show();
 	elseif ( haveResponse ) then
 		GameTooltip:SetOwner(self, "ANCHOR_TOP");
-		GameTooltip:SetText(GM_RESPONSE_ALERT, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(GM_RESPONSE_ALERT, nil, nil, nil, nil, true);
 	elseif ( TicketStatusFrame.hasGMSurvey ) then
 		GameTooltip:SetOwner(self, "ANCHOR_TOP");
-		GameTooltip:SetText(CHOSEN_FOR_GMSURVEY, nil, nil, nil, nil, 1);
+		GameTooltip:SetText(CHOSEN_FOR_GMSURVEY, nil, nil, nil, nil, true);
 	end
 end
 
@@ -717,19 +664,19 @@ function HelpOpenWebTicketButton_OnEnter(self, elapsed)
 	if ( self.haveTicket ) then
 		if ( self.haveResponse ) then
 			GameTooltip:SetOwner(self, "ANCHOR_TOP");
-			GameTooltip:SetText(GM_RESPONSE_ALERT, nil, nil, nil, nil, 1);
+			GameTooltip:SetText(GM_RESPONSE_ALERT, nil, nil, nil, nil, true);
 		elseif ( self.hasGMSurvey ) then
 			GameTooltip:SetOwner(self, "ANCHOR_TOP");
-			GameTooltip:SetText(CHOSEN_FOR_GMSURVEY, nil, nil, nil, nil, 1);
+			GameTooltip:SetText(CHOSEN_FOR_GMSURVEY, nil, nil, nil, nil, true);
 		else
 			GameTooltip:SetOwner(self, "ANCHOR_TOP");
-			GameTooltip:AddLine(self.titleText, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1);
+			GameTooltip:AddLine(self.titleText, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, true);
 			if (self.statusText) then
 				GameTooltip:AddLine(self.statusText);
 			end
 		end
 		GameTooltip:AddLine(" ");
-		GameTooltip:AddLine(HELPFRAME_TICKET_CLICK_HELP, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, 1);
+		GameTooltip:AddLine(HELPFRAME_TICKET_CLICK_HELP, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, true);
 		GameTooltip:Show();
 	end
 end
@@ -910,6 +857,8 @@ function KnowledgeBase_OnLoad(self)
 		OnClick = KnowledgeBase_DisplayCategories,
 		listFunc = KnowledgeBase_ListCategory,
 	}
+	self.navBar.textMaxWidth = 117;
+	self.navBar.oldStyle = true;
 	NavBar_Initialize(self.navBar, "HelpFrameNavButtonTemplate", homeData, self.navBar.home, self.navBar.overflow);
 
 	--Scroll Frame
@@ -1113,7 +1062,7 @@ function KnowledgeBase_SelectCategory(self, index, navBar) -- Index could also b
 	elseif index == 2  then
 		KnowledgeBase_GotoTopIssues();
 	else
-		KnowledgeBase_DisplaySubCategories(index-2, text);
+		KnowledgeBase_DisplaySubCategories(index-2);
 		HelpFrame.kbase.category = index-2;
 	end
 	
@@ -1297,7 +1246,7 @@ function KnowledgeBase_SnapToTopIssues()
 			KnowledgeBase_ShowErrorFrame(HelpFrame.kbase, KBASE_ERROR_NO_RESULTS);
 		end
 	else
-		KBSetup_BeginLoading(KBASE_NUM_ARTICLES_PER_PAGE, 0);
+		--KBSetup_BeginLoading(KBASE_NUM_ARTICLES_PER_PAGE, 0);
 	end
 end
 

@@ -98,6 +98,7 @@ SoundPanelOptions = {
 	Sound_EnableAmbience = { text = "ENABLE_AMBIENCE" },
 	Sound_EnableSFX = { text = "ENABLE_SOUNDFX" },
 	Sound_EnableAllSound = { text = "ENABLE_SOUND" },
+	Sound_EnableDialog = { text = "ENABLE_DIALOG" },
 	Sound_ListenerAtCharacter = { text = "ENABLE_SOUND_AT_CHARACTER" },
 	Sound_EnableEmoteSounds = { text = "ENABLE_EMOTE_SOUNDS" },
 	Sound_EnablePetSounds = { text = "ENABLE_PET_SOUNDS" },
@@ -111,9 +112,10 @@ SoundPanelOptions = {
 	Sound_SFXVolume = { text = "SOUND_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
 	Sound_MusicVolume = { text = "MUSIC_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
 	Sound_AmbienceVolume = { text = "AMBIENCE_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
+	Sound_DialogVolume = { text = "DIALOG_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.1, },
 	Sound_MasterVolume = { text = "MASTER_VOLUME", minValue = 0, maxValue = 1, valueStep = 0.001, },
 	Sound_NumChannels = { text = "SOUND_CHANNELS", minValue = 32, maxValue = 64, valueStep = 32, },
-	Sound_OutputQuality = { text = "SOUND_QUALITY", minValue = 0, maxValue = 2, valueStep = 1 },
+	--Sound_OutputQuality = { text = "SOUND_QUALITY", minValue = 0, maxValue = 2, valueStep = 1 },
 }
 
 function AudioOptionsSoundPanel_OnLoad (self)

@@ -397,7 +397,14 @@ do
 	--Alias helpers
 	local function FormatDamageHelper(baseDamage, attackType, defenderType)
 		local output = "";
-		local multi = C_PetBattles.GetAttackModifier(attackType, defenderType);
+		local multi = 1;
+		
+		-- If there is no type for the defender, then don't check the multiplier.
+		-- (This could happen for some things like weather effects that have an ambiguous target.)
+		if ( defenderType ~= 0 ) then
+			multi = C_PetBattles.GetAttackModifier(attackType, defenderType);
+		end
+		
 
 		if ( multi > 1 ) then 
 			output = GREEN_FONT_COLOR_CODE..math.floor(baseDamage * multi)..FONT_COLOR_CODE_CLOSE;
@@ -481,7 +488,17 @@ do
 	parserEnv.SimpleDamage = function(...) return parserEnv.points(...) * parserEnv.AttackBonus(); end;
 	parserEnv.StandardDamage = function(...)
 		local turnIndex, effectIndex, abilityID = ...;
-		return parserEnv.FormatDamage(parserEnv.SimpleDamage(...), abilityID);
+		local damage = parserEnv.SimpleDamage(...);
+		if ( not abilityID ) then
+			abilityID = parsedAbilityInfo:GetAbilityID();
+		end
+		local variance = C_PetBattles.GetAbilityEffectInfo(abilityID, turnIndex, effectIndex, "variance");
+		if( variance ) then
+			variance = variance/200 * damage;
+			return string.format(BATTLE_PET_VARIANCE_STR, parserEnv.FormatDamage(damage-variance, abilityID), parserEnv.FormatDamage(damage+variance, abilityID));
+		else
+			return parserEnv.FormatDamage(damage, abilityID);
+		end
 	end;
 	parserEnv.FormatDamage = function(baseDamage, abilityID, affected)
 		if ( not affected ) then

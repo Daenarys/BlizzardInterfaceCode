@@ -113,8 +113,9 @@ end
 
 function FCF_CopyChatSettings(copyTo, copyFrom)
 	local name, fontSize, r, g, b, a, shown, locked, docked, uninteractable = FCF_GetChatWindowInfo(copyFrom:GetID());
-	FCF_SetWindowColor(copyTo, r, g, b, 1);
-	FCF_SetWindowAlpha(copyTo, a, 1);
+	
+	FCF_SetWindowColor(copyTo, r, g, b, true);
+	FCF_SetWindowAlpha(copyTo, a, true);
 	--If we're copying to a docked window, we don't want to copy locked.
 	if ( not copyTo.isDocked ) then
 		FCF_SetLocked(copyTo, locked);
@@ -128,14 +129,13 @@ function FloatingChatFrame_Update(id, onUpdateEvent)
 	local chatTab = _G["ChatFrame"..id.."Tab"];
 	
 	local name, fontSize, r, g, b, a, shown, locked, docked, uninteractable = FCF_GetChatWindowInfo(id);
-	
 	-- Set Tab Name
-	FCF_SetWindowName(chatFrame, name, 1)
+	FCF_SetWindowName(chatFrame, name, true)
 
 	if ( onUpdateEvent ) then
 		-- Set Frame Color and Alpha
-		FCF_SetWindowColor(chatFrame, r, g, b, 1);
-		FCF_SetWindowAlpha(chatFrame, a, 1);
+		FCF_SetWindowColor(chatFrame, r, g, b, true);
+		FCF_SetWindowAlpha(chatFrame, a, true);
 		FCF_SetLocked(chatFrame, locked);
 		FCF_SetUninteractable(chatFrame, uninteractable);
 	end
@@ -281,22 +281,6 @@ function FCFOptionsDropDown_Initialize(dropDown)
 			info.arg1 = FCF_GetCurrentChatFrame(dropDown);
 			info.notCheckable = 1;
 			UIDropDownMenu_AddButton(info);
-		elseif ( chatFrame.isTemporary and (chatFrame.chatType == "BN_CONVERSATION" ) ) then
-			if ( GetCVar("conversationMode") == "popout" or GetCVar("conversationMode") == "popout_and_inline" ) then
-				info = UIDropDownMenu_CreateInfo();
-				info.text = CLOSE_AND_LEAVE_CHAT_CONVERSATION_WINDOW;
-				info.func = FCF_LeaveConversation;
-				info.arg1 = FCF_GetCurrentChatFrame(dropDown);
-				info.notCheckable = 1;
-				UIDropDownMenu_AddButton(info);
-			else
-				info = UIDropDownMenu_CreateInfo();
-				info.text = CLOSE_CHAT_CONVERSATION_WINDOW;
-				info.func = FCF_PopInWindow;
-				info.arg1 = FCF_GetCurrentChatFrame(dropDown);
-				info.notCheckable = 1;
-				UIDropDownMenu_AddButton(info);
-			end
 		elseif ( chatFrame.isTemporary ) then
 			info = UIDropDownMenu_CreateInfo();
 			info.text = CLOSE_CHAT_WINDOW;
@@ -570,7 +554,7 @@ function FCF_OpenNewWindow(name)
 			FCF_SetWindowName(chatFrame, name);
 			FCF_SetWindowColor(chatFrame, DEFAULT_CHATFRAME_COLOR.r, DEFAULT_CHATFRAME_COLOR.g, DEFAULT_CHATFRAME_COLOR.b);
 			FCF_SetWindowAlpha(chatFrame, DEFAULT_CHATFRAME_ALPHA);
-			SetChatWindowLocked(i, nil);
+			SetChatWindowLocked(i, false);
 
 			-- clear stale messages
 			chatFrame:Clear();
@@ -579,7 +563,6 @@ function FCF_OpenNewWindow(name)
 			ChatFrame_RemoveAllMessageGroups(chatFrame);
 			ChatFrame_RemoveAllChannels(chatFrame);
 			ChatFrame_ReceiveAllPrivateMessages(chatFrame);
-			ChatFrame_ReceiveAllBNConversations(chatFrame);
 			
 			ChatFrame_AddMessageGroup(chatFrame, "SAY");
 			ChatFrame_AddMessageGroup(chatFrame, "YELL");
@@ -596,7 +579,7 @@ function FCF_OpenNewWindow(name)
 			-- Show the frame and tab
 			chatFrame:Show();
 			chatTab:Show();
-			SetChatWindowShown(i, 1);
+			SetChatWindowShown(i, true);
 			
 			-- Dock the frame by default
 			FCF_DockFrame(chatFrame, (#FCFDock_GetChatFrames(GENERAL_CHAT_DOCK)+1), true);
@@ -619,8 +602,6 @@ function FCF_SetTemporaryWindowType(chatFrame, chatType, chatTarget)
 	local name;
 	if ( chatType == "WHISPER" or chatType == "BN_WHISPER" ) then
 		name = chatTarget;
-	elseif ( chatType == "BN_CONVERSATION" ) then
-		name = format(CONVERSATION_NAME, tonumber(chatTarget) + MAX_WOW_CHAT_CHANNELS);
 	elseif ( chatType == "PET_BATTLE_COMBAT_LOG" ) then
 		name = PET_BATTLE_COMBAT_LOG;
 	end
@@ -634,7 +615,6 @@ function FCF_SetTemporaryWindowType(chatFrame, chatType, chatTarget)
 	ChatFrame_RemoveAllMessageGroups(chatFrame);
 	ChatFrame_RemoveAllChannels(chatFrame);
 	ChatFrame_ReceiveAllPrivateMessages(chatFrame);
-	ChatFrame_ReceiveAllBNConversations(chatFrame);
 	
 	ChatFrame_AddMessageGroup(chatFrame, chatType);
 	
@@ -654,9 +634,6 @@ function FCF_SetTemporaryWindowType(chatFrame, chatType, chatTarget)
 	if ( chatType == "WHISPER" or chatType == "BN_WHISPER" ) then
 		chatFrame.editBox:SetAttribute("tellTarget", chatTarget);
 		ChatFrame_AddPrivateMessageTarget(chatFrame, chatTarget);
-	elseif ( chatType == "BN_CONVERSATION" ) then
-		chatFrame.editBox:SetAttribute("channelTarget", chatTarget);
-		ChatFrame_AddBNConversationTarget(chatFrame, chatTarget);
 	elseif ( chatType == "PET_BATTLE_COMBAT_LOG" ) then
 		chatFrame.editBox:SetAttribute("chatType", "SAY");
 		chatFrame.editBox:SetAttribute("stickyType", "SAY");
@@ -667,45 +644,21 @@ function FCF_SetTemporaryWindowType(chatFrame, chatType, chatTarget)
 	chatTab.selectedColorTable = { r = info.r, g = info.g, b = info.b };
 	FCFTab_UpdateColors(chatTab, not chatFrame.isDocked or chatFrame == FCFDock_GetSelectedWindow(GENERAL_CHAT_DOCK));
 	
-	--If it's a conversation, create the conversation button
-	if ( chatType == "BN_CONVERSATION" or chatType == "BN_WHISPER" ) then
-		if ( chatFrame.conversationButton ) then
-			BNConversationButton_UpdateTarget(chatFrame.conversationButton);
-			chatFrame.conversationButton:Show();
-		else
-			CreateFrame("Button", chatFrame:GetName().."ConversationButton", chatFrame.buttonFrame, "BNConversationRosterButtonTemplate", chatFrame:GetID());
-		end
-		if ( chatFrame:GetHeight() < CHAT_FRAME_BIGGER_MIN_HEIGHT ) then
-			chatFrame:SetHeight(CHAT_FRAME_BIGGER_MIN_HEIGHT);
-		end
-		chatFrame:SetMinResize(CHAT_FRAME_MIN_WIDTH, CHAT_FRAME_BIGGER_MIN_HEIGHT);
-	else
-		if ( chatFrame.conversationButton ) then
-			chatFrame.conversationButton:Hide();
-		end
-		chatFrame:SetMinResize(CHAT_FRAME_MIN_WIDTH, CHAT_FRAME_NORMAL_MIN_HEIGHT);
-	end
-	
-	--If it's a conversation, get it ready to convert to a whisper if needed.
-	if ( chatType == "BN_CONVERSATION" ) then
-		chatFrame:RegisterEvent("BN_CHAT_CHANNEL_CLOSED");
-	else
-		chatFrame:UnregisterEvent("BN_CHAT_CHANNEL_CLOSED");
-	end
+	chatFrame:SetMinResize(CHAT_FRAME_MIN_WIDTH, CHAT_FRAME_NORMAL_MIN_HEIGHT);
 	
 	--Set the icon
-	local conversationIcon;
+	local icon;
 	if ( chatType == "WHISPER" or chatType == "BN_WHISPER" ) then
-		conversationIcon = "Interface\\ChatFrame\\UI-ChatWhisperIcon";
+		icon = "Interface\\ChatFrame\\UI-ChatWhisperIcon";
 	elseif ( chatType == "PET_BATTLE_COMBAT_LOG" ) then
-		conversationIcon = "Interface\\Icons\\Tracking_WildPet";
+		icon = "Interface\\Icons\\Tracking_WildPet";
 	else
-		conversationIcon = "Interface\\ChatFrame\\UI-ChatConversationIcon";
+		icon = "Interface\\ChatFrame\\UI-ChatConversationIcon";
 	end
 	
-	chatTab.conversationIcon:SetTexture(conversationIcon);
+	chatTab.conversationIcon:SetTexture(icon);
 	if ( chatFrame.minFrame ) then
-		chatFrame.minFrame.conversationIcon:SetTexture(conversationIcon);
+		chatFrame.minFrame.conversationIcon:SetTexture(icon);
 	end
 	
 	--Register this frame
@@ -780,13 +733,10 @@ function FCF_OpenTemporaryWindow(chatType, chatTarget, sourceChatFrame, selectWi
 		--Stop displaying this type of chat in the old chat frame.
 		--Remove the messages from the old frame.
 		if (not (chatType == "WHISPER" and GetCVar("whisperMode") == "popout_and_inline")
-			and not (chatType == "BN_WHISPER" and GetCVar("bnWhisperMode") == "popout_and_inline")
-			and not (chatType == "BN_CONVERSATION" and GetCVar("conversationMode") == "popout_and_inline") ) then
+			and not (chatType == "BN_WHISPER" and GetCVar("bnWhisperMode") == "popout_and_inline") ) then
 
 			if ( chatType == "WHISPER" or chatType == "BN_WHISPER" ) then
 				ChatFrame_ExcludePrivateMessageTarget(sourceChatFrame, chatTarget);
-			elseif ( chatType == "BN_CONVERSATION" ) then
-				ChatFrame_ExcludeBNConversationTarget(sourceChatFrame, chatTarget);
 			end
 
 			sourceChatFrame:RemoveMessagesByAccessID(accessID);
@@ -903,7 +853,7 @@ function FCF_SetWindowAlpha(frame, alpha, doNotSave)
 		SetChatWindowAlpha(frame:GetID(), alpha);
 	end
 	-- Remember the alpha
-	frame.oldAlpha = alpha;
+	frame.oldAlpha = alpha or DEFAULT_CHATFRAME_ALPHA;
 end
 
 function FCF_GetCurrentChatFrameID()
@@ -987,9 +937,9 @@ function FCF_ToggleLock()
 			FCF_SetTabPosition(chatFrame, 0);
 			chatFrame:Show();
 		end
-		FCF_SetLocked(chatFrame, nil);
+		FCF_SetLocked(chatFrame, false);
 	else
-		FCF_SetLocked(chatFrame, 1);
+		FCF_SetLocked(chatFrame, true);
 	end
 end
 
@@ -1532,7 +1482,7 @@ function FCF_DockFrame(frame, index, selected)
 	end
 	
 	-- Lock frame
-	FCF_SetLocked(frame, 1);
+	FCF_SetLocked(frame, true);
 	
 	--If the frame that is being docked and the frame it is docking to have different interactable settings, make them both interactable.
 	if ( frame.isUninteractable ~= DEFAULT_CHAT_FRAME.isUninteractable ) then
@@ -1595,14 +1545,6 @@ function FCF_Tab_OnClick(self, button)
 			elseif ( chatFrame.isTemporary and (chatFrame.chatType == "WHISPER" or chatFrame.chatType == "BN_WHISPER") ) then
 				FCF_PopInWindow(self, chatFrame);
 				return;
-			elseif ( chatFrame.isTemporary and ( chatFrame.chatType == "BN_CONVERSATION" ) ) then
-				if ( GetCVar("conversationMode") == "popout" or GetCVar("conversationMode") == "popout_and_inline" ) then
-					FCF_LeaveConversation(self, chatFrame);
-					return;
-				else
-					FCF_PopInWindow(self, chatFrame);
-					return;
-				end
 			elseif ( chatFrame.isTemporary and ( chatFrame.chatType == "PET_BATTLE_COMBAT_LOG" ) ) then
 				FCF_Close(chatFrame);
 			else
@@ -1640,20 +1582,6 @@ function FCF_SaveDock()
 	for index, value in pairs(FCFDock_GetChatFrames(GENERAL_CHAT_DOCK)) do
 		SetChatWindowDocked(value:GetID(), index);
 	end
-end
-
-function FCF_LeaveConversation(frame, fallback)
-	if ( fallback ) then
-		frame=fallback
-	end
-	if ( not frame ) then
-		frame = FCF_GetCurrentChatFrame();
-	end
-	
-	assert(frame.chatType == "BN_CONVERSATION");
-	BNLeaveConversation(tonumber(frame.chatTarget));
-	
-	FCF_Close(frame);
 end
 
 function FCF_PopInWindow(frame, fallback)
@@ -1695,15 +1623,11 @@ function FCF_Close(frame, fallback)
 		frame.isRegistered = false;
 		frame.inUse = false;
 	end
-	if ( PENDING_BN_WHISPER_TO_CONVERSATION_FRAME == frame ) then
-		PENDING_BN_WHISPER_TO_CONVERSATION_FRAME = nil;
-	end
 	
 	--Reset what this window receives.
 	ChatFrame_RemoveAllMessageGroups(frame);
 	ChatFrame_RemoveAllChannels(frame);
 	ChatFrame_ReceiveAllPrivateMessages(frame);
-	ChatFrame_ReceiveAllBNConversations(frame);
 end
 
 function FCF_RestoreChatsToFrame(targetFrame, sourceFrame)
@@ -1722,14 +1646,6 @@ function FCF_RestoreChatsToFrame(targetFrame, sourceFrame)
 		for name, value in pairs(sourceFrame.privateMessageList) do
 			if ( value ) then
 				ChatFrame_RemoveExcludePrivateMessageTarget(targetFrame, name);
-			end
-		end
-	end
-	
-	if ( sourceFrame.bnConversationList ) then
-		for name, value in pairs(sourceFrame.bnConversationList) do
-			if ( value ) then
-				ChatFrame_RemoveExcludeBNConversationTarget(targetFrame, name);
 			end
 		end
 	end
@@ -1768,7 +1684,7 @@ end
 function FCF_Set_NormalChat()
 	ChatFrame2:StartMoving();
 	ChatFrame2:StopMovingOrSizing();
-	FCF_SetLocked(ChatFrame2, nil);
+	FCF_SetLocked(ChatFrame2, false);
 	-- to fix a bug with the combat log not repositioning its tab properly when coming out of
 	-- simple chat, we need to update now
 	FCF_DockUpdate();
@@ -1801,7 +1717,6 @@ function FCF_ResetChatWindows()
 	ChatFrame_RemoveAllMessageGroups(ChatFrame1);
 	ChatFrame_RemoveAllChannels(ChatFrame1);
 	ChatFrame_ReceiveAllPrivateMessages(ChatFrame1);
-	ChatFrame_ReceiveAllBNConversations(ChatFrame1);
 	SELECTED_CHAT_FRAME = ChatFrame1;
 	DEFAULT_CHAT_FRAME.chatframe = DEFAULT_CHAT_FRAME;
 
@@ -1812,27 +1727,19 @@ function FCF_ResetChatWindows()
 	ChatFrame_RemoveAllMessageGroups(ChatFrame2);
 	ChatFrame_RemoveAllChannels(ChatFrame2);
 	ChatFrame_ReceiveAllPrivateMessages(ChatFrame2);
-	ChatFrame_ReceiveAllBNConversations(ChatFrame2);
 	FCF_UnDockFrame(ChatFrame2);
 	ChatFrame2.isInitialized = 0;
 	for _, chatFrameName in ipairs(CHAT_FRAMES) do
 		if ( chatFrameName ~= "ChatFrame1" ) then
 			local chatFrame = _G[chatFrameName];
-			if ( chatFrame.isTemporary and chatFrame.chatType == "BN_CONVERSATION" and
-				BNGetConversationInfo(tonumber(chatFrame.chatTarget)) and (GetCVar("conversationMode") == "popout" or GetCVar("conversationMode") == "popout_and_inline") ) then
-				--We're still in this conversation, so we just want to reset the position, not remove the frame.
-				FCF_DockFrame(chatFrame, 3);	--Put it after General and Combat Log
-			else
-				chatFrame.isInitialized = 0;
-				FCF_SetTabPosition(chatFrame, 0);
-				FCF_Close(chatFrame);
-				FCF_UnDockFrame(chatFrame);
-				FCF_SetWindowName(chatFrame, "");
-				ChatFrame_RemoveAllMessageGroups(chatFrame);
-				ChatFrame_RemoveAllChannels(chatFrame);
-				ChatFrame_ReceiveAllPrivateMessages(chatFrame);
-				ChatFrame_ReceiveAllBNConversations(chatFrame);
-			end
+			chatFrame.isInitialized = 0;
+			FCF_SetTabPosition(chatFrame, 0);
+			FCF_Close(chatFrame);
+			FCF_UnDockFrame(chatFrame);
+			FCF_SetWindowName(chatFrame, "");
+			ChatFrame_RemoveAllMessageGroups(chatFrame);
+			ChatFrame_RemoveAllChannels(chatFrame);
+			ChatFrame_ReceiveAllPrivateMessages(chatFrame);
 			FCF_SetChatWindowFontSize(nil, chatFrame, 14);
 			FCF_SetWindowColor(chatFrame, DEFAULT_CHATFRAME_COLOR.r, DEFAULT_CHATFRAME_COLOR.g, DEFAULT_CHATFRAME_COLOR.b);
 			FCF_SetWindowAlpha(chatFrame, DEFAULT_CHATFRAME_ALPHA);
@@ -2077,10 +1984,6 @@ function FCFDock_AddChatFrame(dock, chatFrame, position)
 		chatFrame:SetResizable(false);
 	end
 	
-	if ( chatFrame.conversationButton ) then
-		BNConversationButton_UpdateAttachmentPoint(chatFrame.conversationButton);
-	end
-	
 	chatFrame.buttonFrame.minimizeButton:Hide();
 	chatFrame.buttonFrame:SetAlpha(1.0);
 	
@@ -2104,10 +2007,6 @@ function FCFDock_RemoveChatFrame(dock, chatFrame)
 		FCFDock_SelectWindow(dock, dock.DOCKED_CHAT_FRAMES[1]);
 	end
 	
-	if ( chatFrame.conversationButton ) then
-		BNConversationButton_UpdateAttachmentPoint(chatFrame.conversationButton);
-	end
-	
 	chatFrame.buttonFrame.minimizeButton:Show();
 	dock.overflowButton.list:Hide();
 	chatFrame:Show();
@@ -2124,14 +2023,6 @@ function FCFDock_SelectWindow(dock, chatFrame)
 	dock.selected = chatFrame;
 	dock.overflowButton.list:Hide();
 	FCFDock_UpdateTabs(dock);
-	
-	if ( ChatFrameMenuButton ) then
-		if ( chatFrame.conversationButton and chatFrame.conversationButton:IsShown() ) then
-			ChatFrameMenuButton:Hide();
-		else
-			ChatFrameMenuButton:Show();
-		end
-	end
 end
 
 function FCFDock_GetSelectedWindow(dock)
@@ -2233,7 +2124,9 @@ function FCFDock_CalculateTabSize(dock, numDynFrames)
 	
 	--Figure out how many tabs we're going to be able to fit at the minimum size
 	local numWholeTabs = min(floor(scrollSize / MIN_SIZE), numDynFrames)
-	
+	if ( scrollSize == 0 ) then
+		return 1, (numDynFrames > 0);
+	end
 	if ( numWholeTabs == 0 ) then
 		return scrollSize, true;
 	end
@@ -2560,8 +2453,7 @@ function FCFManager_ShouldSuppressMessage(chatFrame, chatType, chatTarget)
 		return false;
 	end
 	
-	if ( (chatType == "BN_CONVERSATION" and GetCVar("conversationMode") == "popout")
-		or (chatType == "BN_WHISPER" and GetCVar("bnWhisperMode") == "popout")
+	if ( (chatType == "BN_WHISPER" and GetCVar("bnWhisperMode") == "popout")
 		or (chatType == "WHISPER" and GetCVar("whisperMode") == "popout") ) then
 		return true;
 	end
@@ -2576,8 +2468,7 @@ function FCFManager_ShouldSuppressMessageFlash(chatFrame, chatType, chatTarget)
 		return false;
 	end
 	
-	if ( (chatType == "BN_CONVERSATION" and GetCVar("conversationMode") == "popout_and_inline")
-		or (chatType == "BN_WHISPER" and GetCVar("bnWhisperMode") == "popout_and_inline") 
+	if ( (chatType == "BN_WHISPER" and GetCVar("bnWhisperMode") == "popout_and_inline") 
 		or (chatType == "WHISPER" and GetCVar("whisperMode") == "popout_and_inline") ) then
 		return true;
 	end
@@ -2596,10 +2487,6 @@ function FCFManager_StopFlashOnDedicatedWindows(chatType, chatTarget)
 end
 
 function FloatingChatFrameManager_OnLoad(self)
-	--Register for BN_CONVERSATION related messages to be able to spawn off new windows as needed
-	for _, event in pairs(ChatTypeGroup["BN_CONVERSATION"]) do
-		self:RegisterEvent(event);
-	end
 	for _, event in pairs(ChatTypeGroup["BN_WHISPER"]) do
 		self:RegisterEvent(event);
 	end
@@ -2613,20 +2500,6 @@ function FloatingChatFrameManager_OnEvent(self, event, ...)
 	if ( strsub(event, 1, 9) == "CHAT_MSG_" ) then
 		local chatType = strsub(event, 10);
 		local chatGroup = Chat_GetChatCategory(chatType);
-		
-		if ( chatGroup == "BN_CONVERSATION" ) then
-			if ( GetCVar("conversationMode") == "popout" or GetCVar("conversationMode") == "popout_and_inline" ) then
-				if( not (event == "CHAT_MSG_BN_CONVERSATION_NOTICE" and arg1 == "YOU_LEFT_CONVERSATION") ) then
-					local chatTarget = tostring(select(8, ...));
-					if ( FCFManager_GetNumDedicatedFrames(chatGroup, chatTarget) == 0 ) then
-						local chatFrame = FCF_OpenTemporaryWindow(chatGroup, chatTarget);
-						chatFrame:GetScript("OnEvent")(chatFrame, event, ...);	--Re-fire the event for the frame.
-					elseif (GetCVar("conversationMode") == "popout_and_inline" and BNIsSelf(select(13, ...))) then
-						FCFManager_StopFlashOnDedicatedWindows(chatGroup, chatTarget);
-					end
-				end
-			end
-		end
 		
 		if ( (chatGroup == "BN_WHISPER" and (GetCVar("bnWhisperMode") == "popout" or GetCVar("bnWhisperMode") == "popout_and_inline"))
 			or (chatGroup == "WHISPER" and (GetCVar("whisperMode") == "popout" or GetCVar("whisperMode") == "popout_and_inline"))) then
